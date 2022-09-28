@@ -5,7 +5,7 @@
 import { Context, Contract } from 'fabric-contract-api';
 import { Car } from './car';
 
-export class FabCar extends Contract {
+export class BlockchainIndexing extends Contract {
 
     public async initLedger(ctx: Context) {
         console.info('============= START : Initialize Ledger ===========');
