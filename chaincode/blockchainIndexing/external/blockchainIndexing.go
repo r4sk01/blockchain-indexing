@@ -153,7 +153,7 @@ func main() {
 	chaincode, err := contractapi.NewChaincode(new(SmartContract))
 
 	if err != nil {
-		fmt.Printf("Error create fabcar chaincode: %s", err.Error())
+		fmt.Printf("Error create blockchainIndexing chaincode: %s", err.Error())
 		return
 	}
 
@@ -167,6 +167,6 @@ func main() {
 	}
 
 	if err := server.Start(); err != nil {
-		fmt.Printf("Error starting fabcar chaincode: %s", err.Error())
+		fmt.Printf("Error starting blockchainIndexing chaincode: %s", err.Error())
 	}
 }
