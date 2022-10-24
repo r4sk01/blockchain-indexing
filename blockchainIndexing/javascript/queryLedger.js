@@ -40,14 +40,7 @@ async function main() {
         const contract = network.getContract('blockchainIndexing');
 
         // Submit the specified transaction.
-        // createCar transaction - requires 5 argument, ex: ('createCar', 'CAR12', 'Honda', 'Accord', 'Black', 'Tom')
-        // changeCarOwner transaction - requires 2 args , ex: ('changeCarOwner', 'CAR12', 'Dave')
-        await contract.submitTransaction('createCar', 'CAR12', 'Honda', 'Accord', 'Black', 'Tom');
-        await contract.submitTransaction('changeCarOwner', 'CAR12', 'Dave');
-        await contract.submitTransaction('changeCarOwner', 'CAR12', 'Steve');
-        await contract.submitTransaction('changeCarOwner', 'CAR12', 'George');
-        await contract.submitTransaction('changeCarOwner', 'CAR12', 'Chris');
-        // const stub = await contract.submitTransaction('queryLedger', 'CAR12');
+        const stub = await contract.submitTransaction('queryLedger', 'CAR12');
        
         console.log('Transaction has been submitted');
         console.log(stub.toString());
