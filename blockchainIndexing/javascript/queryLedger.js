@@ -10,7 +10,10 @@ const { Gateway, Wallets } = require('fabric-network');
 const fs = require('fs');
 const path = require('path');
 
-async function main() {
+async function queryLedger() {
+    // Get arg passed to script from command line for key to query
+    const args = process.argv.slice(2);
+    
     try {
         // load the network configuration
         const ccpPath = path.resolve(__dirname, '..', '..', 'test-network', 'organizations', 'peerOrganizations', 'org1.example.com', 'connection-org1.json');
@@ -40,11 +43,20 @@ async function main() {
         const contract = network.getContract('blockchainIndexing');
 
         // Submit the specified transaction.
-        const stub = await contract.submitTransaction('queryLedger', 'CAR12');
+        const stub = await contract.submitTransaction('queryLedger', args[0]);
        
         console.log('Transaction has been submitted');
-        console.log(stub.toString());
-        console.log(JSON.parse(stub.toString()));
+        
+        const txData = JSON.parse(stub.toString());
+        
+        // Pull timestamp data out into separate attributes
+        txData.map((item) => {
+        	item['timestamp_s_low'] = item['timestamp']['seconds']['low'];
+        	item['timestamp_ns'] = item['timestamp']['nanos'];
+        });
+        
+
+        console.log(txData);
 
         // Disconnect from the gateway.
         await gateway.disconnect();
@@ -55,4 +67,4 @@ async function main() {
     }
 }
 
-main();
+queryLedger();

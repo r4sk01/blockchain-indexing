@@ -143,41 +143,25 @@ class BlockchainIndexing extends Contract {
 
     async queryLedger(ctx, carNumber) {
         console.info('============= START : queryLedger ===========');
-
-        // const carAsBytes = await ctx.stub.getState(carNumber); // get the car from chaincode state
-        // if (!carAsBytes || carAsBytes.length === 0) {
-        //    throw new Error(`${carNumber} does not exist`);
-        // }
-        // const car = JSON.parse(carAsBytes.toString());
-        // car.owner = newOwner;
-
-        // await ctx.stub.putState(carNumber, Buffer.from(JSON.stringify(car)));
-        console.log('carNumber: ' + carNumber);
         
         const histPromise = await ctx.stub.getHistoryForKey(carNumber);
         
         const results = [];
         
-        //for await (const keyMod of histPromise) {
-        //	const resp = {
-        //		timestamp: keyMod.timestamp,
-        //		txid: keyMod.tx_id
-        //	};
-        //	
-        //	if (keyMod.is_delete) {
-        //		resp.data = 'KEY DELETED';
-        //	} else {
-        //		resp.data = keyMod.value.toString('utf8);
-        //	}
-        //	
-        //	results.push(resp);
-        // }
-        
         while (true) {
         	const res = await histPromise.next();
         	
         	if (res.value) {
-        		results.push(res.value.value.toString('utf8'));
+        		const data = {
+        			// value,
+        			// timestamp,
+        			// txId
+        			...res.value,
+        			// Convert buffer to string
+        			value: res.value.value.toString('utf8')
+        		};
+        		
+        		results.push(data);
         	}
         	
         	if (res.done) {
@@ -188,9 +172,6 @@ class BlockchainIndexing extends Contract {
         }
         
         return JSON.stringify(results);
-        
-        // return typeof(histPromise);
-        // return JSON.stringify(histPromise);
 
         console.info('============= END : queryLedger ===========');
     }
