@@ -50,8 +50,8 @@ async function main() {
         // const stub = await contract.submitTransaction('queryLedger', 'CAR12');
        
         console.log('Transaction has been submitted');
-        console.log(stub.toString());
-        console.log(JSON.parse(stub.toString()));
+        // console.log(stub.toString());
+        // console.log(JSON.parse(stub.toString()));
 
         // Disconnect from the gateway.
         await gateway.disconnect();
