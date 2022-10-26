@@ -47,11 +47,8 @@ async function main() {
         await contract.submitTransaction('changeCarOwner', 'CAR12', 'Steve');
         await contract.submitTransaction('changeCarOwner', 'CAR12', 'George');
         await contract.submitTransaction('changeCarOwner', 'CAR12', 'Chris');
-        // const stub = await contract.submitTransaction('queryLedger', 'CAR12');
        
         console.log('Transaction has been submitted');
-        // console.log(stub.toString());
-        // console.log(JSON.parse(stub.toString()));
 
         // Disconnect from the gateway.
         await gateway.disconnect();
