@@ -17,6 +17,11 @@ export VERBOSE=false
 
 . ../scripts/utils.sh
 
+: ${CONTAINER_CLI:="docker"}
+: ${CONTAINER_CLI_COMPOSE:="${CONTAINER_CLI}-compose"}
+infoln "Using ${CONTAINER_CLI} and ${CONTAINER_CLI_COMPOSE}"
+
+
 # Print the usage message
 function printHelp () {
   echo "Usage: "
@@ -31,8 +36,6 @@ function printHelp () {
   echo "    -t <timeout> - CLI timeout duration in seconds (defaults to 10)"
   echo "    -d <delay> - delay duration in seconds (defaults to 3)"
   echo "    -s <dbtype> - the database backend to use: goleveldb (default) or couchdb"
-  echo "    -i <imagetag> - the tag to be used to launch the network (defaults to \"latest\")"
-  echo "    -cai <ca_imagetag> - the image tag to be used for CA (defaults to \"${CA_IMAGETAG}\")"
   echo "    -verbose - verbose mode"
   echo
   echo "Typically, one would first generate the required certificates and "
@@ -86,8 +89,7 @@ function generateOrg3() {
     fi
 
     infoln "Generating certificates using Fabric CA"
-
-    IMAGE_TAG=${CA_IMAGETAG} docker-compose -f $COMPOSE_FILE_CA_ORG3 up -d 2>&1
+    ${CONTAINER_CLI_COMPOSE} -f ${COMPOSE_FILE_CA_BASE} -f $COMPOSE_FILE_CA_ORG3 up -d 2>&1
 
     . fabric-ca/registerEnroll.sh
 
@@ -121,10 +123,15 @@ function generateOrg3Definition() {
 
 function Org3Up () {
   # start org3 nodes
+
+  if [ "$CONTAINER_CLI" == "podman" ]; then
+    cp ../podman/core.yaml ../../organizations/peerOrganizations/org3.example.com/peers/peer0.org3.example.com/
+  fi
+
   if [ "${DATABASE}" == "couchdb" ]; then
-    IMAGE_TAG=${IMAGETAG} docker-compose -f $COMPOSE_FILE_ORG3 -f $COMPOSE_FILE_COUCH_ORG3 up -d 2>&1
+    DOCKER_SOCK=${DOCKER_SOCK} ${CONTAINER_CLI_COMPOSE} -f ${COMPOSE_FILE_BASE} -f $COMPOSE_FILE_ORG3 -f ${COMPOSE_FILE_COUCH_BASE} -f $COMPOSE_FILE_COUCH_ORG3 up -d 2>&1
   else
-    IMAGE_TAG=$IMAGETAG docker-compose -f $COMPOSE_FILE_ORG3 up -d 2>&1
+    DOCKER_SOCK=${DOCKER_SOCK} ${CONTAINER_CLI_COMPOSE} -f ${COMPOSE_FILE_BASE} -f $COMPOSE_FILE_ORG3 up -d 2>&1
   fi
   if [ $? -ne 0 ]; then
     fatalln "ERROR !!!! Unable to start Org3 network"
@@ -150,13 +157,13 @@ function addOrg3 () {
   # Use the CLI container to create the configuration transaction needed to add
   # Org3 to the network
   infoln "Generating and submitting config tx to add Org3"
-  docker exec cli ./scripts/org3-scripts/updateChannelConfig.sh $CHANNEL_NAME $CLI_DELAY $CLI_TIMEOUT $VERBOSE
+  ${CONTAINER_CLI} exec cli ./scripts/org3-scripts/updateChannelConfig.sh $CHANNEL_NAME $CLI_DELAY $CLI_TIMEOUT $VERBOSE
   if [ $? -ne 0 ]; then
     fatalln "ERROR !!!! Unable to create config tx"
   fi
 
   infoln "Joining Org3 peers to network"
-  docker exec cli ./scripts/org3-scripts/joinChannel.sh $CHANNEL_NAME $CLI_DELAY $CLI_TIMEOUT $VERBOSE
+  ${CONTAINER_CLI} exec cli ./scripts/org3-scripts/joinChannel.sh $CHANNEL_NAME $CLI_DELAY $CLI_TIMEOUT $VERBOSE
   if [ $? -ne 0 ]; then
     fatalln "ERROR !!!! Unable to join Org3 peers to network"
   fi
@@ -168,33 +175,30 @@ function networkDown () {
     ./network.sh down
 }
 
-
-# Obtain the OS and Architecture string that will be used to select the correct
-# native binaries for your platform
-OS_ARCH=$(echo "$(uname -s|tr '[:upper:]' '[:lower:]'|sed 's/mingw64_nt.*/windows/')-$(uname -m | sed 's/x86_64/amd64/g')" | awk '{print tolower($0)}')
-# timeout duration - the duration the CLI should wait for a response from
-# another container before giving up
-
 # Using crpto vs CA. default is cryptogen
 CRYPTO="cryptogen"
-
+# timeout duration - the duration the CLI should wait for a response from
+# another container before giving up
 CLI_TIMEOUT=10
 #default for delay
 CLI_DELAY=3
 # channel name defaults to "mychannel"
 CHANNEL_NAME="mychannel"
 # use this as the docker compose couch file
-COMPOSE_FILE_COUCH_ORG3=docker/docker-compose-couch-org3.yaml
+COMPOSE_FILE_COUCH_BASE=compose/compose-couch-org3.yaml
+COMPOSE_FILE_COUCH_ORG3=compose/${CONTAINER_CLI}/docker-compose-couch-org3.yaml
 # use this as the default docker-compose yaml definition
-COMPOSE_FILE_ORG3=docker/docker-compose-org3.yaml
+COMPOSE_FILE_BASE=compose/compose-org3.yaml
+COMPOSE_FILE_ORG3=compose/${CONTAINER_CLI}/docker-compose-org3.yaml
 # certificate authorities compose file
-COMPOSE_FILE_CA_ORG3=docker/docker-compose-ca-org3.yaml
-# default image tag
-IMAGETAG="latest"
-# default ca image tag
-CA_IMAGETAG="latest"
+COMPOSE_FILE_CA_BASE=compose/compose-ca-org3.yaml
+COMPOSE_FILE_CA_ORG3=compose/${CONTAINER_CLI}/docker-compose-ca-org3.yaml
 # database
 DATABASE="leveldb"
+
+# Get docker sock path from environment variable
+SOCK="${DOCKER_HOST:-/var/run/docker.sock}"
+DOCKER_SOCK="${SOCK##unix://}"
 
 # Parse commandline args
 
@@ -235,17 +239,8 @@ while [[ $# -ge 1 ]] ; do
     DATABASE="$2"
     shift
     ;;
-  -i )
-    IMAGETAG=$(go env GOARCH)"-""$2"
-    shift
-    ;;
-  -cai )
-    CA_IMAGETAG="$2"
-    shift
-    ;;
   -verbose )
     VERBOSE=true
-    shift
     ;;
   * )
     errorln "Unknown flag: $key"
