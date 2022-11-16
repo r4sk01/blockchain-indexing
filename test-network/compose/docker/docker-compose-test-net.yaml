@@ -7,10 +7,9 @@ version: '3.7'
 services:
   peer0.org1.example.com:
     container_name: peer0.org1.example.com
-    # image: hyperledger/fabric-peer:latest
-    image: hyperledger/fabric-sharp-peer:2.2.0
+    image: hyperledger/fabric-peer:latest
     labels:
-      service: hyperledger-fabric-sharp
+      service: hyperledger-fabric
     environment:
       #Generic peer variables
       - CORE_VM_ENDPOINT=unix:///host/var/run/docker.sock
@@ -21,10 +20,9 @@ services:
 
   peer0.org2.example.com:
     container_name: peer0.org2.example.com
-    # image: hyperledger/fabric-peer:latest
-    image: hyperledger/fabric-sharp-peer:2.2.0
+    image: hyperledger/fabric-peer:latest
     labels:
-      service: hyperledger-fabric-sharp
+      service: hyperledger-fabric
     environment:
       #Generic peer variables
       - CORE_VM_ENDPOINT=unix:///host/var/run/docker.sock
@@ -35,6 +33,6 @@ services:
   
   cli:
     container_name: cli
-    image: hyperledger/fabric-tools:2.2
+    image: hyperledger/fabric-tools:latest
     volumes:
       - ./docker/peercfg:/etc/hyperledger/peercfg
