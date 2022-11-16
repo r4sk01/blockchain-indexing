@@ -77,6 +77,10 @@ _Best results for this application can be achieved by using Linux or a virtual m
 2. Exit from a Docker exec session.  
    Press control + C, then press control + D.  
 3. Copy FabricSharp ledger files from a docker container to your Linux VM.  
-   `docker cp peer0.org2.example.com:/var/hyperledger/production/ledgersData/chains/chains/mychannel/ ../data/mychannel`  
+   `docker cp peer0.org1.example.com:/var/hyperledger/production/ledgersData/chains/chains/mychannel/ ../data/mychannel/peer0.org1`  
+   `docker cp peer0.org2.example.com:/var/hyperledger/production/ledgersData/chains/chains/mychannel/ ../data/mychannel/peer0.org2`  
+   `docker cp orderer.example.com:/var/hyperledger/production/orderer/chains/mychannel/ ../data/mychannel/orderer`  
 4. Copy FabricSharp ledger files from your Linux VM to a docker container.  
-   `docker cp ../data/mychannel peer0.org1.example.com:/var/hyperledger/production/ledgersData/chains/chains/`  
+   `docker cp ../data/mychannel/peer0.org1/mychannel peer0.org1.example.com:/var/hyperledger/production/ledgersData/chains/chains/`  
+   `docker cp ../data/mychannel/peer0.org2/mychannel peer0.org2.example.com:/var/hyperledger/production/ledgersData/chains/chains/`  
+   `docker cp ../data/mychannel/orderer/mychannel orderer.example.com:/var/hyperledger/production/orderer/chains/`  
