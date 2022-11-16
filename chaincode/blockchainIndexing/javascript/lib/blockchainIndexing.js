@@ -136,10 +136,48 @@ class BlockchainIndexing extends Contract {
         const car = JSON.parse(carAsBytes.toString());
         car.owner = newOwner;
 
+	// Updates world state record for carNumber by incrementing _rev field (e.g., "_rev": "5-3044aa76bf3ddbc9b5a4248cb8943006" "5-" represents the 5th update to this record)
         await ctx.stub.putState(carNumber, Buffer.from(JSON.stringify(car)));
         console.info('============= END : changeCarOwner ===========');
     }
 
+    async queryLedger(ctx, carNumber) {
+        console.info('============= START : queryLedger ===========');
+        
+        const histPromise = await ctx.stub.getHistoryForKey(carNumber);
+        
+        const results = [];
+        
+        while (true) {
+        	const res = await histPromise.next();
+        	
+        	if (res.value) {
+        		const data = {
+        			// value,
+        			// timestamp,
+        			// txId
+        			...res.value,
+        			// Convert buffer to string
+        			value: res.value.value.toString('utf8')
+        		};
+        		
+        		results.push(data);
+        	}
+        	
+        	if (res.done) {
+        		await histPromise.close();
+        		
+        		return results;
+        	}
+        }
+        
+        return JSON.stringify(results);
+
+        console.info('============= END : queryLedger ===========');
+    }
+
 }
+
+// Redeploy using ./../../test-network/network.sh deployCC -ccn blockchainIndexing -ccv 1 -ccs 14 -cci NA -ccl javascript  -ccp ../chaincode/blockchainIndexing/javascript/
 
 module.exports = BlockchainIndexing;
