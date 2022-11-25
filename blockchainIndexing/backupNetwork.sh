@@ -11,7 +11,8 @@ PATH4="$DIRECTORY/ordererOrgs"
 PATH5="$DIRECTORY/peerOrgs"
 PATH6="$DIRECTORY/artifacts"
 PATH7="$DIRECTORY/genesis"
-PATH8="$DIRECTORY/wallets"
+PATH8="$DIRECTORY/wallet"
+PATH9="$DIRECTORY/fabric-ca"
 
 PEER1="peer0.org1.example.com"
 PEER2="peer0.org2.example.com"
@@ -21,6 +22,7 @@ PEER_PROD_PATH="/var/hyperledger/production/"
 ORDERER_PROD_PATH=$PEER_PROD_PATH"orderer/"
 TEST_NET_PATH="../test-network"
 ORGS_PATH="$TEST_NET_PATH/organizations"
+FABRIC_CA_PATH="$ORGS_PATH/fabric-ca"
 ORDERER_ORG_PATH="$ORGS_PATH/ordererOrganizations"
 PEER_ORG_PATH="$ORGS_PATH/peerOrganizations"
 ARTIFACTS_PATH="$TEST_NET_PATH/channel-artifacts"
@@ -83,6 +85,20 @@ else
   echo "$PATH7 exists"
 fi
 
+#if [ ! -d "$PATH8" ]; then
+#  echo "$PATH8 does not exist"
+#  mkdir $PATH8
+#else
+#  echo "$PATH8 exists"
+#fi
+
+if [ ! -d "$PATH9" ]; then
+  echo "$PATH9 does not exist"
+  mkdir $PATH9
+else
+  echo "$PATH9 exists"
+fi
+
 # Copy ledger files from Docker containers to backup directory
 docker cp $PEER1:$PEER_PROD_PATH $PATH1
 docker cp $PEER2:$PEER_PROD_PATH $PATH2
@@ -93,6 +109,8 @@ cp -r $ORDERER_ORG_PATH $PATH4
 cp -r $PEER_ORG_PATH $PATH5
 cp -r $ARTIFACTS_PATH $PATH6
 cp -r $GENESIS_PATH $PATH7
+cp -r $FABRIC_CA_PATH $PATH9
 
 
-# Copy /wallet ?
+# Copy /wallet
+#cp -r "./javascript/wallet" $PATH8

@@ -11,7 +11,8 @@ PATH4="$DIRECTORY/ordererOrgs/ordererOrganizations"
 PATH5="$DIRECTORY/peerOrgs/peerOrganizations"
 PATH6="$DIRECTORY/artifacts/channel-artifacts"
 PATH7="$DIRECTORY/genesis/system-genesis-block"
-PATH8="$DIRECTORY/wallets"
+PATH8="$DIRECTORY/wallet/wallet"
+PATH9="$DIRECTORY/fabric-ca"
 
 PEER1="peer0.org1.example.com"
 PEER2="peer0.org2.example.com"
@@ -20,6 +21,7 @@ ORDERER="orderer.example.com"
 PEER_PROD_PATH="/var/hyperledger/"
 ORDERER_PROD_PATH=$PEER_PROD_PATH"production/"
 TEST_NET_PATH="../test-network"
+FABRIC_CA_PATH="$TEST_NET_PATH/fabric-ca"
 ORGS_PATH="$TEST_NET_PATH/organizations"
 ORDERER_ORG_PATH="$ORGS_PATH/ordererOrganizations"
 PEER_ORG_PATH="$ORGS_PATH/peerOrganizations"
@@ -61,14 +63,22 @@ docker cp $PATH2 $PEER2:$PEER_PROD_PATH
 docker cp $PATH3 $ORDERER:$ORDERER_PROD_PATH
 
 # Copy backup files to test-network directories
-cp -r $PATH4 $ORGS_PATH
-cp -r $PATH5 $ORGS_PATH
+#cp -r $PATH4 $ORGS_PATH
+#cp -r $PATH5 $ORGS_PATH
 cp -r $PATH6 $TEST_NET_PATH
 cp -r $PATH7 $TEST_NET_PATH
+cp -r $PATH9 $TEST_NET_PATH
 
 
 # Still getting these errors when querying after running this script
-# Install /wallet ?
+# Install /wallet
+# cp -r $PATH8 "./javascript"
+
+
+
+#2022-11-22T07:06:05.055Z - error: [DiscoveryResultsProcessor]: parseDiscoveryResults[mychannel] - Channel:mychannel received discovery error:failed fetching config for channel #mychannel
+#Failed to evaluate transaction: Error: DiscoveryService: mychannel error: failed fetching config for channel mychannel
+
 
 
 #2022-11-16T04:27:09.793Z - error: [ServiceEndpoint]: Error: Failed to connect before the deadline on Endorser- name: peer0.org1.example.com, url:grpcs://localhost:7051, connected:false, connectAttempted:true
