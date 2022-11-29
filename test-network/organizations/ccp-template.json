@@ -6,8 +6,15 @@
         "connection": {
             "timeout": {
                 "peer": {
-                    "endorser": "300"
-                }
+                    "endorser": "1800"
+                },
+                "orderer": "1800"
+            },
+            "options": {
+                "grpc.max_receive_message_length": "-1",
+                "grpc.max_send_message_length": "-1",
+                "grpc.keepalive_time_ms": "1800000",
+                "grpc.keepalive_timeout_ms": "1800000"
             }
         }
     },
@@ -30,7 +37,11 @@
             },
             "grpcOptions": {
                 "ssl-target-name-override": "peer0.org${ORG}.example.com",
-                "hostnameOverride": "peer0.org${ORG}.example.com"
+                "hostnameOverride": "peer0.org${ORG}.example.com",
+                "grpc.max_receive_message_length": "500000000",
+                "grpc.max_send_message_length": "500000000",
+                "grpc.keepalive_time_ms": "1800000",
+                "grpc.keepalive_timeout_ms": "1800000"
             }
         }
     },
