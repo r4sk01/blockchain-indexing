@@ -69,6 +69,32 @@ _Best results for this application can be achieved by using Linux or a virtual m
    `docker logs peer0.org1.example.com`  
    _This will output the logs from peer0 in your terminal. At the top of the output, you should see SHARP (2.2.0)._
    _If the output from the logs matches the expected result, the network is running on FabricSharp._  
+   
+## Bringing the Network Down  
+
+1. In the terminal on your Linux VM, navigate to the directory where you cloned
+   the blockchain-indexing repository and navigate to the blockchainIndexing
+   directory within that repository.  
+2. Bring the network down by running the following command:  
+   `./networkDown.sh`  
+   _This should bring the network down, shutting down the orderer and both peers._  
+   
+## Useful Application Commands  
+
+1. Enroll shortcut command  
+   1. After starting the network, run the following command:  
+      `cd javascript/ && node enrollAdmin.js && node registerUser.js && cd ..`  
+2. Bulk load data into the blockchain ledger.  
+   1. Ensure the data you want to import exists on or is accessible from your VM.  
+      _Since the data set is large, it may make more sense to set up a shared directory between your VM and your computer. Use the VMWare System Settings -> Sharing option._  
+   2. Navigate into the /blockchain-indexing/blockchainIndexing/javascript directory.  
+   3. Run the following command:  
+      `node bulkChunkInvoke.js /path/to/data/directory/fileName.json`  
+      _/path/to/data/directory/fileName.json should be the path to the data you want to upload in JSON format._  
+      _If you set up a shared directory between your VM and your computer, it should be accessible from your VM at /mnt/hgfs/your-directory-name_  
+      * This command take about 17 minutes to complete when loading 1 million records on a VM with 4GB of memory and 2 processors.  
+      * The 1 million records in the TPC-H data set use about 770MB of space, so ensure your VM has at least 2GB of available disk space before using this command.  
+      * If you see any errors returned while running this command (e.g., peer timeouts), try increasing the timeoutDuration_ms value in bulkChunkInvoke.js.  
 
 ## Useful Docker Commands  
 
