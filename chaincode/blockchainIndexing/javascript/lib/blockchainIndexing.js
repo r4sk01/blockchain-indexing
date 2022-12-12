@@ -32,6 +32,8 @@ class BlockchainIndexing extends Contract {
         await ctx.stub.putState(orderKey, Buffer.from(JSON.stringify(pacakagedOrder)));
     }
 
+
+    // Handles bulk transactions sent as buffer
     async addOrdersBulk(ctx, orderBuffer) {
         console.info('============= START : Add Orders Bulk ===========');
         
@@ -53,17 +55,91 @@ class BlockchainIndexing extends Contract {
             };
             
             console.info('orderKey: ', orderKey);
-            //transactionList.push(ctx.stub.putState(orderKey, Buffer.from(JSON.stringify(pacakagedOrder))));
             await ctx.stub.putState(orderKey, Buffer.from(JSON.stringify(pacakagedOrder)));
         }
         
-        //await Promise.all(transactionList);
-        
-        // The following are from tests done to check txn times for putState in for loop and with Promise.all
-        // for loop: 1000 records takes 1.4 seconds => 1,000,000 will take approximately 23.33 minutes
-        // Promise.all: 1000 records takes 1.192 seconds => 1,000,000 will take approximately 19.87 minutes
+        /* 
+         * The following are from tests done to check txn times for putState in for loop and with Promise.all
+         * for loop: 1000 records takes 1.4 seconds => 1,000,000 will take approximately 23.33 minutes
+         * Promise.all: 1000 records takes 1.192 seconds => 1,000,000 will take approximately 19.87 minutes
+         */
         
         console.info('============= END : Add Orders Bulk ===========');
+        return;
+    }
+
+    // This is a test method for trying to speed up bulk transaction processing time, but it needs more work from the client
+    // end because there is still a limit to the payload (orderBuffer) size of 100MB
+    async addOrdersBulkChunk(ctx, orderBuffer) {
+        console.info('============= START : Add Orders Bulk Chunk ===========');
+        
+        const orders = orderBuffer.toString();
+        const ordersObj = JSON.parse(orders);
+        
+        const chunkLength = 1000;
+        const splitLength = 30;
+        
+        // This pattern borrowed from https://stackoverflow.com/questions/8495687/split-array-into-chunks
+        const chunks = ordersObj.reduce((chunkArray, item, index) => {
+            const chunkIndex = Math.floor(index / chunkLength);
+
+            if(!chunkArray[chunkIndex]) {
+              chunkArray[chunkIndex] = []; // start a new chunk
+            }
+
+            chunkArray[chunkIndex].push(item);
+
+            return chunkArray;
+        }, []);
+        console.info(`chunks.length: ${chunks.length}`);
+        
+        const splits = chunks.reduce((resultArray, item, index) => {
+            const splitIndex = Math.floor(index / splitLength);
+
+            if(!resultArray[splitIndex]) {
+              resultArray[splitIndex] = []; // start a new chunk
+            }
+
+            resultArray[splitIndex].push(item);
+
+            return resultArray;
+        }, []);
+        console.info(`splits.length: ${splits.length}`);
+        //console.info(`splits[0].length: ${splits[0].length}`);
+        //console.info(`splits[1].length: ${splits[1].length}`);
+        
+        const timeoutDuration_ms = 15000;
+        
+        await splits.forEach(async (split, index) => {
+            console.info(`Running split index: ${index}`);
+            setTimeout(async () => {
+                console.info(`setTimeout ran at ${index * timeoutDuration_ms}`);
+                split.forEach(async memberArray => {
+                    const length = ordersObj.length;
+        
+                    for (let i = 0; i < length; i++) {
+                        const memberArrayObj = memberArray[i];
+                        const { L_ORDERKEY, L_LINENUMBER, ...orderRest } = memberArrayObj;
+        
+                        // Fabric key must be a string
+                        const orderKey = L_ORDERKEY.toString() + '-' + L_LINENUMBER.toString();
+                        const pacakagedOrder = {
+                            docType: 'order',
+                            ...orderRest
+                        };
+            
+                        console.info('orderKey: ', orderKey);
+                        //transactionList.push(ctx.stub.putState(orderKey, Buffer.from(JSON.stringify(pacakagedOrder))));
+                        await ctx.stub.putState(orderKey, Buffer.from(JSON.stringify(pacakagedOrder)));
+                    }
+                })
+                
+                console.info(`setTimeout ${index} which started at ${index * timeoutDuration_ms} finished`);
+            } , index * timeoutDuration_ms);
+        });
+        
+        console.info('============= END : Add Orders Bulk Chunk ===========');
+        return;
     }
 
     async queryOrdersByRange(ctx, startKey, endKey) {
@@ -80,6 +156,8 @@ class BlockchainIndexing extends Contract {
             }
             
             allResults.push({ Key: key, Record: record });
+            
+            //console.info('allResults: ', allResults);
         }
 
         return JSON.stringify(allResults);
