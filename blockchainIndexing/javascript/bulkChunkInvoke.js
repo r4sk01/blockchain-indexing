@@ -102,7 +102,7 @@ async function main() {
         // Although we await on the transaction submission, it returns before the ledger has been fully updated,
         // so we have to set a time to wait before sending the next request otherwise the peers get overwhelmed
         // and start failing to handle transactions properly
-        const timeoutDuration_ms = 30000;
+        const timeoutDuration_ms = 60000;
         
         await splits.forEach(async (split, index) => {
             console.info(`Running split index: ${index}`);
