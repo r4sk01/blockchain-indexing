@@ -1,0 +1,11 @@
+Step 1: Pull and Translate the config
+
+Get to cli container or peer container:
+
+docker exec -it cli sh
+
+mkdir cfgchange
+
+cd cfgchange
+
+peer channel fetch config config_block.pb -o orderer.example.com:7050 --ordererTLSHostnameOverride orderer.example.com -c mychannel --tls --cafile /opt/gopath/src/github.com/hyperledger/fabric/peer/organizations/ordererOrganizations/example.com/orderers/orderer.example.com/msp/tlscacerts/tlsca.example.com-cert.pem
