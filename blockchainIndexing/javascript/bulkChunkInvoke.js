@@ -70,7 +70,7 @@ async function main() {
         const chunkLength = 1000;
         
         // Number of splits to create from groups of chunks (i.e., 30 groups of 1000 record chunks)
-        const splitLength = 20;
+        const splitLength = 25;
         // const splitLength = 15;
         
         // This pattern borrowed from https://stackoverflow.com/questions/8495687/split-array-into-chunks
