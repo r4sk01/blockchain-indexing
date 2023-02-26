@@ -20,10 +20,13 @@ class BlockchainIndexing extends Contract {
         console.info('============= START : Add Order ===========');
         
         const orderObj = JSON.parse(order);
-        const { L_ORDERKEY, L_LINENUMBER, ...orderRest } = orderObj;
+        // const { L_ORDERKEY, L_LINENUMBER, ...orderRest } = orderObj;
+        const { L_ORDERKEY, ...orderRest } = orderObj;
+
         
         // Fabric key must be a string
-        const orderKey = L_ORDERKEY.toString() + '-' + L_LINENUMBER.toString();
+        // const orderKey = L_ORDERKEY.toString() + '-' + L_LINENUMBER.toString();
+        const orderKey = L_ORDERKEY.toString();
         const pacakagedOrder = {
             docType: 'order',
             ...orderRest
@@ -45,10 +48,12 @@ class BlockchainIndexing extends Contract {
         
         for (let i = 0; i < length; i++) {
             const orderObj = ordersObj[i];
-            const { L_ORDERKEY, L_LINENUMBER, ...orderRest } = orderObj;
+            // const { L_ORDERKEY, L_LINENUMBER, ...orderRest } = orderObj;
+            const { L_ORDERKEY, ...orderRest } = orderObj;
         
             // Fabric key must be a string
-            const orderKey = L_ORDERKEY.toString() + '-' + L_LINENUMBER.toString();
+            // const orderKey = L_ORDERKEY.toString() + '-' + L_LINENUMBER.toString();
+            const orderKey = L_ORDERKEY.toString();
             const pacakagedOrder = {
                 docType: 'order',
                 ...orderRest
@@ -119,10 +124,12 @@ class BlockchainIndexing extends Contract {
         
                     for (let i = 0; i < length; i++) {
                         const memberArrayObj = memberArray[i];
-                        const { L_ORDERKEY, L_LINENUMBER, ...orderRest } = memberArrayObj;
+                        // const { L_ORDERKEY, L_LINENUMBER, ...orderRest } = memberArrayObj;
+                        const { L_ORDERKEY, ...orderRest } = memberArrayObj;
         
                         // Fabric key must be a string
-                        const orderKey = L_ORDERKEY.toString() + '-' + L_LINENUMBER.toString();
+                        // const orderKey = L_ORDERKEY.toString() + '-' + L_LINENUMBER.toString();
+                        const orderKey = L_ORDERKEY.toString();
                         const pacakagedOrder = {
                             docType: 'order',
                             ...orderRest
@@ -181,6 +188,67 @@ class BlockchainIndexing extends Contract {
         //console.info(allResults);
         return JSON.stringify(allResults);
     }
+
+    async queryOrderHistoryByKey(ctx, orderKey) {
+
+        const results = [];
+
+        const iterator = await ctx.stub.getHistoryForKey(orderKey);
+      
+        while (true) {
+          const result = await iterator.next();
+
+          if (result.done) {
+            break;
+          }
+
+          const assetValue = result.value.value.toString('utf8');
+          let transactionId = result.value.txId;
+
+          let asset = {
+            value: assetValue,
+            timestamp: result.value.timestamp,
+            txId: transactionId
+          };
+
+          results.push(asset);
+        }
+        await iterator.close();
+        return JSON.stringify(results);
+      
+    }
+    
+    
+    async queryOrderHistoryForKeyRange(ctx, startKey, endKey) {
+        const iterator = await ctx.stub.getHistoryForKeyRange(startKey, endKey);
+      
+        const results = [];
+      
+        while (true) {
+          const result = await iterator.next();
+      
+          if (result.value && result.value.value.toString()) {
+            const jsonResult = {};
+            jsonResult.Key = result.value.key;
+            jsonResult.TxId = result.value.txId;
+            jsonResult.Timestamp = result.value.timestamp;
+            jsonResult.IsDelete = result.value.is_delete.toString();
+            try {
+              jsonResult.Value = JSON.parse(result.value.value.toString('utf8'));
+            } catch (err) {
+              console.log(err);
+              jsonResult.Value = result.value.value.toString('utf8');
+            }
+      
+            results.push(jsonResult);
+          }
+      
+          if (result.done) {
+            await iterator.close();
+            return results;
+          }
+        }
+      }
 
 }
 
