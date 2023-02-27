@@ -217,38 +217,71 @@ class BlockchainIndexing extends Contract {
         return JSON.stringify(results);
       
     }
-    
-    
+    /*
     async queryOrderHistoryForKeyRange(ctx, startKey, endKey) {
-        const iterator = await ctx.stub.getHistoryForKeyRange(startKey, endKey);
-      
+
         const results = [];
+
+        const iterator = await ctx.stub.getHistoryForKeyRange(startKey, endKey);
       
         while (true) {
           const result = await iterator.next();
-      
-          if (result.value && result.value.value.toString()) {
-            const jsonResult = {};
-            jsonResult.Key = result.value.key;
-            jsonResult.TxId = result.value.txId;
-            jsonResult.Timestamp = result.value.timestamp;
-            jsonResult.IsDelete = result.value.is_delete.toString();
-            try {
-              jsonResult.Value = JSON.parse(result.value.value.toString('utf8'));
-            } catch (err) {
-              console.log(err);
-              jsonResult.Value = result.value.value.toString('utf8');
-            }
-      
-            results.push(jsonResult);
-          }
-      
+
           if (result.done) {
-            await iterator.close();
-            return results;
+            break;
           }
+
+          const assetValue = result.value.value.toString('utf8');
+          let transactionId = result.value.txId;
+
+          let asset = {
+            value: assetValue,
+            timestamp: result.value.timestamp,
+            txId: transactionId
+          };
+
+          results.push(asset);
         }
-      }
+
+        await iterator.close();
+        return JSON.stringify(results);
+      
+    }
+    */
+    
+    async queryOrderHistoryForKeyRange(ctx, startKey, endKey) {
+
+        const results = [];
+
+        for (let i = startKey; i <= endKey; i++) {
+            const iterator = await ctx.stub.getHistoryForKey(i);
+      
+            while (true) {
+                const result = await iterator.next();
+
+                if (result.done) {
+                    break;
+                }
+
+                const assetValue = result.value.value.toString('utf8');
+                let transactionId = result.value.txId;
+
+                let asset = {
+                    value: assetValue,
+                    timestamp: result.value.timestamp,
+                    txId: transactionId
+                };
+
+                results.push(asset);
+            }
+
+
+            await iterator.close();
+        }
+
+        return JSON.stringify(results);
+      
+    }
 
 }
 

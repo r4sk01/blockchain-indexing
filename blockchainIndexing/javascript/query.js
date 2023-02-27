@@ -10,9 +10,19 @@ const { Gateway, Wallets } = require('fabric-network');
 const path = require('path');
 const fs = require('fs');
 
+let start = process.hrtime();
+const elapsedTime = (note, reset = true) => {
+    const precision = 3;
+    let elapsed = process.hrtime(start)[1] / 1000000; // divide by a million to get nano to milli
+    console.log(process.hrtime(start)[0] + " s, " + elapsed.toFixed(precision) + " ms - " + note); // print message + time
+    if (reset) {
+        start = process.hrtime(); // reset the timer
+    }
+};
 
 async function main() {
     try {
+        elapsedTime("Start Query.js transaction", false);
         // load the network configuration
         const ccpPath = path.resolve(__dirname, '..', '..', 'test-network', 'organizations', 'peerOrganizations', 'org1.example.com', 'connection-org1.json');
         const ccp = JSON.parse(fs.readFileSync(ccpPath, 'utf8'));
@@ -45,10 +55,12 @@ async function main() {
         // queryAllCars transaction - requires no arguments, ex: ('queryAllCars')
         // const result = await contract.evaluateTransaction('queryAllCars');
         // const result = await contract.evaluateTransaction('queryAllOrders');
-        const orderKey = '91041';
+        // const orderKey = 91041;
+        const orderKey = 1;
         const result = await contract.evaluateTransaction('queryOrderHistoryByKey', orderKey);
         console.log(`Transaction has been evaluated, result is: ${result}`);
         // console.log(`Transaction has been evaluated, result is: ${result.toString()}`);
+        elapsedTime("Query.js transaction is done", false);
 
         // Disconnect from the gateway.
         await gateway.disconnect();

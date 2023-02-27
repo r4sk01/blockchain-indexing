@@ -10,6 +10,16 @@ const { Gateway, Wallets } = require('fabric-network');
 const path = require('path');
 const fs = require('fs');
 
+let start = process.hrtime();
+const elapsedTime = (note, reset = true) => {
+    const precision = 3;
+    let elapsed = process.hrtime(start)[1] / 1000000; // divide by a million to get nano to milli
+    console.log(process.hrtime(start)[0] + " s, " + elapsed.toFixed(precision) + " ms - " + note); // print message + time
+    if (reset) {
+        start = process.hrtime(); // reset the timer
+    }
+};
+
 /*
  * The purpose of this script is to query for a range of values from the blockchain rather than the entire blockchain.
  *
@@ -29,6 +39,7 @@ const fs = require('fs');
 
 async function main() {
     try {
+        elapsedTime("Start queryByRangeUpd.js transaction", false);
         // load the network configuration
         const ccpPath = path.resolve(__dirname, '..', '..', 'test-network', 'organizations', 'peerOrganizations', 'org1.example.com', 'connection-org1.json');
         const ccp = JSON.parse(fs.readFileSync(ccpPath, 'utf8'));
@@ -60,12 +71,17 @@ async function main() {
         // queryCar transaction - requires 1 argument, ex: ('queryCar', 'CAR4')
         // queryAllCars transaction - requires no arguments, ex: ('queryAllCars')
         // const result = await contract.evaluateTransaction('queryAllCars');
-        const startKey = 1; 
-        const endKey = 2;
-        const result = await contract.evaluateTransaction('queryOrderHistoryForKeyRange', startKey, endKey);
-        console.log(`Transaction has been evaluated, result is: ${result.toString()}`);
-        console.log(`key: ${endKey}`)
-
+        let finres = [];
+        const startKey = 91041;
+        const endKey = 91051;
+        for (let key = startKey; key < endKey; key++){
+            console.log(`key: ${key}`)
+            let result = await contract.evaluateTransaction('queryOrderHistoryByKey', key);
+            finres.push(result)
+        }
+        console.log(`Transaction has been evaluated, result is: ${finres.toString()}`);
+        
+        elapsedTime("queryByRangeUpd.js transaction is done", false);
         // Disconnect from the gateway.
         await gateway.disconnect();
 
