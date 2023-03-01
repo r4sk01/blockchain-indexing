@@ -217,12 +217,12 @@ class BlockchainIndexing extends Contract {
         return JSON.stringify(results);
       
     }
-    /*
-    async queryOrderHistoryForKeyRange(ctx, startKey, endKey) {
+    
+    async pointQuery(ctx, orderKey, keyVersion) {
 
         const results = [];
 
-        const iterator = await ctx.stub.getHistoryForKeyRange(startKey, endKey);
+        const iterator = await ctx.stub.getHistoryForKey(orderKey);
       
         while (true) {
           const result = await iterator.next();
@@ -242,45 +242,44 @@ class BlockchainIndexing extends Contract {
 
           results.push(asset);
         }
-
         await iterator.close();
-        return JSON.stringify(results);
-      
+
+        let sortedResults = results.sort((a, b) => a.timestamp.seconds - b.timestamp.seconds);
+        let finResult = sortedResults[keyVersion];
+
+        return JSON.stringify(finResult);
     }
-    */
-    
-    async queryOrderHistoryForKeyRange(ctx, startKey, endKey) {
+
+    async versionQuery(ctx, orderKey, keyVersionStart, keyVersionEnd) {
 
         const results = [];
 
-        for (let i = startKey; i <= endKey; i++) {
-            const iterator = await ctx.stub.getHistoryForKey(i);
+        const iterator = await ctx.stub.getHistoryForKey(orderKey);
       
-            while (true) {
-                const result = await iterator.next();
+        while (true) {
+          const result = await iterator.next();
 
-                if (result.done) {
-                    break;
-                }
+          if (result.done) {
+            break;
+          }
 
-                const assetValue = result.value.value.toString('utf8');
-                let transactionId = result.value.txId;
+          const assetValue = result.value.value.toString('utf8');
+          let transactionId = result.value.txId;
 
-                let asset = {
-                    value: assetValue,
-                    timestamp: result.value.timestamp,
-                    txId: transactionId
-                };
+          let asset = {
+            value: assetValue,
+            timestamp: result.value.timestamp,
+            txId: transactionId
+          };
 
-                results.push(asset);
-            }
-
-
-            await iterator.close();
+          results.push(asset);
         }
+        await iterator.close();
 
-        return JSON.stringify(results);
-      
+        let sortedResults = results.sort((a, b) => a.timestamp.seconds - b.timestamp.seconds);
+        let finResult = sortedResults.slice(keyVersionStart, keyVersionEnd + 1);;
+
+        return JSON.stringify(finResult);
     }
 
 }

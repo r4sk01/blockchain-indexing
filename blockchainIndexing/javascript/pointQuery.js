@@ -56,8 +56,8 @@ async function main() {
         // const result = await contract.evaluateTransaction('queryAllCars');
         // const result = await contract.evaluateTransaction('queryAllOrders');
         const orderKey = 91041;
-        // const orderKey = 999939;
-        const result = await contract.evaluateTransaction('queryOrderHistoryByKey', orderKey);
+        const keyVersion = 0;
+        const result = await contract.evaluateTransaction('pointQuery', orderKey, keyVersion);
         console.log(`Transaction has been evaluated, result is: ${result}`);
         // console.log(`Transaction has been evaluated, result is: ${result.toString()}`);
         elapsedTime("Query.js transaction is done", false);

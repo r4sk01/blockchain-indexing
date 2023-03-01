@@ -73,9 +73,11 @@ async function main() {
         // const result = await contract.evaluateTransaction('queryAllCars');
         let finres = [];
         const startKey = 91041;
-        const endKey = 91051;
+        const endKey = 91541;
+        // const startKey = 1;
+        // const endKey = 10;
         for (let key = startKey; key < endKey; key++){
-            console.log(`key: ${key}`)
+            // console.log(`key: ${key}`)
             let result = await contract.evaluateTransaction('queryOrderHistoryByKey', key);
             finres.push(result)
         }

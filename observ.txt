@@ -171,3 +171,91 @@ Transaction has been evaluated, result is:
 
 11)
 []
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+key: 1
+key: 2
+key: 3
+key: 4
+key: 5
+key: 6
+key: 7
+key: 8
+key: 9
+Transaction has been evaluated, result is: 
+[{"value":
+
+
+1)
+"{\"docType\":\"order\",\"L_PARTKEY\":15635,\"L_SUPPKEY\":638,\"L_LINENUMBER\":6,\"L_QUANTITY\":32,
+\"L_EXTENDEDPRICE\":49620.16,\"L_DISCOUNT\":0.07,\"L_TAX\":0.02,\"L_RETURNFLAG\":\"N\",\"L_LINESTATUS\":\"O\",\"L_SHIPDATE\":\"1996-01-30T07:00:00.000Z\",
+\"L_COMMITDATE\":\"1996-02-07T07:00:00.000Z\",\"L_RECEIPTDATE\":\"1996-02-03T07:00:00.000Z\",\"L_SHIPINSTRUCT\":\"DELIVER IN PERSON\",\"L_SHIPMODE\":\"MAIL\",
+\"L_COMMENT\":\"arefully slyly ex\"}",
+"timestamp":{"seconds":1677548671,"nanos":949000000},"txId":"9c55e0c0defa833d47dc44a4e00e40a201d4cf5c1471e6b090e51ed713380160"}],
+
+
+2)
+[{"value":"{\"docType\":\"order\",\"L_PARTKEY\":106170,\"L_SUPPKEY\":1191,\"L_LINENUMBER\":1,\"L_QUANTITY\":38,
+\"L_EXTENDEDPRICE\":44694.46,\"L_DISCOUNT\":0,\"L_TAX\":0.05,\"L_RETURNFLAG\":\"N\",\"L_LINESTATUS\":\"O\",\"L_SHIPDATE\":\"1997-01-28T07:00:00.000Z\",
+\"L_COMMITDATE\":\"1997-01-14T07:00:00.000Z\",\"L_RECEIPTDATE\":\"1997-02-02T07:00:00.000Z\",\"L_SHIPINSTRUCT\":\"TAKE BACK RETURN\",\"L_SHIPMODE\":\"RAIL\",
+\"L_COMMENT\":\"ven requests. deposits breach a\"}",
+"timestamp":{"seconds":1677548671,"nanos":949000000},"txId":"9c55e0c0defa833d47dc44a4e00e40a201d4cf5c1471e6b090e51ed713380160"}],
+
+
+3)
+[{"value":"{\"docType\":\"order\",\"L_PARTKEY\":62143,\"L_SUPPKEY\":9662,\"L_LINENUMBER\":6,\"L_QUANTITY\":26,
+\"L_EXTENDEDPRICE\":28733.64,\"L_DISCOUNT\":0.1,\"L_TAX\":0.02,\"L_RETURNFLAG\":\"A\",\"L_LINESTATUS\":\"F\",\"L_SHIPDATE\":\"1993-10-29T06:00:00.000Z\",
+\"L_COMMITDATE\":\"1993-12-18T07:00:00.000Z\",\"L_RECEIPTDATE\":\"1993-11-04T07:00:00.000Z\",\"L_SHIPINSTRUCT\":\"TAKE BACK RETURN\",\"L_SHIPMODE\":\"RAIL\",
+\"L_COMMENT\":\"ges sleep after the caref\"}",
+"timestamp":{"seconds":1677548671,"nanos":949000000},"txId":"9c55e0c0defa833d47dc44a4e00e40a201d4cf5c1471e6b090e51ed713380160"}],
+
+
+4)
+[{"value":"{\"docType\":\"order\",\"L_PARTKEY\":88035,\"L_SUPPKEY\":5560,\"L_LINENUMBER\":1,\"L_QUANTITY\":30,\"L_EXTENDEDPRICE\":30690.9,\"L_DISCOUNT\":0.03,
+\"L_TAX\":0.08,\"L_RETURNFLAG\":\"N\",\"L_LINESTATUS\":\"O\",\"L_SHIPDATE\":\"1996-01-10T07:00:00.000Z\",\"L_COMMITDATE\":\"1995-12-14T07:00:00.000Z\",
+\"L_RECEIPTDATE\":\"1996-01-18T07:00:00.000Z\",\"L_SHIPINSTRUCT\":\"DELIVER IN PERSON\",\"L_SHIPMODE\":\"REG AIR\",
+\"L_COMMENT\":\"- quickly regular packages sleep. idly\"}",
+"timestamp":{"seconds":1677548671,"nanos":949000000},"txId":"9c55e0c0defa833d47dc44a4e00e40a201d4cf5c1471e6b090e51ed713380160"}],
+
+
+5)
+[{"value":"{\"docType\":\"order\",\"L_PARTKEY\":37531,\"L_SUPPKEY\":35,\"L_LINENUMBER\":3,\"L_QUANTITY\":50,\"L_EXTENDEDPRICE\":73426.5,\"L_DISCOUNT\":0.08,
+\"L_TAX\":0.03,\"L_RETURNFLAG\":\"A\",\"L_LINESTATUS\":\"F\",\"L_SHIPDATE\":\"1994-08-08T06:00:00.000Z\",\"L_COMMITDATE\":\"1994-10-13T06:00:00.000Z\",
+\"L_RECEIPTDATE\":\"1994-08-26T06:00:00.000Z\",\"L_SHIPINSTRUCT\":\"DELIVER IN PERSON\",\"L_SHIPMODE\":\"AIR\",\"L_COMMENT\":\"eodolites. fluffily unusual\"}",
+"timestamp":{"seconds":1677548671,"nanos":949000000},"txId":"9c55e0c0defa833d47dc44a4e00e40a201d4cf5c1471e6b090e51ed713380160"}],
+
+
+6)
+[{"value":"{\"docType\":\"order\",\"L_PARTKEY\":139636,\"L_SUPPKEY\":2150,\"L_LINENUMBER\":1,\"L_QUANTITY\":37,\"L_EXTENDEDPRICE\":61998.31,\"L_DISCOUNT\":0.08,
+\"L_TAX\":0.03,\"L_RETURNFLAG\":\"A\",\"L_LINESTATUS\":\"F\",\"L_SHIPDATE\":\"1992-04-27T06:00:00.000Z\",\"L_COMMITDATE\":\"1992-05-15T06:00:00.000Z\",
+\"L_RECEIPTDATE\":\"1992-05-02T06:00:00.000Z\",\"L_SHIPINSTRUCT\":\"TAKE BACK RETURN\",\"L_SHIPMODE\":\"TRUCK\",\"L_COMMENT\":\"p furiously special foxes\"}",
+"timestamp":{"seconds":1677548671,"nanos":949000000},"txId":"9c55e0c0defa833d47dc44a4e00e40a201d4cf5c1471e6b090e51ed713380160"}],
+
+
+7)
+[{"value":"{\"docType\":\"order\",\"L_PARTKEY\":157238,\"L_SUPPKEY\":2269,\"L_LINENUMBER\":7,\"L_QUANTITY\":5,\"L_EXTENDEDPRICE\":6476.15,\"L_DISCOUNT\":0.04,
+\"L_TAX\":0.02,\"L_RETURNFLAG\":\"N\",\"L_LINESTATUS\":\"O\",\"L_SHIPDATE\":\"1996-02-10T07:00:00.000Z\",\"L_COMMITDATE\":\"1996-03-26T07:00:00.000Z\",
+\"L_RECEIPTDATE\":\"1996-02-13T07:00:00.000Z\",\"L_SHIPINSTRUCT\":\"NONE\",\"L_SHIPMODE\":\"FOB\",\"L_COMMENT\":\"ithely regula\"}",
+"timestamp":{"seconds":1677548671,"nanos":949000000},"txId":"9c55e0c0defa833d47dc44a4e00e40a201d4cf5c1471e6b090e51ed713380160"}],
+
+
+8)
+[],
+
+
+9)
+[]
