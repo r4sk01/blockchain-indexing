@@ -60,9 +60,9 @@ async function main() {
         // queryCar transaction - requires 1 argument, ex: ('queryCar', 'CAR4')
         // queryAllCars transaction - requires no arguments, ex: ('queryAllCars')
         // const result = await contract.evaluateTransaction('queryAllCars');
-        const startKey = '159417-1';
-        const endKey = '159427-1';
-        const result = await contract.evaluateTransaction('queryOrdersByRange', startKey, endKey);
+        const startKey = '168658';
+        const endKey = '441830';
+        const result = await contract.evaluateTransaction('queryOrderHistoryByRange', startKey, endKey);
         console.log(`Transaction has been evaluated, result is: ${result.toString()}`);
 
         // Disconnect from the gateway.
