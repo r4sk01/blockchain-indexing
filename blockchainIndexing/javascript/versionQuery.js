@@ -20,26 +20,9 @@ const elapsedTime = (note, reset = true) => {
     }
 };
 
-/*
- * The purpose of this script is to query for a range of values from the blockchain rather than the entire blockchain.
- *
- * This script is still under development. It is currently set up to use hard coded values as the range and has to be
- * updated manually to change the range. It should be relatively simple to update it to accept command line arguments
- * for the range.
- *
- * This script does not currently behave the way you might expect. Examples will help explain.
- * 1. The script does not always return all transactions in the given range. Sometimes, it only returns the last one
- *    in the specified range.
- * 2. If you request a range starting with 10000-1 and ending with 10010-1. This script will sometimes return transactions
- *    with keys of 100-1 or 1000-1.
- *
- * Since documentation for this framework is very sparse, more experimentation and exploration is needed to resolve/understand
- * these issues.
- */
-
 async function main() {
     try {
-        elapsedTime("Start queryByRangeUpd.js transaction", false);
+        elapsedTime("Start Query.js transaction", false);
         // load the network configuration
         const ccpPath = path.resolve(__dirname, '..', '..', 'test-network', 'organizations', 'peerOrganizations', 'org1.example.com', 'connection-org1.json');
         const ccp = JSON.parse(fs.readFileSync(ccpPath, 'utf8'));
@@ -71,17 +54,15 @@ async function main() {
         // queryCar transaction - requires 1 argument, ex: ('queryCar', 'CAR4')
         // queryAllCars transaction - requires no arguments, ex: ('queryAllCars')
         // const result = await contract.evaluateTransaction('queryAllCars');
-        let finres = [];
-        const startKey = 91041;
-        const endKey = 91541;
-        // const startKey = 1;
-        // const endKey = 10;
+        // const result = await contract.evaluateTransaction('queryAllOrders');
+        const orderKey = 91041;
+        const keyVersionStart = 0;
+        const keyVersionEnd = 2;
+        const result = await contract.evaluateTransaction('versionQuery', orderKey, keyVersionStart, keyVersionEnd);
+        console.log(`Transaction has been evaluated, result is: ${result}`);
+        // console.log(`Transaction has been evaluated, result is: ${result.toString()}`);
+        elapsedTime("pointQuery.js transaction is done", false);
 
-        let result = await contract.evaluateTransaction('queryOrderHistoryByRange', startKey, endKey);
-
-        console.log(`Transaction has been evaluated, result is: ${result.toString()}`);
-        
-        elapsedTime("rangeQuery.js transaction is done", false);
         // Disconnect from the gateway.
         await gateway.disconnect();
 

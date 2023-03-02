@@ -76,10 +76,15 @@ async function main() {
         const endKey = 91541;
         // const startKey = 1;
         // const endKey = 10;
-
-        let result = await contract.evaluateTransaction('queryOrderHistoryByRange', startKey, endKey);
-
-        console.log(`Transaction has been evaluated, result is: ${result.toString()}`);
+        for (let key = startKey; key < endKey; key++){
+            // console.log(`key: ${key}`)
+            let result = await contract.evaluateTransaction('queryOrderHistoryByKey', key);
+            if (result == []) {
+                continue;
+            }
+            finres.push(result)
+        }
+        console.log(`Transaction has been evaluated, result is: ${finres.toString()}`);
         
         elapsedTime("rangeQuery.js transaction is done", false);
         // Disconnect from the gateway.

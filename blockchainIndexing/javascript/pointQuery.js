@@ -60,7 +60,7 @@ async function main() {
         const result = await contract.evaluateTransaction('pointQuery', orderKey, keyVersion);
         console.log(`Transaction has been evaluated, result is: ${result}`);
         // console.log(`Transaction has been evaluated, result is: ${result.toString()}`);
-        elapsedTime("Query.js transaction is done", false);
+        elapsedTime("pointQuery.js transaction is done", false);
 
         // Disconnect from the gateway.
         await gateway.disconnect();

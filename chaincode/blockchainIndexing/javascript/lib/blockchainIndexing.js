@@ -277,9 +277,32 @@ class BlockchainIndexing extends Contract {
         await iterator.close();
 
         let sortedResults = results.sort((a, b) => a.timestamp.seconds - b.timestamp.seconds);
-        let finResult = sortedResults.slice(keyVersionStart, keyVersionEnd + 1);;
+        let finResult = sortedResults.slice(keyVersionStart, keyVersionEnd);
 
         return JSON.stringify(finResult);
+    }
+
+    async queryOrderHistoryByRange(ctx, startKey, endKey) {
+        const results = [];
+        for await (const {key, value} of ctx.stub.getStateByRange(startKey, endKey)) {
+            const iterator = await ctx.stub.getHistoryForKey(key);
+            while (true) {
+                const result = await iterator.next();
+                if (result.done) {
+                    break;
+                }
+                const assetValue = result.value.value.toString('utf8');
+                let transactionId = result.value.txId;
+                let asset = {
+                value: assetValue,
+                timestamp: result.value.timestamp,
+                txId: transactionId
+                };
+                results.push(asset);
+            }
+            await iterator.close();
+        }
+        return JSON.stringify(results);
     }
 
 }
