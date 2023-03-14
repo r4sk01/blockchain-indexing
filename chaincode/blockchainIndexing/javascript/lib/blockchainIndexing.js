@@ -226,6 +226,72 @@ class BlockchainIndexing extends Contract {
         return JSON.stringify(results);
     }
 
+    async pointQuery(ctx, orderKey, keyVersion) {
+
+        const results = [];
+
+        const iterator = await ctx.stub.getHistoryForKey(orderKey);
+      
+        while (true) {
+          const result = await iterator.next();
+
+          if (result.done) {
+            break;
+          }
+
+          const assetValue = result.value.value.toString('utf8');
+          let transactionId = result.value.txId;
+
+          let asset = {
+            value: assetValue,
+            timestamp: result.value.timestamp,
+            txId: transactionId
+          };
+
+          results.push(asset);
+        }
+        await iterator.close();
+
+        let sortedResults = results.sort((a, b) => a.timestamp.seconds - b.timestamp.seconds);
+        let finResult = sortedResults[keyVersion];
+
+        return JSON.stringify(finResult);
+    }
+
+
+    async versionQuery(ctx, orderKey, keyVersionStart, keyVersionEnd) {
+
+        const results = [];
+
+        const iterator = await ctx.stub.getHistoryForKey(orderKey);
+      
+        while (true) {
+          const result = await iterator.next();
+
+          if (result.done) {
+            break;
+          }
+
+          const assetValue = result.value.value.toString('utf8');
+          let transactionId = result.value.txId;
+
+          let asset = {
+            value: assetValue,
+            timestamp: result.value.timestamp,
+            txId: transactionId
+          };
+
+          results.push(asset);
+        }
+        await iterator.close();
+
+        let sortedResults = results.sort((a, b) => a.timestamp.seconds - b.timestamp.seconds);
+        let finResult = sortedResults.slice(keyVersionStart, keyVersionEnd);
+
+        return JSON.stringify(finResult);
+    }
+
+
 
 }
 

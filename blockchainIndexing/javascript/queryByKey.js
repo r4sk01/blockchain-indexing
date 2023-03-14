@@ -10,25 +10,20 @@ const { Gateway, Wallets } = require('fabric-network');
 const path = require('path');
 const fs = require('fs');
 
-/*
- * The purpose of this script is to query for a range of values from the blockchain rather than the entire blockchain.
- *
- * This script is still under development. It is currently set up to use hard coded values as the range and has to be
- * updated manually to change the range. It should be relatively simple to update it to accept command line arguments
- * for the range.
- *
- * This script does not currently behave the way you might expect. Examples will help explain.
- * 1. The script does not always return all transactions in the given range. Sometimes, it only returns the last one
- *    in the specified range.
- * 2. If you request a range starting with 10000-1 and ending with 10010-1. This script will sometimes return transactions
- *    with keys of 100-1 or 1000-1.
- *
- * Since documentation for this framework is very sparse, more experimentation and exploration is needed to resolve/understand
- * these issues.
- */
+let start = process.hrtime();
+const elapsedTime = (note, reset = true) => {
+    const precision = 3;
+    let elapsed = process.hrtime(start)[1] / 1000000; // divide by a million to get nano to milli
+    console.log(process.hrtime(start)[0] + " s, " + elapsed.toFixed(precision) + " ms - " + note); // print message + time
+    if (reset) {
+        start = process.hrtime(); // reset the timer
+    }
+};
+
 
 async function main() {
     try {
+        elapsedTime("Start Query.js transaction", false);
         // load the network configuration
         const ccpPath = path.resolve(__dirname, '..', '..', 'test-network', 'organizations', 'peerOrganizations', 'org1.example.com', 'connection-org1.json');
         const ccp = JSON.parse(fs.readFileSync(ccpPath, 'utf8'));
@@ -60,10 +55,10 @@ async function main() {
         // queryCar transaction - requires 1 argument, ex: ('queryCar', 'CAR4')
         // queryAllCars transaction - requires no arguments, ex: ('queryAllCars')
         // const result = await contract.evaluateTransaction('queryAllCars');
-        const startKey = '607810';
-        const endKey = '696229';
-        const result = await contract.evaluateTransaction('queryOrderHistoryByRange', startKey, endKey);
+        const orderKey = '607810';
+        const result = await contract.evaluateTransaction('pointQuery', orderKey, 2);
         console.log(`Transaction has been evaluated, result is: ${result.toString()}`);
+        elapsedTime("Query.js transaction is done", false);
 
         // Disconnect from the gateway.
         await gateway.disconnect();

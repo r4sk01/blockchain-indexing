@@ -20,7 +20,6 @@ const elapsedTime = (note, reset = true) => {
     }
 };
 
-
 async function main() {
     try {
         elapsedTime("Start Query.js transaction", false);
@@ -55,10 +54,13 @@ async function main() {
         // queryCar transaction - requires 1 argument, ex: ('queryCar', 'CAR4')
         // queryAllCars transaction - requires no arguments, ex: ('queryAllCars')
         // const result = await contract.evaluateTransaction('queryAllCars');
-        const orderKey = '91041';
-        const result = await contract.evaluateTransaction('queryOrderHistoryByKey', orderKey);
-        console.log(`Transaction has been evaluated, result is: ${result.toString()}`);
-        elapsedTime("Query.js transaction is done", false);
+        // const result = await contract.evaluateTransaction('queryAllOrders');
+        const orderKey = 91041;
+        const keyVersion = 0;
+        const result = await contract.evaluateTransaction('pointQuery', orderKey, keyVersion);
+        console.log(`Transaction has been evaluated, result is: ${result}`);
+        // console.log(`Transaction has been evaluated, result is: ${result.toString()}`);
+        elapsedTime("pointQuery.js transaction is done", false);
 
         // Disconnect from the gateway.
         await gateway.disconnect();
