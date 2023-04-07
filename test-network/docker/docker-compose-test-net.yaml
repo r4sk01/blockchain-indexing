@@ -20,7 +20,10 @@ services:
     container_name: orderer.example.com
     #image: hyperledger/fabric-orderer:latest
     #image: hyperledger/fabric-sharp-orderer:2.2.0
-    image: hyperledger/fabric-orderer:2.2
+
+    #image: hyperledger/fabric-orderer:2.2
+
+    image: hyperledger/fabric-rvp-orderer:2.2.3
     environment:
       - FABRIC_LOGGING_SPEC=INFO
       - ORDERER_GENERAL_LISTENADDRESS=0.0.0.0
@@ -57,7 +60,10 @@ services:
     container_name: peer0.org1.example.com
     #image: hyperledger/fabric-peer:latest
     #image: hyperledger/fabric-sharp-peer:2.2.0
-    image: hyperledger/fabric-peer:2.2
+    
+    #image: hyperledger/fabric-peer:2.2
+
+    image: hyperledger/fabric-rvp-peer:2.2.3
     environment:
       #Generic peer variables
       - CORE_VM_ENDPOINT=unix:///host/var/run/docker.sock
@@ -98,7 +104,10 @@ services:
     container_name: peer0.org2.example.com
     #image: hyperledger/fabric-peer:latest
     #image: hyperledger/fabric-sharp-peer:2.2.0
-    image: hyperledger/fabric-peer:2.2
+
+    #image: hyperledger/fabric-peer:2.2
+
+    image: hyperledger/fabric-rvp-peer:2.2.3
     environment:
       #Generic peer variables
       - CORE_VM_ENDPOINT=unix:///host/var/run/docker.sock

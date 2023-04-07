@@ -7,6 +7,52 @@
 'use strict';
 
 const { Contract } = require('fabric-contract-api');
+const shim = require('fabric-shim');
+const { BlockDecoder } = require('fabric-client/lib/BlockDecoder');
+const crypto = require('crypto');
+const FNV = require('fnv-plus');
+
+function generateRandomUint32() {
+    return crypto.randomBytes(4).readUInt32BE(0);
+  }
+  
+function generateHashFuncs(numHashFuncs) {
+  const hashFuncs = [];
+  
+  for (let i = 0; i < numHashFuncs; i++) {
+    const seed1 = generateRandomUint32();
+    const seed2 = generateRandomUint32();
+  
+    hashFuncs.push((data) => {
+      const h1 = FNV.hash(data, 32, seed1).value;
+      const h2 = FNV.hash(data, 32, seed2).value;
+  
+      return h1 ^ h2;
+    });
+  }
+  
+  return hashFuncs;
+}
+  
+function isKeyPresentInBloomFilter(orderKey, bloomFilter) {
+  // Number of hash functions
+  const numHashFuncs = 22;
+  const numBits = bloomFilter.length * 8;
+  
+  const hashFuncs = generateHashFuncs(numHashFuncs);
+  
+  for (const hashFunc of hashFuncs) {
+    const index = hashFunc(orderKey) % numBits;
+    const byteIndex = Math.floor(index / 8);
+    const bitIndex = index % 8;
+  
+    if ((bloomFilter[byteIndex] & (1 << bitIndex)) === 0) {
+      return false;
+    }
+  }
+  
+  return true;
+}
 
 class BlockchainIndexing extends Contract {
 
@@ -305,6 +351,70 @@ class BlockchainIndexing extends Contract {
         return JSON.stringify(results);
     }
 
+  async getHistoryForKeyWithBloomFilter(ctx, orderKey) {
+    let history = [];
+  
+    let blockNumber = await ctx.stub.getBlockchainInfo().then((info) => info.height - 1);
+  
+    while (blockNumber >= 0) {
+      const blockBytes = await ctx.stub.getBlockByNumber(blockNumber);
+      const block = BlockDecoder.decode(blockBytes);
+  
+      const bloomFilterBytes = block.metadata.metadata[block.metadata.metadata.length - 1];
+      const bloomFilter = Buffer.from(bloomFilterBytes);
+  
+      if (isKeyPresentInBloomFilter(orderKey, bloomFilter)) {
+        const resultsIterator = await ctx.stub.getHistoryForKey(orderKey);
+        let result;
+  
+        for (const tx of block.data.data) {
+          const txId = tx.payload.header.channel_header.tx_id;
+  
+          while (!(result = await resultsIterator.next()).done) {
+            const { tx_id } = result.value;
+            if (tx_id === txId) {
+              history.push({
+                value: result.value.value.toString('utf8'),
+                timestamp: result.value.timestamp,
+                txId: result.value.tx_id,
+              });
+            }
+          }
+  
+          // Reset the iterator after using it
+          await resultsIterator.close();
+        }
+      }
+  
+      blockNumber--;
+    }
+  
+    return history;
+  }
+
+  async pointQueryBloom(ctx, orderKey, keyVersion) {
+    const results = await this.getHistoryForKeyWithBloomFilter(ctx, orderKey);
+    const sortedResults = results.sort((a, b) => a.timestamp.seconds - b.timestamp.seconds);
+    const finResult = sortedResults[keyVersion];
+    return JSON.stringify(finResult);
+  }
+
+  async versionQueryBloom(ctx, orderKey, keyVersionStart, keyVersionEnd) {
+    const results = await this.getHistoryForKeyWithBloomFilter(ctx, orderKey);
+    const sortedResults = results.sort((a, b) => a.timestamp.seconds - b.timestamp.seconds);
+    let finResult = sortedResults.slice(keyVersionStart, keyVersionEnd);
+    return JSON.stringify(finResult);
+  }
+
+  async queryOrderHistoryByRangeBloom(ctx, startKey, endKey) {
+    const results = [];
+    for await (const { key } of ctx.stub.getStateByRange(startKey, endKey)) {
+      const history = await this.getHistoryForKeyWithBloomFilter(ctx, key);
+      results.push({ key, history });
+    }
+    return JSON.stringify(results);
+  }
+  
 }
 
 // To re-deploy chaincode in Fabric, navigate to the test-network directory and run the following command
