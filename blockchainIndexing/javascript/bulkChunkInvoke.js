@@ -63,13 +63,13 @@ async function main() {
         let jsonStringData = fs.readFileSync(fileUrl, 'utf8');
         let jsonData = JSON.parse(jsonStringData);
         
-        const jsonDataLength = jsonData.table.length;
+        //const jsonDataLength = jsonData.table.length;
         
         // Number of records to include in each chunk
         const chunkLength = 1000;
         
         // Number of splits to create from groups of chunks (i.e., 30 groups of 1000 record chunks)
-        const splitLength = 30;
+        const splitLength = 25;
         
         // This pattern borrowed from https://stackoverflow.com/questions/8495687/split-array-into-chunks
         // Reduce the array of data in jsonData to an unspecified number of arrays containing 1000, or chunkLength, records each

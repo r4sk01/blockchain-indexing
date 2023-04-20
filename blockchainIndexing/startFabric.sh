@@ -37,7 +37,7 @@ rm -rf go/wallet/*
 pushd ../test-network
 ./network.sh down
 # ./network.sh up createChannel -ca -s couchdb
-./network.sh up createChannel -ca
+./network.sh up createChannel -ca 
 ./network.sh deployCC -ccn blockchainIndexing -ccv 1 -cci initLedger -ccl ${CC_SRC_LANGUAGE} -ccp ${CC_SRC_PATH}
 popd
 

@@ -1,0 +1,6 @@
+go 1.14
+
+use (
+./chaincode/blockchainIndexing/go
+./blockchainIndexing/go
+)
