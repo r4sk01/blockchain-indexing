@@ -70,15 +70,15 @@ func main() {
 		gateway.WithIdentity(wallet, "appUser"),
 	)
 	if err != nil {
-		fmt.Printf("Failed to connect to gateway: %s\n", err)
-		os.Exit(1)
+		log.Fatalf("Failed to connect to gateway: %s\n", err)
+
 	}
 	defer gw.Close()
 
 	network, err := gw.GetNetwork("mychannel")
 	if err != nil {
-		fmt.Printf("Failed to get network: %s\n", err)
-		os.Exit(1)
+		log.Fatalf("Failed to get network: %s\n", err)
+
 	}
 
 	contract := network.GetContract("blockchainIndexing")
@@ -88,10 +88,10 @@ func main() {
 	flag.Parse()
 
 	switch *transaction {
-	case "bulkInvoke":
-		bulkInvoke(contract, *file)
-	/*case "stateRangeQuery":
-	stateRangeQuery(contract)*/
+	case "BulkInvoke":
+		BulkInvoke(contract, *file)
+	case "Invoke":
+		Invoke(contract, *file)
 	case "histTest":
 		histTest(contract)
 	case "pointQuery":
@@ -101,6 +101,184 @@ func main() {
 	case "rangeQuery":
 		rangeQuery(contract)
 	}
+
+}
+
+func BulkInvoke(contract *gateway.Contract, fileUrl string) {
+	if fileUrl == "" || !filepath.IsAbs(fileUrl) {
+		log.Fatalln("File URL must be provided and must be an absolute path")
+
+	}
+
+	jsonData, err := ioutil.ReadFile(fileUrl)
+	if err != nil {
+		log.Fatalf("error while reading json file: %s", err)
+
+	}
+
+	var table Table
+	if err := json.Unmarshal([]byte(jsonData), &table); err != nil {
+		log.Fatalf("Failed to unmarshal JSON: %s", err)
+	}
+
+	orders := table.Table
+
+	startTime := time.Now()
+	log.Printf("Starting bulk transaction at time: %s\n", startTime.Format(time.UnixDate))
+
+	// Split orders into chunks of size 1000
+	chunkSize := 1000
+	for i := 0; i < len(orders); i += chunkSize {
+		chunkTime := time.Now()
+
+		chunk := orders[i:func() int {
+			if i+chunkSize > len(orders) {
+				return len(orders)
+			}
+			return i + chunkSize
+		}()]
+
+		if i/chunkSize+1 == 51 {
+			break
+		}
+
+		chunkBytes, err := json.Marshal(chunk)
+		if err != nil {
+			log.Fatalf("Failed to marshal JSON: %s", err)
+		}
+
+		_, err = contract.SubmitTransaction("CreateBulk", string(chunkBytes))
+		if err != nil {
+			log.Fatalf("Failed to submit transaction: %s\n", err)
+		}
+
+		endTime := time.Now()
+		executionTime := endTime.Sub(chunkTime).Seconds()
+		log.Printf("Execution Time: %f sec at chunk %d", executionTime, i/chunkSize+1)
+	}
+
+	endTime := time.Now()
+	executionTime := endTime.Sub(startTime).Seconds()
+	log.Printf("Finished bulk transaction at time: %s\n", endTime.Format(time.UnixDate))
+	log.Printf("Total execution time is: %f sec\n", executionTime)
+
+}
+
+func Invoke(contract *gateway.Contract, fileUrl string) {
+	log.Println("Submit individual orders")
+
+	if fileUrl == "" || !filepath.IsAbs(fileUrl) {
+		fmt.Println("File URL must be provided and must be an absolute path")
+		os.Exit(1)
+	}
+
+	jsonData, err := ioutil.ReadFile(fileUrl)
+	if err != nil {
+		log.Fatalf("error while reading json file: %s", err)
+
+	}
+
+	var table Table
+	if err := json.Unmarshal([]byte(jsonData), &table); err != nil {
+		log.Fatalf("Failed to unmarshal JSON: %s", err)
+	}
+
+	orders := table.Table
+
+	for i := 0; i < 50; i++ {
+
+		orderBytes, err := json.Marshal(orders[i])
+		if err != nil {
+			log.Fatalf("Failed to marshal JSON: %s", err)
+		}
+
+		_, err = contract.SubmitTransaction("CreateBulk", string(orderBytes))
+		if err != nil {
+			log.Fatalf("Failed to submit transaction: %s\n", err)
+		}
+	}
+
+	log.Println("Done")
+}
+
+func histTest(contract *gateway.Contract) {
+	log.Println("-----stub.Hist() Test-----")
+
+	key := "24454"
+	startBlk := ""
+	endBlk := ""
+
+	result, err := contract.EvaluateTransaction("histTest", key, startBlk, endBlk)
+	if err != nil {
+		log.Fatalf("Failed to submit transaction: %s\n", err)
+
+	}
+
+	log.Printf("Transaction has been evaluated, result is: %s\n", string(result))
+}
+
+func pointQuery(contract *gateway.Contract) {
+	log.Println("-----Point Query-----")
+	startTime := time.Now()
+
+	key := "32"
+	version := "0"
+	startBlk := "0"
+	endBlk := "56"
+
+	result, err := contract.EvaluateTransaction("pointQuery", key, version, startBlk, endBlk)
+	if err != nil {
+		log.Fatalf("Failed to evaluate transaction: %s\n", err)
+	}
+
+	log.Printf("Transaction has been evaluated, result is: %s\n", string(result))
+
+	endTime := time.Now()
+	executionTime := endTime.Sub(startTime).Seconds()
+	log.Printf("Finished point query with execution time: %f sec\n", executionTime)
+
+}
+
+func versionQuery(contract *gateway.Contract) {
+	log.Println("-----Version Query-----")
+	startTime := time.Now()
+
+	key := ""
+	startVersion := "0"
+	endVersion := "2"
+	startBlk := "0"
+	endBlk := ""
+
+	result, err := contract.EvaluateTransaction("versionQuery", key, startVersion, endVersion, startBlk, endBlk)
+	if err != nil {
+		log.Fatalf("Failed to evaluate transaction: %s\n", err)
+	}
+
+	log.Printf("Transaction has been evaluated, result is: %s\n", string(result))
+
+	endTime := time.Now()
+	executionTime := endTime.Sub(startTime).Seconds()
+	log.Printf("Finished point query with execution time: %f sec\n", executionTime)
+
+}
+
+func rangeQuery(contract *gateway.Contract) {
+	log.Println("-----Range Query-----")
+	startTime := time.Now()
+
+	startKey := ""
+	endKey := ""
+	startBlk := "0"
+	endBlk := ""
+
+	_, err := contract.EvaluateTransaction("rangeQuery", startKey, endKey, startBlk, endBlk)
+	if err != nil {
+		log.Fatalf("Failed to evaluate transaction: %s\n", err)
+	}
+
+	endTime := time.Now()
+	executionTime := endTime.Sub(startTime).Seconds()
+	log.Printf("Finished point query with execution time: %f sec\n", executionTime)
 
 }
 
@@ -146,145 +324,4 @@ func populateWallet(wallet *gateway.Wallet) error {
 		return err
 	}
 	return nil
-}
-
-func bulkInvoke(contract *gateway.Contract, fileUrl string) {
-	if fileUrl == "" || !filepath.IsAbs(fileUrl) {
-		fmt.Println("File URL must be provided and must be an absolute path")
-		os.Exit(1)
-	}
-
-	// Read JSON file
-	jsonData, err := ioutil.ReadFile(fileUrl)
-	if err != nil {
-		log.Fatalf("error while reading json file: %s", err)
-
-	}
-
-	var table Table
-	if err := json.Unmarshal([]byte(jsonData), &table); err != nil {
-		log.Fatalf("Failed to unmarshal JSON: %s", err)
-	}
-
-	orders := table.Table
-
-	startTime := time.Now()
-	log.Printf("Starting bulk transaction at time: %s\n", startTime.Format(time.UnixDate))
-
-	// Split orders into chunks of size 1000
-	chunkSize := 10000
-	for index := 0; index < len(orders); index += chunkSize {
-		end := index + chunkSize
-		if end > len(orders) {
-			end = len(orders)
-		}
-		chunk := orders[index:end]
-		if index == 20000 {
-			break
-		}
-
-		// Marshal chunk into JSON string
-		jsonString, err := json.Marshal(chunk)
-		if err != nil {
-			log.Fatalf("Failed to marshal JSON: %s", err)
-		}
-
-		startTime := time.Now()
-		_, err = contract.SubmitTransaction("CreateBulk", string(jsonString))
-		if err != nil {
-			log.Fatalf("Failed to submit transaction: %s\n", err)
-
-		}
-		endTime := time.Now()
-		executionTime := endTime.Sub(startTime).Milliseconds()
-		log.Printf("Execution Time: %d ms at chunk %d", executionTime, index+10000)
-	}
-
-	endTime := time.Now()
-	executionTime := endTime.Sub(startTime).Milliseconds()
-	log.Printf("Finished bulk transaction at time: %s\n", endTime.Format(time.UnixDate))
-	log.Printf("Total execution time is: %d ms\n", executionTime)
-
-}
-
-/*
-func stateRangeQuery(contract *gateway.Contract) {
-	log.Println("-----Range Query Orders-----")
-	startKey := "91041"
-	endKey := "970757"
-
-	result, err := contract.EvaluateTransaction("ReadByKeyRange", startKey, endKey)
-	if err != nil {
-		fmt.Printf("Failed to submit transaction: %s\n", err)
-		os.Exit(1)
-	}
-
-	fmt.Printf("Transaction has been evaluated, result is: %s\n", string(result))
-
-}*/
-
-func histTest(contract *gateway.Contract) {
-	log.Println("-----Query Order-----")
-
-	key := "24454"
-
-	result, err := contract.EvaluateTransaction("histTest", key)
-	if err != nil {
-		fmt.Printf("Failed to submit transaction: %s\n", err)
-		os.Exit(1)
-	}
-
-	fmt.Printf("Transaction has been evaluated, result is: %s\n", string(result))
-}
-
-func pointQuery(contract *gateway.Contract) {
-	startTime := time.Now()
-
-	key := "9000"
-	version := "3"
-
-	_, err := contract.EvaluateTransaction("pointQuery", key, version)
-	if err != nil {
-		fmt.Println("Failed to evaluate transaction")
-	}
-
-	endTime := time.Now()
-	executionTime := endTime.Sub(startTime).Milliseconds()
-	log.Printf("Finished point query with execution time: %d ms\n", executionTime)
-
-}
-
-func versionQuery(contract *gateway.Contract) {
-	startTime := time.Now()
-
-	key := "9000"
-	startVer := "5"
-	endVer := "15"
-
-	_, err := contract.EvaluateTransaction("versionQuery", key, startVer, endVer)
-	if err != nil {
-		fmt.Printf("Failed to evaluate transaction: %s ms\n", err)
-	}
-
-	endTime := time.Now()
-	executionTime := endTime.Sub(startTime).Milliseconds()
-	log.Printf("Finished point query with execution time: %d ms\n", executionTime)
-
-}
-
-func rangeQuery(contract *gateway.Contract) {
-	startTime := time.Now()
-
-	startKey := "1000"
-	endKey := "10000"
-
-	_, err := contract.EvaluateTransaction("rangeQuery", startKey, endKey)
-	if err != nil {
-		fmt.Printf("Failed to evaluate transaction: %s\n", err)
-	}
-
-	endTime := time.Now()
-	executionTime := endTime.Sub(startTime).Milliseconds()
-	log.Printf("Finished point query with execution time: %d ms\n", executionTime)
-
 }

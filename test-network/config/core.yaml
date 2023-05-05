@@ -46,18 +46,6 @@ peer:
     # When set to true, will override peer address.
     addressAutoDetect: false
 
-    # Settings for the Peer's gateway server.
-    gateway:
-        # Whether the gateway is enabled for this Peer.
-        enabled: true
-        # endorsementTimeout is the duration the gateway waits for a response
-        # from other endorsing peers before returning a timeout error to the client.
-        endorsementTimeout: 30s
-        # dialTimeout is the duration the gateway waits for a connection
-        # to other network nodes.
-        dialTimeout: 2m
-
-
     # Keepalive settings for peer server and clients
     keepalive:
         # Interval is the duration after which if the server does not see
@@ -65,7 +53,7 @@ peer:
         interval: 7200s
         # Timeout is the duration the server waits for a response
         # from the client after sending a ping before closing the connection
-        timeout: 20s
+        timeout: 300s
         # MinInterval is the minimum permitted time between client pings.
         # If clients send pings more frequently, the peer server will
         # disconnect them
@@ -78,7 +66,7 @@ peer:
             interval: 60s
             # Timeout is the duration the client waits for a response from
             # peer nodes before closing the connection
-            timeout: 20s
+            timeout: 300s
         # DeliveryClient keepalive settings for communication with ordering
         # nodes.
         deliveryClient:
@@ -240,15 +228,9 @@ peer:
         # Gossip state transfer related configuration
         state:
             # indicates whenever state transfer is enabled or not
-            # default value is false, i.e. state transfer is active
+            # default value is true, i.e. state transfer is active
             # and takes care to sync up missing blocks allowing
-            # lagging peer to catch up to speed with rest network.
-            # Keep in mind that when peer.gossip.useLeaderElection is true
-            # and there are several peers in the organization,
-            # or peer.gossip.useLeaderElection is false alongside with
-            # peer.gossip.orgleader being false, the peer's ledger may lag behind
-            # the rest of the peers and will never catch up due to state transfer
-            # being disabled.
+            # lagging peer to catch up to speed with rest network
             enabled: false
             # checkInterval interval to check whether peer is lagging behind enough to
             # request blocks via state transfer from another peer.
@@ -271,31 +253,26 @@ peer:
     tls:
         # Require server-side TLS
         enabled:  false
-        # Require client certificates / mutual TLS for inbound connections.
+        # Require client certificates / mutual TLS.
         # Note that clients that are not configured to use a certificate will
         # fail to connect to the peer.
         clientAuthRequired: false
         # X.509 certificate used for TLS server
         cert:
             file: tls/server.crt
-        # Private key used for TLS server
+        # Private key used for TLS server (and client if clientAuthEnabled
+        # is set to true
         key:
             file: tls/server.key
-        # rootcert.file represents the trusted root certificate chain used for verifying certificates
-        # of other nodes during outbound connections.
-        # It is not required to be set, but can be used to augment the set of TLS CA certificates
-        # available from the MSPs of each channel’s configuration.
+        # Trusted root certificate chain for tls.cert
         rootcert:
             file: tls/ca.crt
-        # If mutual TLS is enabled, clientRootCAs.files contains a list of additional root certificates
-        # used for verifying certificates of client connections.
-        # It augments the set of TLS CA certificates available from the MSPs of each channel’s configuration.
-        # Minimally, set your organization's TLS CA root certificate so that the peer can receive join channel requests.
+        # Set of root certificate authorities used to verify client certificates
         clientRootCAs:
             files:
               - tls/ca.crt
-        # Private key used for TLS when making client connections.
-        # If not set, peer.tls.key.file will be used instead
+        # Private key used for TLS when making client connections.  If
+        # not set, peer.tls.key.file will be used instead
         clientKey:
             file:
         # X.509 certificate used for TLS when making client connections.
@@ -360,11 +337,6 @@ peer:
 
     # Delivery service related config
     deliveryclient:
-        # Enables this peer to disseminate blocks it pulled from the ordering service
-        # via gossip.
-        # Note that 'gossip.state.enabled' controls point to point block replication
-        # of blocks committed in the past.
-        blockGossipEnabled: true
         # It sets the total time the delivery service may spend in reconnection
         # attempts until its retry logic gives up and returns an error
         reconnectTotalTimeThreshold: 3600s
@@ -479,15 +451,6 @@ peer:
             endorserService: 2500
             # deliverService limits concurrent event listeners registered to deliver service for blocks and transaction events.
             deliverService: 2500
-            # gatewayService limits concurrent requests to gateway service that handles the submission and evaluation of transactions.
-            gatewayService: 500
-
-    # Since all nodes should be consistent it is recommended to keep
-    # the default value of 100MB for MaxRecvMsgSize & MaxSendMsgSize
-    # Max message size in bytes GRPC server and client can receive
-    maxRecvMsgSize: 104857600
-    # Max message size in bytes GRPC server and client can send
-    maxSendMsgSize: 104857600
 
 ###############################################################################
 #
@@ -500,8 +463,6 @@ vm:
     # unix:///var/run/docker.sock
     # http://localhost:2375
     # https://localhost:2376
-    # If you utilize external chaincode builders and don't need the default Docker chaincode builder,
-    # the endpoint should be unconfigured so that the peer's Docker health checker doesn't get registered.
     endpoint: unix:///var/run/docker.sock
 
     # settings for docker vms
@@ -585,14 +546,12 @@ chaincode:
     # List of directories to treat as external builders and launchers for
     # chaincode. The external builder detection processing will iterate over the
     # builders in the order specified below.
-    # If you don't need to fallback to the default Docker builder, also unconfigure vm.endpoint above.
-    # To override this property via env variable use CORE_CHAINCODE_EXTERNALBUILDERS: [{name: x, path: dir1}, {name: y, path: dir2}]
-    externalBuilders:
-       - name: ccaas_builder
-         path: /opt/hyperledger/ccaas_builder
-         propagateEnvironment:
-           - CHAINCODE_AS_A_SERVICE_BUILDER_CONFIG
-
+    externalBuilders: []
+        # - path: /path/to/directory
+        #   name: descriptive-builder-name
+        #   propagateEnvironment:
+        #      - ENVVAR_NAME_TO_PROPAGATE_FROM_PEER
+        #      - GOPROXY
 
     # The maximum duration to wait for the chaincode build and install process
     # to complete.
@@ -610,7 +569,7 @@ chaincode:
     # build the image, which might take more time. In production environment,
     # the chaincode image is unlikely to be deleted, so the timeout could be
     # reduced accordingly.
-    executetimeout: 35s
+    executetimeout: 300s
 
     # There are 2 modes: "dev" and "net".
     # In dev mode, user runs the chaincode after starting peer from
@@ -629,6 +588,8 @@ chaincode:
         _lifecycle: enable
         cscc: enable
         lscc: enable
+        escc: enable
+        vscc: enable
         qscc: enable
 
     # Logging section for the chaincode container
@@ -654,15 +615,15 @@ ledger:
     # stateDatabase - options are "goleveldb", "CouchDB"
     # goleveldb - default state database stored in goleveldb.
     # CouchDB - store state database in CouchDB
-    stateDatabase: CouchDB
+    stateDatabase: UstoreDB
     # Limit on the number of records to return per query
     totalQueryLimit: 100000
-    CouchDBConfig:
+    couchDBConfig:
        # It is recommended to run CouchDB on the same server as the peer, and
        # not map the CouchDB container port to a server port in docker-compose.
        # Otherwise proper security must be provided on the connection between
        # CouchDB client (on the peer) and server.
-       CouchDBAddress: 127.0.0.1:5984
+       couchDBAddress: 127.0.0.1:5984
        # This username must have read and write authority on CouchDB
        username:
        # The password is recommended to pass as an environment variable
@@ -677,7 +638,7 @@ ledger:
        # Default of 10 retries results in 11 attempts over 2 minutes.
        maxRetriesOnStartup: 10
        # CouchDB request timeout (unit: duration, e.g. 20s)
-       requestTimeout: 35s
+       requestTimeout: 300s
        # Limit on the number of records per each CouchDB query
        # Note that chaincode queries are only bound by totalQueryLimit.
        # Internally the chaincode may execute multiple CouchDB queries,
@@ -685,6 +646,14 @@ ledger:
        internalQueryLimit: 1000
        # Limit on the number of records per CouchDB bulk update batch
        maxBatchUpdateSize: 1000
+       # Warm indexes after every N blocks.
+       # This option warms any indexes that have been
+       # deployed to CouchDB after every N blocks.
+       # A value of 1 will warm indexes after every block commit,
+       # to ensure fast selector queries.
+       # Increasing the value may improve write efficiency of peer and CouchDB,
+       # but may degrade query response time.
+       warmIndexesAfterNBlocks: 1
        # Create the _global_changes system database
        # This is optional.  Creating the global changes database will require
        # additional system resources to track changes and maintain the database
@@ -709,20 +678,6 @@ ledger:
     # the minimum duration (in milliseconds) between writing
     # two consecutive db batches for converting the ineligible missing data entries to eligible missing data entries
     collElgProcDbBatchesInterval: 1000
-    # The missing data entries are classified into two categories:
-    # (1) prioritized
-    # (2) deprioritized
-    # Initially, all missing data are in the prioritized list. When the
-    # reconciler is unable to fetch the missing data from other peers,
-    # the unreconciled missing data would be moved to the deprioritized list.
-    # The reconciler would retry deprioritized missing data after every
-    # deprioritizedDataReconcilerInterval (unit: minutes). Note that the
-    # interval needs to be greater than the reconcileSleepInterval
-    deprioritizedDataReconcilerInterval: 60m
-
-  snapshots:
-    # Path on the file system where peer will store ledger snapshots
-    rootDir: /var/hyperledger/production/snapshots
 
 ###############################################################################
 #
