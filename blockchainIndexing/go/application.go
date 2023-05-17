@@ -138,9 +138,9 @@ func BulkInvoke(contract *gateway.Contract, fileUrl string) {
 			return i + chunkSize
 		}()]
 
-		if i/chunkSize+1 == 51 {
+		/*if i/chunkSize+1 == 501 {
 			break
-		}
+		}*/
 
 		chunkBytes, err := json.Marshal(chunk)
 		if err != nil {
@@ -185,14 +185,14 @@ func Invoke(contract *gateway.Contract, fileUrl string) {
 
 	orders := table.Table
 
-	for i := 0; i < 50; i++ {
+	for i := 0; i < 10; i++ {
 
 		orderBytes, err := json.Marshal(orders[i])
 		if err != nil {
 			log.Fatalf("Failed to marshal JSON: %s", err)
 		}
 
-		_, err = contract.SubmitTransaction("CreateBulk", string(orderBytes))
+		_, err = contract.SubmitTransaction("Create", string(orderBytes))
 		if err != nil {
 			log.Fatalf("Failed to submit transaction: %s\n", err)
 		}
@@ -204,17 +204,18 @@ func Invoke(contract *gateway.Contract, fileUrl string) {
 func histTest(contract *gateway.Contract) {
 	log.Println("-----stub.Hist() Test-----")
 
-	key := "24454"
-	startBlk := ""
-	endBlk := ""
+	startKey := "1"
+	endKey := "3"
+	startBlk := "0"
+	endBlk := "16"
 
-	result, err := contract.EvaluateTransaction("histTest", key, startBlk, endBlk)
+	_, err := contract.EvaluateTransaction("histTest", startKey, endKey, startBlk, endBlk)
 	if err != nil {
 		log.Fatalf("Failed to submit transaction: %s\n", err)
 
 	}
 
-	log.Printf("Transaction has been evaluated, result is: %s\n", string(result))
+	log.Println("Transaction has been evaluated")
 }
 
 func pointQuery(contract *gateway.Contract) {
@@ -224,7 +225,7 @@ func pointQuery(contract *gateway.Contract) {
 	key := "32"
 	version := "0"
 	startBlk := "0"
-	endBlk := "56"
+	endBlk := "1006"
 
 	result, err := contract.EvaluateTransaction("pointQuery", key, version, startBlk, endBlk)
 	if err != nil {
@@ -243,11 +244,11 @@ func versionQuery(contract *gateway.Contract) {
 	log.Println("-----Version Query-----")
 	startTime := time.Now()
 
-	key := ""
+	key := "32"
 	startVersion := "0"
-	endVersion := "2"
+	endVersion := "4"
 	startBlk := "0"
-	endBlk := ""
+	endBlk := "1006"
 
 	result, err := contract.EvaluateTransaction("versionQuery", key, startVersion, endVersion, startBlk, endBlk)
 	if err != nil {
@@ -266,15 +267,17 @@ func rangeQuery(contract *gateway.Contract) {
 	log.Println("-----Range Query-----")
 	startTime := time.Now()
 
-	startKey := ""
-	endKey := ""
+	startKey := "1"
+	endKey := "108"
 	startBlk := "0"
-	endBlk := ""
+	endBlk := "1006"
 
 	_, err := contract.EvaluateTransaction("rangeQuery", startKey, endKey, startBlk, endBlk)
 	if err != nil {
 		log.Fatalf("Failed to evaluate transaction: %s\n", err)
 	}
+
+	log.Println("Transaction has been evaluated.")
 
 	endTime := time.Now()
 	executionTime := endTime.Sub(startTime).Seconds()
