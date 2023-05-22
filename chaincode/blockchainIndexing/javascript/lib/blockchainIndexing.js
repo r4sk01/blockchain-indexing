@@ -351,46 +351,109 @@ class BlockchainIndexing extends Contract {
         return JSON.stringify(results);
     }
 
-  async getHistoryForKeyWithBloomFilter(ctx, orderKey) {
-    let history = [];
+
+    // async getHistoryForKeyWithBloomFilter(ctx, orderKey) {
+    //   let history = [];
+    
+    //   let blockNumber = await ctx.stub.getBlockchainInfo().then((info) => info.height - 1);
+    
+    //   while (blockNumber >= 0) {
+    //     const blockBytes = await ctx.stub.getBlockByNumber(blockNumber);
+    //     const block = BlockDecoder.decode(blockBytes);
+    
+    //     const bloomFilterBytes = block.metadata.metadata[block.metadata.metadata.length - 1];
+    //     const bloomFilter = Buffer.from(bloomFilterBytes);
+    
+    //     if (isKeyPresentInBloomFilter(orderKey, bloomFilter)) {
+    //       const resultsIterator = await ctx.stub.getHistoryForKey(orderKey);
+    //       let result;
+    
+    //       for (const tx of block.data.data) {
+    //         const txId = tx.payload.header.channel_header.tx_id;
+    
+    //         while (!(result = await resultsIterator.next()).done) {
+    //           const { tx_id } = result.value;
+    //           if (tx_id === txId) {
+    //             history.push({
+    //               value: result.value.value.toString('utf8'),
+    //               timestamp: result.value.timestamp,
+    //               txId: result.value.tx_id,
+    //             });
+    //           }
+    //         }
+    
+    //         // Reset the iterator after using it
+    //         await resultsIterator.close();
+    //       }
+    //     }
+    
+    //     blockNumber--;
+    //   }
+    
+    //   return history;
+    // }
+
+    async getHistoryForKeyWithBloomFilter(ctx, orderKey) {
+      let history = [];
+      let channelName = ctx.stub.getChannelID()
   
-    let blockNumber = await ctx.stub.getBlockchainInfo().then((info) => info.height - 1);
+      // const getBlockchainInfoArgs = ['GetBlockchainInfo'];
+      const getBlockchainInfoArgs = ['GetChainInfo', channelName];
+      const blockchainInfoResponse = await ctx.stub.invokeChaincode('qscc', getBlockchainInfoArgs, channelName);
+
+      console.log('blockchainInfoResponse:', blockchainInfoResponse);
+
+      if (blockchainInfoResponse.status !== 200) {
+        throw new Error(`Error invoking qscc chaincode: ${blockchainInfoResponse.message}`);
+      }
+
+      let blockchainInfo;
+      try {
+        blockchainInfo = JSON.parse(blockchainInfoResponse.payload.toString());
+      } catch (error) {
+        throw new Error(`Error parsing blockchainInfoResponse payload: ${error}`);
+      }
+      let blockNumber = blockchainInfo.height - 1;
   
-    while (blockNumber >= 0) {
-      const blockBytes = await ctx.stub.getBlockByNumber(blockNumber);
-      const block = BlockDecoder.decode(blockBytes);
+      while (blockNumber >= 0) {
+          const getBlockArgs = ['GetBlockByNumber', ctx.stub.getChannelID(), blockNumber.toString()];
+          const blockBytesResponse = await ctx.stub.invokeChaincode('qscc', getBlockArgs, ctx.stub.getChannelID());
+
+          const blockBytes = blockBytesResponse.payload;
+          const block = BlockDecoder.decode(blockBytes);
   
-      const bloomFilterBytes = block.metadata.metadata[block.metadata.metadata.length - 1];
-      const bloomFilter = Buffer.from(bloomFilterBytes);
+          const bloomFilterBytes = block.metadata.metadata[block.metadata.metadata.length - 1];
+          const bloomFilter = Buffer.from(bloomFilterBytes);
   
-      if (isKeyPresentInBloomFilter(orderKey, bloomFilter)) {
-        const resultsIterator = await ctx.stub.getHistoryForKey(orderKey);
-        let result;
+          if (isKeyPresentInBloomFilter(orderKey, bloomFilter)) {
+              const resultsIterator = await ctx.stub.getHistoryForKey(orderKey);
+              let result;
   
-        for (const tx of block.data.data) {
-          const txId = tx.payload.header.channel_header.tx_id;
+              for (const tx of block.data.data) {
+                  const txId = tx.payload.header.channel_header.tx_id;
   
-          while (!(result = await resultsIterator.next()).done) {
-            const { tx_id } = result.value;
-            if (tx_id === txId) {
-              history.push({
-                value: result.value.value.toString('utf8'),
-                timestamp: result.value.timestamp,
-                txId: result.value.tx_id,
-              });
-            }
+                  while (!(result = await resultsIterator.next()).done) {
+                      const { tx_id } = result.value;
+                      if (tx_id === txId) {
+                          history.push({
+                              value: result.value.value.toString('utf8'),
+                              timestamp: result.value.timestamp,
+                              txId: result.value.tx_id,
+                          });
+                      }
+                  }
+  
+                  // Reset the iterator after using it
+                  await resultsIterator.close();
+              }
           }
   
-          // Reset the iterator after using it
-          await resultsIterator.close();
-        }
+        blockNumber--;
       }
   
-      blockNumber--;
+      return history;
     }
   
-    return history;
-  }
 
   async pointQueryBloom(ctx, orderKey, keyVersion) {
     const results = await this.getHistoryForKeyWithBloomFilter(ctx, orderKey);
