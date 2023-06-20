@@ -55,6 +55,7 @@ async function main() {
         // queryAllCars transaction - requires no arguments, ex: ('queryAllCars')
         // const result = await contract.evaluateTransaction('queryAllCars');
         // const result = await contract.evaluateTransaction('queryAllOrders');
+        // const orderKey = 91041; //100K Unsorted
         const orderKey = 91041;
         const keyVersion = 0;
         const result = await contract.evaluateTransaction('pointQuery', orderKey, keyVersion);

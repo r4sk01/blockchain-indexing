@@ -14,7 +14,7 @@
 # this may be commented out to resolve installed version of tools if desired
 export PATH=${PWD}/../bin:$PATH
 export FABRIC_CFG_PATH=${PWD}/configtx
-export VERBOSE=false
+export VERBOSE=true
 
 . scripts/utils.sh
 

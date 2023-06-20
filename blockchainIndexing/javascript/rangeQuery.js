@@ -73,9 +73,9 @@ async function main() {
         // const result = await contract.evaluateTransaction('queryAllCars');
         let finres = [];
         const startKey = 91041;
-        const endKey = 91541;
-        // const startKey = 1;
-        // const endKey = 10;
+        const endKey = 91061;
+        //const startKey = 1;
+        //const endKey = 50;
 
         let result = await contract.evaluateTransaction('queryOrderHistoryByRange', startKey, endKey);
 
