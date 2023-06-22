@@ -95,6 +95,8 @@ func main() {
 		Invoke(contract, *file)
 	case "getHistoryForAsset": // Add a new case for the new function
 		getHistoryForAsset(contract, *key)
+	case "getHistoryForAssets": // Add a new case for the new function
+		getHistoryForAssets(contract, *key)
 	}
 
 }
@@ -199,6 +201,15 @@ func Invoke(contract *gateway.Contract, fileUrl string) {
 // getHistoryForAsset calls GetHistoryForKey API
 func getHistoryForAsset(contract *gateway.Contract, key string) {
 	result, err := contract.EvaluateTransaction("getHistoryForAsset", key)
+	if err != nil {
+		log.Fatalf("Failed to evaluate transaction: %s\n", err)
+	}
+
+	fmt.Println(string(result))
+}
+
+func getHistoryForAssets(contract *gateway.Contract, key string) {
+	result, err := contract.EvaluateTransaction("getHistoryForAssets", key)
 	if err != nil {
 		log.Fatalf("Failed to evaluate transaction: %s\n", err)
 	}
