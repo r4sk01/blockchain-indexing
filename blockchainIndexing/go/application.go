@@ -85,6 +85,7 @@ func main() {
 
 	transaction := flag.String("t", "defaultQuery", "Choose a transaction to run")
 	file := flag.String("f", "~", "file path for json data")
+	key := flag.String("k", "", "key for getHistoryForAsset")
 	flag.Parse()
 
 	switch *transaction {
@@ -92,6 +93,8 @@ func main() {
 		BulkInvoke(contract, *file)
 	case "Invoke":
 		Invoke(contract, *file)
+	case "getHistoryForAsset": // Add a new case for the new function
+		getHistoryForAsset(contract, *key)
 	}
 
 }
@@ -118,8 +121,8 @@ func BulkInvoke(contract *gateway.Contract, fileUrl string) {
 	startTime := time.Now()
 	log.Printf("Starting bulk transaction at time: %s\n", startTime.Format(time.UnixDate))
 
-	// Split orders into chunks of size 1000
-	chunkSize := 1000
+	// Split orders into chunks of size 2500
+	chunkSize := 2500
 	for i := 0; i < len(orders); i += chunkSize {
 		chunkTime := time.Now()
 
@@ -191,6 +194,16 @@ func Invoke(contract *gateway.Contract, fileUrl string) {
 	}
 
 	log.Println("Done")
+}
+
+// getHistoryForAsset calls GetHistoryForKey API
+func getHistoryForAsset(contract *gateway.Contract, key string) {
+	result, err := contract.EvaluateTransaction("getHistoryForAsset", key)
+	if err != nil {
+		log.Fatalf("Failed to evaluate transaction: %s\n", err)
+	}
+
+	fmt.Println(string(result))
 }
 
 func populateWallet(wallet *gateway.Wallet) error {

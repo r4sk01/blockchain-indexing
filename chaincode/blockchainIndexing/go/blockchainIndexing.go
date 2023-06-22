@@ -53,6 +53,8 @@ func (sc *SmartContract) Invoke(stub shim.ChaincodeStubInterface) sc.Response {
 		return sc.CreateBulk(stub, args)
 	case "Create":
 		return sc.Create(stub, args)
+	case "getHistoryForAsset":
+		return sc.getHistoryForAsset(stub, args)
 	default:
 		return shim.Error("Invalid Smart Contract function name.")
 	}
@@ -113,6 +115,62 @@ func (sc *SmartContract) CreateBulk(stub shim.ChaincodeStubInterface, args []str
 
 	return shim.Success(nil)
 
+}
+
+// getHistoryForAsset calls built in GetHistoryForKey() API
+func (sc *SmartContract) getHistoryForAsset(stub shim.ChaincodeStubInterface, args []string) sc.Response {
+	if len(args) != 1 {
+		return shim.Error("Incorrect number of arguments. Expecting 1")
+	}
+
+	historyIer, err := stub.GetHistoryForKey(args[0])
+	if err != nil {
+		return shim.Error(err.Error())
+	}
+
+	var history []QueryResult
+	for historyIer.HasNext() {
+		historyData, err := historyIer.Next()
+		if err != nil {
+			return shim.Error(err.Error())
+		}
+
+		var order Order
+		json.Unmarshal(historyData.Value, &order)
+
+		history = append(history, QueryResult{Key: historyData.TxId, Record: &order})
+	}
+
+	historyAsBytes, _ := json.Marshal(history)
+	return shim.Success(historyAsBytes)
+}
+
+// getHistoryForAsset calls built in GetHistoryForKey() API
+func (sc *SmartContract) getHistoryForAssets(stub shim.ChaincodeStubInterface, args []string) sc.Response {
+	if len(args) != 1 {
+		return shim.Error("Incorrect number of arguments. Expecting 1")
+	}
+
+	historyIer, err := stub.GetHistoryForKey(args[0])
+	if err != nil {
+		return shim.Error(err.Error())
+	}
+
+	var history []QueryResult
+	for historyIer.HasNext() {
+		historyData, err := historyIer.Next()
+		if err != nil {
+			return shim.Error(err.Error())
+		}
+
+		var order Order
+		json.Unmarshal(historyData.Value, &order)
+
+		history = append(history, QueryResult{Key: historyData.TxId, Record: &order})
+	}
+
+	historyAsBytes, _ := json.Marshal(history)
+	return shim.Success(historyAsBytes)
 }
 
 func main() {
