@@ -45,16 +45,30 @@ type QueryResult struct {
 	Record *Order
 }
 
+func (s *SmartContract) Invoke(stub shim.ChaincodeStubInterface) error {
+	function, args := stub.GetFunctionAndParameters()
+
+	switch function {
+	case "InitLedger":
+		return s.InitLedger(stub)
+	case "CreateBulk":
+		return s.CreateBulk(stub, args)
+	case "getHistoryForAsset":
+		_, err := s.getHistoryForAsset(stub, args)
+		return err
+	default:
+		return fmt.Errorf("invalid function name: %s. Expecting 'InitLedger', 'CreateBulk', or 'getHistoryForAsset'", function)
+	}
+}
+
 func (s *SmartContract) Init(stub shim.ChaincodeStubInterface) error {
 	fmt.Println("====== INIT CAllED ======")
-
 	return nil
 }
 
-func (s *SmartContract) InitLedger(ctx contractapi.TransactionContextInterface) error {
+func (s *SmartContract) InitLedger(stub shim.ChaincodeStubInterface) error {
 	fmt.Println("====== INIT LEDGER START ======")
 	fmt.Println("====== INIT LEDGER END ======")
-
 	return nil
 }
 
@@ -80,13 +94,13 @@ func (s *SmartContract) CreateBulk(stub shim.ChaincodeStubInterface, args []stri
 			return err
 		}
 	}
-
 	return nil
 }
 
 // getHistoryForAsset executes getHistoryForKey() API
-func getHistoryForAsset(ctx contractapi.TransactionContextInterface, assetKey string) (string, error) {
-	historyResultsIterator, err := ctx.GetStub().GetHistoryForKey(assetKey)
+func (s *SmartContract) getHistoryForAsset(stub shim.ChaincodeStubInterface, args []string) (string, error) {
+	assetKey := args[0]
+	historyResultsIterator, err := stub.GetHistoryForKey(assetKey)
 	if err != nil {
 		return "", fmt.Errorf("failed to get asset history for %s: %v", assetKey, err)
 	}
@@ -117,7 +131,6 @@ func getHistoryForAsset(ctx contractapi.TransactionContextInterface, assetKey st
 	if err != nil {
 		return "", fmt.Errorf("failed to marshal asset history: %v", err)
 	}
-
 	return string(historyAsJSON), nil
 }
 

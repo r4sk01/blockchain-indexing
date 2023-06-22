@@ -184,3 +184,21 @@ func BulkInvoke(contract *gateway.Contract, fileUrl string) {
 	log.Printf("Finished bulk transaction at time: %s\n", endTime.Format(time.UnixDate))
 	log.Printf("Total execution time is: %f sec\n", executionTime)
 }
+
+func getHistoryForAsset(contract *gateway.Contract) {
+	log.Printf("======getHistoryForAsset======")
+	startTime := time.Now()
+
+	key := "91041"
+
+	result, err := contract.EvaluateTransaction("getHistoryForAsset", key)
+	if err != nil {
+		log.Fatalf("Failed to evaluate transaction: %s\n", err)
+	}
+
+	log.Printf("Transaction has been evaluated, result is: %s\n", string(result))
+
+	endTime := time.Now()
+	executionTime := endTime.Sub(startTime).Seconds()
+	log.Printf("Finished query with execution time: %f sec\n", executionTime)
+}
