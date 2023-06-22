@@ -4,13 +4,15 @@ import (
 	"encoding/json"
 	"errors"
 	"flag"
-	"github.com/hyperledger/fabric-sdk-go/pkg/core/config"
-	"github.com/hyperledger/fabric-sdk-go/pkg/gateway"
+	"fmt"
 	"io/ioutil"
 	"log"
 	"os"
 	"path/filepath"
 	"time"
+
+	"github.com/hyperledger/fabric-sdk-go/pkg/core/config"
+	"github.com/hyperledger/fabric-sdk-go/pkg/gateway"
 )
 
 type Table struct {
@@ -37,16 +39,19 @@ type Order struct {
 }
 
 func main() {
+
 	os.Setenv("DISCOVERY_AS_LOCALHOST", "true")
 	wallet, err := gateway.NewFileSystemWallet("wallet")
 	if err != nil {
-		log.Fatalf("Failed to create wallet: %s\n", err)
+		fmt.Printf("Failed to create wallet: %s\n", err)
+		os.Exit(1)
 	}
 
 	if !wallet.Exists("appUser") {
 		err = populateWallet(wallet)
 		if err != nil {
-			log.Fatalf("Failed to populate wallet contents: %s\n", err)
+			fmt.Printf("Failed to populate wallet contents: %s\n", err)
+			os.Exit(1)
 		}
 	}
 
@@ -66,12 +71,14 @@ func main() {
 	)
 	if err != nil {
 		log.Fatalf("Failed to connect to gateway: %s\n", err)
+
 	}
 	defer gw.Close()
 
 	network, err := gw.GetNetwork("mychannel")
 	if err != nil {
 		log.Fatalf("Failed to get network: %s\n", err)
+
 	}
 
 	contract := network.GetContract("blockchainIndexing")
@@ -83,9 +90,107 @@ func main() {
 	switch *transaction {
 	case "BulkInvoke":
 		BulkInvoke(contract, *file)
-	case "getHistoryForAsset":
-		getHistoryForAsset(contract)
+	case "Invoke":
+		Invoke(contract, *file)
 	}
+
+}
+
+func BulkInvoke(contract *gateway.Contract, fileUrl string) {
+	if fileUrl == "" || !filepath.IsAbs(fileUrl) {
+		log.Fatalln("File URL must be provided and must be an absolute path")
+
+	}
+
+	jsonData, err := ioutil.ReadFile(fileUrl)
+	if err != nil {
+		log.Fatalf("error while reading json file: %s", err)
+
+	}
+
+	var table Table
+	if err := json.Unmarshal([]byte(jsonData), &table); err != nil {
+		log.Fatalf("Failed to unmarshal JSON: %s", err)
+	}
+
+	orders := table.Table
+
+	startTime := time.Now()
+	log.Printf("Starting bulk transaction at time: %s\n", startTime.Format(time.UnixDate))
+
+	// Split orders into chunks of size 1000
+	chunkSize := 1000
+	for i := 0; i < len(orders); i += chunkSize {
+		chunkTime := time.Now()
+
+		chunk := orders[i:func() int {
+			if i+chunkSize > len(orders) {
+				return len(orders)
+			}
+			return i + chunkSize
+		}()]
+
+		/*if i/chunkSize+1 == 501 {
+			break
+		}*/
+
+		chunkBytes, err := json.Marshal(chunk)
+		if err != nil {
+			log.Fatalf("Failed to marshal JSON: %s", err)
+		}
+
+		_, err = contract.SubmitTransaction("CreateBulk", string(chunkBytes))
+		if err != nil {
+			log.Fatalf("Failed to submit transaction: %s\n", err)
+		}
+
+		endTime := time.Now()
+		executionTime := endTime.Sub(chunkTime).Seconds()
+		log.Printf("Execution Time: %f sec at chunk %d", executionTime, i/chunkSize+1)
+	}
+
+	endTime := time.Now()
+	executionTime := endTime.Sub(startTime).Seconds()
+	log.Printf("Finished bulk transaction at time: %s\n", endTime.Format(time.UnixDate))
+	log.Printf("Total execution time is: %f sec\n", executionTime)
+
+}
+
+func Invoke(contract *gateway.Contract, fileUrl string) {
+	log.Println("Submit individual orders")
+
+	if fileUrl == "" || !filepath.IsAbs(fileUrl) {
+		fmt.Println("File URL must be provided and must be an absolute path")
+		os.Exit(1)
+	}
+
+	jsonData, err := ioutil.ReadFile(fileUrl)
+	if err != nil {
+		log.Fatalf("error while reading json file: %s", err)
+
+	}
+
+	var table Table
+	if err := json.Unmarshal([]byte(jsonData), &table); err != nil {
+		log.Fatalf("Failed to unmarshal JSON: %s", err)
+	}
+
+	orders := table.Table
+
+	for i := 0; i < 10; i++ {
+
+		orderBytes, err := json.Marshal(orders[i])
+		if err != nil {
+			log.Fatalf("Failed to marshal JSON: %s", err)
+		}
+
+		_, err = contract.SubmitTransaction("Create", string(orderBytes))
+		if err != nil {
+			log.Fatalf("Failed to submit transaction: %s\n", err)
+		}
+	}
+
+	log.Println("Done")
 }
 
 func populateWallet(wallet *gateway.Wallet) error {
@@ -130,75 +235,4 @@ func populateWallet(wallet *gateway.Wallet) error {
 		return err
 	}
 	return nil
-}
-
-func BulkInvoke(contract *gateway.Contract, fileUrl string) {
-	if fileUrl == "" || !filepath.IsAbs(fileUrl) {
-		log.Fatalf("File URL must be provided and must be an absolute path")
-	}
-
-	jsonData, err := ioutil.ReadFile(fileUrl)
-	if err != nil {
-		log.Fatalf("error while reading json file: %s", err)
-	}
-
-	var table Table
-	if err := json.Unmarshal([]byte(jsonData), &table); err != nil {
-		log.Fatalf("Failed to unmarshal JSON: %s", err)
-	}
-
-	orders := table.Table
-
-	startTime := time.Now()
-	log.Printf("Starting bulk transaction at time: %s\n", startTime.Format(time.UnixDate))
-
-	//Split orders into chunks of size 1000
-	chunkSize := 1000
-	for i := 0; i < len(orders); i += chunkSize {
-		chunkTime := time.Now()
-
-		chunk := orders[i:func() int {
-			if i+chunkSize > len(orders) {
-				return len(orders)
-			}
-			return i + chunkSize
-		}()]
-
-		chunkBytes, err := json.Marshal(chunk)
-		if err != nil {
-			log.Fatalf("Failed to marshal JSON: %s", err)
-		}
-
-		_, err = contract.SubmitTransaction("CreateBulk", string(chunkBytes))
-		if err != nil {
-			log.Fatalf("Failed to submit transaction: %s\n", err)
-		}
-
-		endTime := time.Now()
-		executionTime := endTime.Sub(chunkTime).Seconds()
-		log.Printf("Execution Time: %f sec at chunk %d", executionTime, i/chunkSize+1)
-	}
-
-	endTime := time.Now()
-	executionTime := endTime.Sub(startTime).Seconds()
-	log.Printf("Finished bulk transaction at time: %s\n", endTime.Format(time.UnixDate))
-	log.Printf("Total execution time is: %f sec\n", executionTime)
-}
-
-func getHistoryForAsset(contract *gateway.Contract) {
-	log.Printf("======getHistoryForAsset======")
-	startTime := time.Now()
-
-	key := "91041"
-
-	result, err := contract.EvaluateTransaction("getHistoryForAsset", key)
-	if err != nil {
-		log.Fatalf("Failed to evaluate transaction: %s\n", err)
-	}
-
-	log.Printf("Transaction has been evaluated, result is: %s\n", string(result))
-
-	endTime := time.Now()
-	executionTime := endTime.Sub(startTime).Seconds()
-	log.Printf("Finished query with execution time: %f sec\n", executionTime)
 }
