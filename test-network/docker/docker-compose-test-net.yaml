@@ -25,7 +25,7 @@ services:
 
     #image: hyperledger/fabric-rvp-orderer:2.2.3
 
-    image: hyperledger/fabric-sai-orderer:2.2.11
+    image: hyperledger/fabric-keys-orderer:2.2.11
     environment:
       - FABRIC_LOGGING_SPEC=INFO
       - ORDERER_GENERAL_LISTENADDRESS=0.0.0.0
@@ -67,7 +67,7 @@ services:
 
     #image: hyperledger/fabric-rvp-peer:2.2.3
 
-    image: hyperledger/fabric-sai-peer:2.2.11
+    image: hyperledger/fabric-keys-peer:2.2.11
     environment:
       #Generic peer variables
       - CORE_VM_ENDPOINT=unix:///host/var/run/docker.sock
@@ -116,7 +116,7 @@ services:
 
     #image: hyperledger/fabric-rvp-peer:2.2.3
 
-    image: hyperledger/fabric-sai-peer:2.2.11
+    image: hyperledger/fabric-keys-peer:2.2.11
     environment:
       #Generic peer variables
       - CORE_VM_ENDPOINT=unix:///host/var/run/docker.sock
