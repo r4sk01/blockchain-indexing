@@ -55,8 +55,8 @@ func (sc *SmartContract) Invoke(stub shim.ChaincodeStubInterface) sc.Response {
 		return sc.Create(stub, args)
 	case "getHistoryForAsset":
 		return sc.getHistoryForAsset(stub, args)
-	case "getHistoryForAssets":
-		return sc.getHistoryForAssets(stub, args)
+	// case "getHistoryForAssets":
+	// 	return sc.getHistoryForAssets(stub, args)
 	default:
 		return shim.Error("Invalid Smart Contract function name.")
 	}
@@ -147,37 +147,37 @@ func (sc *SmartContract) getHistoryForAsset(stub shim.ChaincodeStubInterface, ar
 }
 
 // getHistoryForAssets calls custom GetHistoryForKeys() API
-func (sc *SmartContract) getHistoryForAssets(stub shim.ChaincodeStubInterface, args []string) sc.Response {
-	if len(args) < 1 {
-		return shim.Error("Incorrect number of arguments. Expecting 1 or more")
-	}
+// func (sc *SmartContract) getHistoryForAssets(stub shim.ChaincodeStubInterface, args []string) sc.Response {
+// 	if len(args) < 1 {
+// 		return shim.Error("Incorrect number of arguments. Expecting 1 or more")
+// 	}
 
-	// calling the GetHistoryForKeys() API with keys as args
-	historyIers, err := stub.GetHistoryForKeys(args)
-	if err != nil {
-		return shim.Error(err.Error())
-	}
+// 	// calling the GetHistoryForKeys() API with keys as args
+// 	historyIers, err := stub.GetHistoryForKeys(args)
+// 	if err != nil {
+// 		return shim.Error(err.Error())
+// 	}
 
-	var histories [][]QueryResult
-	for i, historyIer := range historyIers {
-		var history []QueryResult
-		for historyIer.HasNext() {
-			historyData, err := historyIer.Next()
-			if err != nil {
-				return shim.Error(err.Error())
-			}
+// 	var histories [][]QueryResult
+// 	for i, historyIer := range historyIers {
+// 		var history []QueryResult
+// 		for historyIer.HasNext() {
+// 			historyData, err := historyIer.Next()
+// 			if err != nil {
+// 				return shim.Error(err.Error())
+// 			}
 
-			var order Order
-			json.Unmarshal(historyData.Value, &order)
+// 			var order Order
+// 			json.Unmarshal(historyData.Value, &order)
 
-			history = append(history, QueryResult{Key: historyData.TxId, Record: &order})
-		}
-		histories[i] = history
-	}
+// 			history = append(history, QueryResult{Key: historyData.TxId, Record: &order})
+// 		}
+// 		histories[i] = history
+// 	}
 
-	historiesAsBytes, _ := json.Marshal(histories)
-	return shim.Success(historiesAsBytes)
-}
+// 	historiesAsBytes, _ := json.Marshal(histories)
+// 	return shim.Success(historiesAsBytes)
+// }
 
 func main() {
 	err := shim.Start(new(SmartContract))

@@ -12,7 +12,3 @@ require (
 	gopkg.in/check.v1 v1.0.0-20190902080502-41f04d3bba15 // indirect
 	gopkg.in/yaml.v2 v2.2.8 // indirect
 )
-
-replace github.com/hyperledger/fabric-protos-go => /home/andrey/Desktop/dgaron/fabric-protos/bindings/go-apiv1
-
-replace github.com/hyperledger/fabric-chaincode-go => /home/andrey/Desktop/dgaron/fabric-chaincode-go

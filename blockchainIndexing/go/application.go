@@ -95,8 +95,8 @@ func main() {
 		Invoke(contract, *file)
 	case "getHistoryForAsset": // Add a new case for the new function
 		getHistoryForAsset(contract, *key)
-	case "getHistoryForAssets": // Add a new case for the new function
-		getHistoryForAssets(contract, *key)
+		// case "getHistoryForAssets": // Add a new case for the new function
+		// 	getHistoryForAssets(contract, *key)
 	}
 
 }
@@ -208,14 +208,14 @@ func getHistoryForAsset(contract *gateway.Contract, key string) {
 	fmt.Println(string(result))
 }
 
-func getHistoryForAssets(contract *gateway.Contract, key string) {
-	result, err := contract.EvaluateTransaction("getHistoryForAssets", key)
-	if err != nil {
-		log.Fatalf("Failed to evaluate transaction: %s\n", err)
-	}
+// func getHistoryForAssets(contract *gateway.Contract, key string) {
+// 	result, err := contract.EvaluateTransaction("getHistoryForAssets", key)
+// 	if err != nil {
+// 		log.Fatalf("Failed to evaluate transaction: %s\n", err)
+// 	}
 
-	fmt.Println(string(result))
-}
+// 	fmt.Println(string(result))
+// }
 
 func populateWallet(wallet *gateway.Wallet) error {
 	credPath := filepath.Join(
