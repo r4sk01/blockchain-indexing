@@ -25,7 +25,7 @@ services:
 
     #image: hyperledger/fabric-rvp-orderer:2.2.3
 
-    image: hyperledger/fabric-keys-orderer:2.2.11
+    image: hyperledger/fabric-sai-orderer:2.2.11
     environment:
       - FABRIC_LOGGING_SPEC=INFO
       - ORDERER_GENERAL_LISTENADDRESS=0.0.0.0
@@ -67,13 +67,13 @@ services:
 
     #image: hyperledger/fabric-rvp-peer:2.2.3
 
-    image: hyperledger/fabric-keys-peer:2.2.11
+    image: hyperledger/fabric-sai-peer:2.2.11
     environment:
       #Generic peer variables
       - CORE_VM_ENDPOINT=unix:///host/var/run/docker.sock
       - CORE_VM_DOCKER_HOSTCONFIG_NETWORKMODE=fabric_test
-      - FABRIC_LOGGING_SPEC=INFO
-      #- FABRIC_LOGGING_SPEC=DEBUG
+      #- FABRIC_LOGGING_SPEC=INFO
+      - FABRIC_LOGGING_SPEC=DEBUG
       - CORE_PEER_TLS_ENABLED=true
       - CORE_PEER_PROFILE_ENABLED=true
       - CORE_PEER_TLS_CERT_FILE=/etc/hyperledger/fabric/tls/server.crt
@@ -116,13 +116,13 @@ services:
 
     #image: hyperledger/fabric-rvp-peer:2.2.3
 
-    image: hyperledger/fabric-keys-peer:2.2.11
+    image: hyperledger/fabric-sai-peer:2.2.11
     environment:
       #Generic peer variables
       - CORE_VM_ENDPOINT=unix:///host/var/run/docker.sock
       - CORE_VM_DOCKER_HOSTCONFIG_NETWORKMODE=fabric_test
-      - FABRIC_LOGGING_SPEC=INFO
-      #- FABRIC_LOGGING_SPEC=DEBUG
+      #- FABRIC_LOGGING_SPEC=INFO
+      - FABRIC_LOGGING_SPEC=DEBUG
       - CORE_PEER_TLS_ENABLED=true
       - CORE_PEER_PROFILE_ENABLED=true
       - CORE_PEER_TLS_CERT_FILE=/etc/hyperledger/fabric/tls/server.crt
