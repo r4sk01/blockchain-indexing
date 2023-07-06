@@ -5,14 +5,12 @@ import (
 	"errors"
 	"flag"
 	"fmt"
+	"github.com/hyperledger/fabric-sdk-go/pkg/core/config"
+	"github.com/hyperledger/fabric-sdk-go/pkg/gateway"
 	"io/ioutil"
 	"log"
 	"os"
 	"path/filepath"
-	"time"
-
-	"github.com/hyperledger/fabric-sdk-go/pkg/core/config"
-	"github.com/hyperledger/fabric-sdk-go/pkg/gateway"
 )
 
 type Table struct {
@@ -103,62 +101,37 @@ func main() {
 
 func BulkInvoke(contract *gateway.Contract, fileUrl string) {
 	if fileUrl == "" || !filepath.IsAbs(fileUrl) {
-		log.Fatalln("File URL must be provided and must be an absolute path")
-
+		log.Fatalln("File URL is not absolute.")
 	}
 
-	jsonData, err := ioutil.ReadFile(fileUrl)
+	raw, err := ioutil.ReadFile(fileUrl)
 	if err != nil {
-		log.Fatalf("error while reading json file: %s", err)
-
+		log.Fatalln(err)
 	}
 
-	var table Table
-	if err := json.Unmarshal([]byte(jsonData), &table); err != nil {
-		log.Fatalf("Failed to unmarshal JSON: %s", err)
-	}
+	var t Table
+	json.Unmarshal(raw, &t)
 
-	orders := table.Table
-
-	startTime := time.Now()
-	log.Printf("Starting bulk transaction at time: %s\n", startTime.Format(time.UnixDate))
-
-	// Split orders into chunks of size 2500
 	chunkSize := 500
-	for i := 0; i < len(orders); i += chunkSize {
-		chunkTime := time.Now()
 
-		chunk := orders[i:func() int {
-			if i+chunkSize > len(orders) {
-				return len(orders)
-			}
-			return i + chunkSize
-		}()]
-
-		/*if i/chunkSize+1 == 501 {
-			break
-		}*/
+	for i := 0; i < len(t.Table); i += chunkSize {
+		end := i + chunkSize
+		if end > len(t.Table) {
+			end = len(t.Table)
+		}
+		chunk := t.Table[i:end]
 
 		chunkBytes, err := json.Marshal(chunk)
 		if err != nil {
-			log.Fatalf("Failed to marshal JSON: %s", err)
+			log.Println(err)
+			continue
 		}
 
 		_, err = contract.SubmitTransaction("CreateBulk", string(chunkBytes))
 		if err != nil {
-			log.Fatalf("Failed to submit transaction: %s\n", err)
+			log.Println(err)
 		}
-
-		endTime := time.Now()
-		executionTime := endTime.Sub(chunkTime).Seconds()
-		log.Printf("Execution Time: %f sec at chunk %d", executionTime, i/chunkSize+1)
 	}
-
-	endTime := time.Now()
-	executionTime := endTime.Sub(startTime).Seconds()
-	log.Printf("Finished bulk transaction at time: %s\n", endTime.Format(time.UnixDate))
-	log.Printf("Total execution time is: %f sec\n", executionTime)
-
 }
 
 func Invoke(contract *gateway.Contract, fileUrl string) {

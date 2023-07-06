@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"log"
 	"strconv"
+	"sync"
 
 	"github.com/hyperledger/fabric-chaincode-go/shim"
 	sc "github.com/hyperledger/fabric-protos-go/peer"
@@ -96,26 +97,52 @@ func (sc *SmartContract) CreateBulk(stub shim.ChaincodeStubInterface, args []str
 	var orders []Order
 	json.Unmarshal([]byte(buffer), &orders)
 
-	for _, order := range orders {
+	chunkSize := 500
+	numWorkers := 10 // limit number of concurrent goroutines
 
-		orderBytes, err := json.Marshal(order)
-		if err != nil {
-			return shim.Error("failed to marshal order JSON: " + err.Error())
-		}
+	// create a buffered channel to limit number of goroutines
+	chunks := make(chan []Order, numWorkers)
 
-		orderKey := strconv.FormatInt(int64(order.L_ORDERKEY), 10)
+	var wg sync.WaitGroup
 
-		// Fabric key must be a string
-		//fmt.Sprintf("%d", order.L_ORDERKEY)
-		log.Printf("Appending order %s with part %d\n", orderKey, order.L_PARTKEY)
-		err = stub.PutState(orderKey, orderBytes)
-		if err != nil {
-			return shim.Error("failed to put order on ledger: " + err.Error())
-		}
+	for i := 0; i < numWorkers; i++ {
+		wg.Add(1)
+		go func() {
+			defer wg.Done()
+			for chunk := range chunks {
+				for _, order := range chunk {
+					orderBytes, err := json.Marshal(order)
+					if err != nil {
+						log.Printf("failed to marshal order JSON: %s", err.Error())
+						continue
+					}
+
+					orderKey := strconv.FormatInt(int64(order.L_ORDERKEY), 10)
+					log.Printf("Appending order %s with part %d\n", orderKey, order.L_PARTKEY)
+					err = stub.PutState(orderKey, orderBytes)
+					if err != nil {
+						log.Printf("failed to put order on ledger: %s", err.Error())
+					}
+				}
+			}
+		}()
 	}
 
-	return shim.Success(nil)
+	for i := 0; i < len(orders); i += chunkSize {
+		end := i + chunkSize
+		if end > len(orders) {
+			end = len(orders)
+		}
+		chunk := orders[i:end]
 
+		// send chunk to worker goroutine
+		chunks <- chunk
+	}
+
+	close(chunks)
+	wg.Wait()
+
+	return shim.Success(nil)
 }
 
 // getHistoryForAsset calls built in GetHistoryForKey() API
