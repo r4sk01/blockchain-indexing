@@ -124,7 +124,7 @@ func BulkInvoke(contract *gateway.Contract, fileUrl string) {
 	log.Printf("Starting bulk transaction at time: %s\n", startTime.Format(time.UnixDate))
 
 	// Split orders into chunks of size 2500
-	chunkSize := 2500
+	chunkSize := 500
 	for i := 0; i < len(orders); i += chunkSize {
 		chunkTime := time.Now()
 

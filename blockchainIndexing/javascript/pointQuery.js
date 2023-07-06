@@ -56,6 +56,7 @@ async function main() {
         // const result = await contract.evaluateTransaction('queryAllCars');
         // const result = await contract.evaluateTransaction('queryAllOrders');
         // const orderKey = 91041; //100K Unsorted
+        // const orderKey = 3844; // 50K Unsorted
         const orderKey = 91041;
         const keyVersion = 0;
         const result = await contract.evaluateTransaction('pointQuery', orderKey, keyVersion);

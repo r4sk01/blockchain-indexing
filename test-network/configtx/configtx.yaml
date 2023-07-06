@@ -221,20 +221,20 @@ Orderer: &OrdererDefaults
     # Batch Timeout: The amount of time to wait before creating a batch
     BatchTimeout: 3s
 
-    # Batch Size: Controls the number of messages batched into a block
+    # Batch Size: Conrols the number of messages batched into a block
     BatchSize:
 
         # Max Message Count: The maximum number of messages to permit in a batch
-        MaxMessageCount: 50
+        MaxMessageCount: 5
 
         # Absolute Max Bytes: The absolute maximum number of bytes allowed for
         # the serialized messages in a batch.
-        AbsoluteMaxBytes: 6 MB
+        AbsoluteMaxBytes: 3 MB
 
         # Preferred Max Bytes: The preferred maximum number of bytes allowed for
         # the serialized messages in a batch. A message larger than the preferred
         # max bytes will result in a batch larger than preferred max bytes.
-        PreferredMaxBytes: 3 MB
+        PreferredMaxBytes: 1 MB
 
     # Organizations is the list of orgs which are defined as participants on
     # the orderer side of the network

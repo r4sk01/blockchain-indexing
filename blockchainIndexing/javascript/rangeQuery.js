@@ -71,9 +71,11 @@ async function main() {
         // queryCar transaction - requires 1 argument, ex: ('queryCar', 'CAR4')
         // queryAllCars transaction - requires no arguments, ex: ('queryAllCars')
         // const result = await contract.evaluateTransaction('queryAllCars');
+        // const startKey = 91041; 100K, 500K, 1KK
+        // const startKey = 1; 50K, 10K
         let finres = [];
         const startKey = 91041;
-        const endKey = 91061;
+        const endKey = 91841;
         //const startKey = 1;
         //const endKey = 50;
 
