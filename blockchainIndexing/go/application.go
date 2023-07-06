@@ -11,6 +11,7 @@ import (
 	"log"
 	"os"
 	"path/filepath"
+	"sync"
 )
 
 type Table struct {
@@ -114,6 +115,9 @@ func BulkInvoke(contract *gateway.Contract, fileUrl string) {
 
 	chunkSize := 500
 
+	// Create a wait group to synchronize goroutines
+	var wg sync.WaitGroup
+
 	for i := 0; i < len(t.Table); i += chunkSize {
 		end := i + chunkSize
 		if end > len(t.Table) {
@@ -127,11 +131,18 @@ func BulkInvoke(contract *gateway.Contract, fileUrl string) {
 			continue
 		}
 
-		_, err = contract.SubmitTransaction("CreateBulk", string(chunkBytes))
-		if err != nil {
-			log.Println(err)
-		}
+		wg.Add(1)
+		go func(data string) {
+			defer wg.Done()
+			_, err = contract.SubmitTransaction("CreateBulk", data)
+			if err != nil {
+				log.Println(err)
+			}
+		}(string(chunkBytes))
 	}
+
+	// Wait for all goroutines to finish
+	wg.Wait()
 }
 
 func Invoke(contract *gateway.Contract, fileUrl string) {

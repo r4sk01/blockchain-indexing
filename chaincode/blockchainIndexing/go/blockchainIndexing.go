@@ -2,12 +2,10 @@ package main
 
 import (
 	"encoding/json"
-	"log"
-	"strconv"
-	"sync"
-
 	"github.com/hyperledger/fabric-chaincode-go/shim"
 	sc "github.com/hyperledger/fabric-protos-go/peer"
+	"log"
+	"strconv"
 )
 
 type Order struct {
@@ -90,58 +88,21 @@ func (sc *SmartContract) Create(stub shim.ChaincodeStubInterface, args []string)
 
 }
 
-// Create a new key-value pair and send to state database
 func (sc *SmartContract) CreateBulk(stub shim.ChaincodeStubInterface, args []string) sc.Response {
-	buffer := args[0]
-
 	var orders []Order
-	json.Unmarshal([]byte(buffer), &orders)
+	json.Unmarshal([]byte(args[0]), &orders)
 
-	chunkSize := 500
-	numWorkers := 10 // limit number of concurrent goroutines
-
-	// create a buffered channel to limit number of goroutines
-	chunks := make(chan []Order, numWorkers)
-
-	var wg sync.WaitGroup
-
-	for i := 0; i < numWorkers; i++ {
-		wg.Add(1)
-		go func() {
-			defer wg.Done()
-			for chunk := range chunks {
-				for _, order := range chunk {
-					orderBytes, err := json.Marshal(order)
-					if err != nil {
-						log.Printf("failed to marshal order JSON: %s", err.Error())
-						continue
-					}
-
-					orderKey := strconv.FormatInt(int64(order.L_ORDERKEY), 10)
-					log.Printf("Appending order %s with part %d\n", orderKey, order.L_PARTKEY)
-					err = stub.PutState(orderKey, orderBytes)
-					if err != nil {
-						log.Printf("failed to put order on ledger: %s", err.Error())
-					}
-				}
-			}
-		}()
-	}
-
-	for i := 0; i < len(orders); i += chunkSize {
-		end := i + chunkSize
-		if end > len(orders) {
-			end = len(orders)
+	for _, order := range orders {
+		orderBytes, err := json.Marshal(order)
+		if err != nil {
+			return shim.Error("Error marshaling order object: " + err.Error())
 		}
-		chunk := orders[i:end]
 
-		// send chunk to worker goroutine
-		chunks <- chunk
+		err = stub.PutState(strconv.Itoa(order.L_ORDERKEY), orderBytes)
+		if err != nil {
+			return shim.Error("Failed to create order: " + err.Error())
+		}
 	}
-
-	close(chunks)
-	wg.Wait()
-
 	return shim.Success(nil)
 }
 
@@ -172,39 +133,6 @@ func (sc *SmartContract) getHistoryForAsset(stub shim.ChaincodeStubInterface, ar
 	historyAsBytes, _ := json.Marshal(history)
 	return shim.Success(historyAsBytes)
 }
-
-// getHistoryForAssets calls custom GetHistoryForKeys() API
-// func (sc *SmartContract) getHistoryForAssets(stub shim.ChaincodeStubInterface, args []string) sc.Response {
-// 	if len(args) < 1 {
-// 		return shim.Error("Incorrect number of arguments. Expecting 1 or more")
-// 	}
-
-// 	// calling the GetHistoryForKeys() API with keys as args
-// 	historyIers, err := stub.GetHistoryForKeys(args)
-// 	if err != nil {
-// 		return shim.Error(err.Error())
-// 	}
-
-// 	var histories [][]QueryResult
-// 	for i, historyIer := range historyIers {
-// 		var history []QueryResult
-// 		for historyIer.HasNext() {
-// 			historyData, err := historyIer.Next()
-// 			if err != nil {
-// 				return shim.Error(err.Error())
-// 			}
-
-// 			var order Order
-// 			json.Unmarshal(historyData.Value, &order)
-
-// 			history = append(history, QueryResult{Key: historyData.TxId, Record: &order})
-// 		}
-// 		histories[i] = history
-// 	}
-
-// 	historiesAsBytes, _ := json.Marshal(histories)
-// 	return shim.Success(historiesAsBytes)
-// }
 
 func main() {
 	err := shim.Start(new(SmartContract))
