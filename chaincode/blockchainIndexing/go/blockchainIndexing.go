@@ -6,6 +6,7 @@ import (
 	sc "github.com/hyperledger/fabric-protos-go/peer"
 	"log"
 	"strconv"
+	"time"
 )
 
 type Order struct {
@@ -28,8 +29,9 @@ type Order struct {
 }
 
 type QueryResult struct {
-	Key    string `json:"Key"`
-	Record *Order
+	Key       string `json:"key"`
+	Record    *Order `json:"record"`
+	Timestamp string `json:"timestamp"`
 }
 
 // SimpleContract contract for handling writing and reading from the world state
@@ -42,20 +44,18 @@ func (sc *SmartContract) Init(stub shim.ChaincodeStubInterface) sc.Response {
 
 func (sc *SmartContract) Invoke(stub shim.ChaincodeStubInterface) sc.Response {
 
-	// Retrieve the requested Smart Contract function and arguments
 	function, args := stub.GetFunctionAndParameters()
-	// Route to the appropriate handler function to interact with the ledger appropriately
 	switch function {
 	case "InitLedger":
 		return sc.InitLedger(stub)
 	case "CreateBulk":
 		return sc.CreateBulk(stub, args)
+	case "CreateBulkParallel":
+		return sc.CreateBulkParallel(stub, args)
 	case "Create":
 		return sc.Create(stub, args)
 	case "getHistoryForAsset":
 		return sc.getHistoryForAsset(stub, args)
-	// case "getHistoryForAssets":
-	// 	return sc.getHistoryForAssets(stub, args)
 	default:
 		return shim.Error("Invalid Smart Contract function name.")
 	}
@@ -89,6 +89,32 @@ func (sc *SmartContract) Create(stub shim.ChaincodeStubInterface, args []string)
 }
 
 func (sc *SmartContract) CreateBulk(stub shim.ChaincodeStubInterface, args []string) sc.Response {
+	buffer := args[0]
+
+	var orders []Order
+	json.Unmarshal([]byte(buffer), &orders)
+
+	for _, order := range orders {
+
+		orderBytes, err := json.Marshal(order)
+		if err != nil {
+			return shim.Error("failed to marshal order JSON: " + err.Error())
+		}
+
+		orderKey := strconv.FormatInt(int64(order.L_ORDERKEY), 10)
+
+		log.Printf("Appending order %s with part %d\n", orderKey, order.L_PARTKEY)
+		err = stub.PutState(orderKey, orderBytes)
+		if err != nil {
+			return shim.Error("failed to put order on ledger: " + err.Error())
+		}
+	}
+
+	return shim.Success(nil)
+
+}
+
+func (sc *SmartContract) CreateBulkParallel(stub shim.ChaincodeStubInterface, args []string) sc.Response {
 	var orders []Order
 	json.Unmarshal([]byte(args[0]), &orders)
 
@@ -127,7 +153,10 @@ func (sc *SmartContract) getHistoryForAsset(stub shim.ChaincodeStubInterface, ar
 		var order Order
 		json.Unmarshal(historyData.Value, &order)
 
-		history = append(history, QueryResult{Key: historyData.TxId, Record: &order})
+		// Convert google.protobuf.Timestamp to string
+		timestamp := time.Unix(historyData.Timestamp.Seconds, int64(historyData.Timestamp.Nanos)).String()
+
+		history = append(history, QueryResult{Key: historyData.TxId, Record: &order, Timestamp: timestamp})
 	}
 
 	historyAsBytes, _ := json.Marshal(history)

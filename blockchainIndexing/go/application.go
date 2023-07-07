@@ -9,7 +9,9 @@ import (
 	"log"
 	"os"
 	"path/filepath"
+	"sort"
 	"sync"
+	"time"
 
 	"github.com/hyperledger/fabric-sdk-go/pkg/core/config"
 	"github.com/hyperledger/fabric-sdk-go/pkg/gateway"
@@ -36,6 +38,12 @@ type Order struct {
 	L_SHIPINSTRUCT  string  `json:"L_SHIPINSTRUCT"`
 	L_SHIPMODE      string  `json:"L_SHIPMODE"`
 	L_COMMENT       string  `json:"L_COMMENT"`
+}
+
+type Asset struct {
+	Key       string                 `json:"key"`
+	Record    map[string]interface{} `json:"record"`
+	Timestamp string                 `json:"timestamp"`
 }
 
 func main() {
@@ -86,22 +94,89 @@ func main() {
 	transaction := flag.String("t", "defaultQuery", "Choose a transaction to run")
 	file := flag.String("f", "~", "file path for json data")
 	key := flag.String("k", "", "key for getHistoryForAsset")
+	version := flag.Int("version", 0, "version to query for point query")
+	start := flag.Int("start", 0, "start version for version query")
+	end := flag.Int("end", 1, "end version for version query")
 	flag.Parse()
 
 	switch *transaction {
 	case "BulkInvoke":
 		BulkInvoke(contract, *file)
+	case "BulkInvokeParallel":
+		BulkInvokeParallel(contract, *file)
 	case "Invoke":
 		Invoke(contract, *file)
 	case "getHistoryForAsset": // Add a new case for the new function
 		getHistoryForAsset(contract, *key)
-		// case "getHistoryForAssets": // Add a new case for the new function
-		// 	getHistoryForAssets(contract, *key)
+	case "pointQuery":
+		pointQuery(contract, *key, *version)
+	case "versionQuery":
+		versionQuery(contract, *key, *start, *end)
 	}
 
 }
 
 func BulkInvoke(contract *gateway.Contract, fileUrl string) {
+	if fileUrl == "" || !filepath.IsAbs(fileUrl) {
+		log.Fatalln("File URL must be provided and must be an absolute path")
+
+	}
+
+	jsonData, err := ioutil.ReadFile(fileUrl)
+	if err != nil {
+		log.Fatalf("error while reading json file: %s", err)
+
+	}
+
+	var table Table
+	if err := json.Unmarshal([]byte(jsonData), &table); err != nil {
+		log.Fatalf("Failed to unmarshal JSON: %s", err)
+	}
+
+	orders := table.Table
+
+	startTime := time.Now()
+	log.Printf("Starting bulk transaction at time: %s\n", startTime.Format(time.UnixDate))
+
+	// Split orders into chunks of size 2500
+	chunkSize := 2500
+	for i := 0; i < len(orders); i += chunkSize {
+		chunkTime := time.Now()
+
+		chunk := orders[i:func() int {
+			if i+chunkSize > len(orders) {
+				return len(orders)
+			}
+			return i + chunkSize
+		}()]
+
+		/*if i/chunkSize+1 == 501 {
+			break
+		}*/
+
+		chunkBytes, err := json.Marshal(chunk)
+		if err != nil {
+			log.Fatalf("Failed to marshal JSON: %s", err)
+		}
+
+		_, err = contract.SubmitTransaction("CreateBulk", string(chunkBytes))
+		if err != nil {
+			log.Fatalf("Failed to submit transaction: %s\n", err)
+		}
+
+		endTime := time.Now()
+		executionTime := endTime.Sub(chunkTime).Seconds()
+		log.Printf("Execution Time: %f sec at chunk %d", executionTime, i/chunkSize+1)
+	}
+
+	endTime := time.Now()
+	executionTime := endTime.Sub(startTime).Seconds()
+	log.Printf("Finished bulk transaction at time: %s\n", endTime.Format(time.UnixDate))
+	log.Printf("Total execution time is: %f sec\n", executionTime)
+
+}
+
+func BulkInvokeParallel(contract *gateway.Contract, fileUrl string) {
 	if fileUrl == "" || !filepath.IsAbs(fileUrl) {
 		log.Fatalln("File URL is not absolute.")
 	}
@@ -135,7 +210,7 @@ func BulkInvoke(contract *gateway.Contract, fileUrl string) {
 		wg.Add(1)
 		go func(data string) {
 			defer wg.Done()
-			_, err = contract.SubmitTransaction("CreateBulk", data)
+			_, err = contract.SubmitTransaction("CreateBulkParallel", data)
 			if err != nil {
 				log.Println(err)
 			}
@@ -193,14 +268,79 @@ func getHistoryForAsset(contract *gateway.Contract, key string) {
 	fmt.Println(string(result))
 }
 
-// func getHistoryForAssets(contract *gateway.Contract, key string) {
-// 	result, err := contract.EvaluateTransaction("getHistoryForAssets", key)
-// 	if err != nil {
-// 		log.Fatalf("Failed to evaluate transaction: %s\n", err)
-// 	}
+func pointQuery(contract *gateway.Contract, key string, version int) {
+	// TIMER START
+	startTime := time.Now()
+	// TIMER START
 
-// 	fmt.Println(string(result))
-// }
+	result, err := contract.EvaluateTransaction("getHistoryForAsset", key)
+	if err != nil {
+		log.Fatalf("Failed to evaluate transaction: %s\n", err)
+	}
+
+	var assets []Asset
+	err = json.Unmarshal(result, &assets)
+	if err != nil {
+		log.Fatalf("Failed to unmarshal JSON: %s\n", err)
+	}
+
+	// sort assets by timestamp
+	sort.Slice(assets, func(i, j int) bool {
+		return assets[i].Timestamp < assets[j].Timestamp
+	})
+
+	if version < 0 || version >= len(assets) {
+		log.Fatalf("Version number out of range: %d\n", version)
+	}
+
+	selectedAsset := assets[version]
+
+	assetJSON, err := json.Marshal(selectedAsset)
+	if err != nil {
+		log.Fatalf("Failed to marshal JSON: %s\n", err)
+	}
+	endTime := time.Now()
+	executionTime := endTime.Sub(startTime).Seconds()
+	fmt.Println(string(assetJSON))
+	log.Printf("Total execution time is: %f sec\n", executionTime)
+}
+
+// versionQuery calls GetHistoryForKey API to execute Version Query
+func versionQuery(contract *gateway.Contract, key string, start int, end int) {
+	// TIMER START
+	startTime := time.Now()
+	// TIMER START
+	result, err := contract.EvaluateTransaction("getHistoryForAsset", key)
+	if err != nil {
+		log.Fatalf("Failed to evaluate transaction: %s\n", err)
+	}
+
+	var assets []Asset
+	err = json.Unmarshal(result, &assets)
+	if err != nil {
+		log.Fatalf("Failed to unmarshal JSON: %s\n", err)
+	}
+
+	// sort assets by timestamp
+	sort.Slice(assets, func(i, j int) bool {
+		return assets[i].Timestamp < assets[j].Timestamp
+	})
+
+	if start < 0 || end < start || end >= len(assets) {
+		log.Fatalf("Start or end index out of range: start=%d, end=%d\n", start, end)
+	}
+
+	selectedAssets := assets[start : end+1]
+
+	assetsJSON, err := json.Marshal(selectedAssets)
+	if err != nil {
+		log.Fatalf("Failed to marshal JSON: %s\n", err)
+	}
+	endTime := time.Now()
+	executionTime := endTime.Sub(startTime).Seconds()
+	fmt.Println(string(assetsJSON))
+	log.Printf("Total execution time is: %f sec\n", executionTime)
+}
 
 func populateWallet(wallet *gateway.Wallet) error {
 	credPath := filepath.Join(
