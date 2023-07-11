@@ -2,11 +2,12 @@ package main
 
 import (
 	"encoding/json"
-	"github.com/hyperledger/fabric-chaincode-go/shim"
-	sc "github.com/hyperledger/fabric-protos-go/peer"
 	"log"
 	"strconv"
 	"time"
+
+	"github.com/hyperledger/fabric-chaincode-go/shim"
+	sc "github.com/hyperledger/fabric-protos-go/peer"
 )
 
 type Order struct {
@@ -29,7 +30,7 @@ type Order struct {
 }
 
 type QueryResult struct {
-	Key       string `json:"key"`
+	Key       string `json:"Key"`
 	Record    *Order `json:"record"`
 	Timestamp string `json:"timestamp"`
 }
@@ -44,7 +45,9 @@ func (sc *SmartContract) Init(stub shim.ChaincodeStubInterface) sc.Response {
 
 func (sc *SmartContract) Invoke(stub shim.ChaincodeStubInterface) sc.Response {
 
+	// Retrieve the requested Smart Contract function and arguments
 	function, args := stub.GetFunctionAndParameters()
+	// Route to the appropriate handler function to interact with the ledger appropriately
 	switch function {
 	case "InitLedger":
 		return sc.InitLedger(stub)
@@ -56,6 +59,8 @@ func (sc *SmartContract) Invoke(stub shim.ChaincodeStubInterface) sc.Response {
 		return sc.Create(stub, args)
 	case "getHistoryForAsset":
 		return sc.getHistoryForAsset(stub, args)
+	case "getHistoryForAssets":
+		return sc.getHistoryForAssets(stub, args)
 	default:
 		return shim.Error("Invalid Smart Contract function name.")
 	}
@@ -88,6 +93,7 @@ func (sc *SmartContract) Create(stub shim.ChaincodeStubInterface, args []string)
 
 }
 
+// Create a new key-value pair and send to state database
 func (sc *SmartContract) CreateBulk(stub shim.ChaincodeStubInterface, args []string) sc.Response {
 	buffer := args[0]
 
@@ -103,6 +109,8 @@ func (sc *SmartContract) CreateBulk(stub shim.ChaincodeStubInterface, args []str
 
 		orderKey := strconv.FormatInt(int64(order.L_ORDERKEY), 10)
 
+		// Fabric key must be a string
+		//fmt.Sprintf("%d", order.L_ORDERKEY)
 		log.Printf("Appending order %s with part %d\n", orderKey, order.L_PARTKEY)
 		err = stub.PutState(orderKey, orderBytes)
 		if err != nil {
@@ -161,6 +169,39 @@ func (sc *SmartContract) getHistoryForAsset(stub shim.ChaincodeStubInterface, ar
 
 	historyAsBytes, _ := json.Marshal(history)
 	return shim.Success(historyAsBytes)
+}
+
+// getHistoryForAssets calls custom GetHistoryForKeys() API
+func (sc *SmartContract) getHistoryForAssets(stub shim.ChaincodeStubInterface, args []string) sc.Response {
+	if len(args) < 1 {
+		return shim.Error("Incorrect number of arguments. Expecting 1 or more")
+	}
+
+	// calling the GetHistoryForKeys() API with keys as args
+	historyIers, err := stub.GetHistoryForKeys(args)
+	if err != nil {
+		return shim.Error(err.Error())
+	}
+
+	var histories [][]QueryResult
+	for i, historyIer := range historyIers {
+		var history []QueryResult
+		for historyIer.HasNext() {
+			historyData, err := historyIer.Next()
+			if err != nil {
+				return shim.Error(err.Error())
+			}
+
+			var order Order
+			json.Unmarshal(historyData.Value, &order)
+
+			history = append(history, QueryResult{Key: historyData.TxId, Record: &order})
+		}
+		histories[i] = history
+	}
+
+	historiesAsBytes, _ := json.Marshal(histories)
+	return shim.Success(historiesAsBytes)
 }
 
 func main() {
