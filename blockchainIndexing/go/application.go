@@ -17,6 +17,12 @@ import (
 	"github.com/hyperledger/fabric-sdk-go/pkg/gateway"
 )
 
+type Asset struct {
+	Key       string                 `json:"key"`
+	Record    map[string]interface{} `json:"record"`
+	Timestamp string                 `json:"timestamp"`
+}
+
 type Table struct {
 	Table []Order `json:"table"`
 }
@@ -38,12 +44,6 @@ type Order struct {
 	L_SHIPINSTRUCT  string  `json:"L_SHIPINSTRUCT"`
 	L_SHIPMODE      string  `json:"L_SHIPMODE"`
 	L_COMMENT       string  `json:"L_COMMENT"`
-}
-
-type Asset struct {
-	Key       string                 `json:"key"`
-	Record    map[string]interface{} `json:"record"`
-	Timestamp string                 `json:"timestamp"`
 }
 
 func main() {
@@ -108,6 +108,8 @@ func main() {
 		Invoke(contract, *file)
 	case "getHistoryForAsset": // Add a new case for the new function
 		getHistoryForAsset(contract, *key)
+	case "getHistoryForAssets": // Add a new case for the new function
+		getHistoryForAssets(contract, *key)
 	case "pointQuery":
 		pointQuery(contract, *key, *version)
 	case "versionQuery":
@@ -261,6 +263,15 @@ func Invoke(contract *gateway.Contract, fileUrl string) {
 // getHistoryForAsset calls GetHistoryForKey API
 func getHistoryForAsset(contract *gateway.Contract, key string) {
 	result, err := contract.EvaluateTransaction("getHistoryForAsset", key)
+	if err != nil {
+		log.Fatalf("Failed to evaluate transaction: %s\n", err)
+	}
+
+	fmt.Println(string(result))
+}
+
+func getHistoryForAssets(contract *gateway.Contract, key string) {
+	result, err := contract.EvaluateTransaction("getHistoryForAssets", key)
 	if err != nil {
 		log.Fatalf("Failed to evaluate transaction: %s\n", err)
 	}
