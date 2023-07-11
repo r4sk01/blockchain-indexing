@@ -25,7 +25,7 @@ services:
 
     #image: hyperledger/fabric-rvp-orderer:2.2.3
 
-    image: hyperledger/fabric-orderer:2.2.11
+    image: hyperledger/fabric-orderer:2.3.3
     environment:
       - FABRIC_LOGGING_SPEC=INFO
       - ORDERER_GENERAL_LISTENADDRESS=0.0.0.0
@@ -67,7 +67,7 @@ services:
 
     #image: hyperledger/fabric-rvp-peer:2.2.3
 
-    image: hyperledger/fabric-peer:2.2.11
+    image: hyperledger/fabric-peer:2.3.3
     environment:
       #Generic peer variables
       - CORE_VM_ENDPOINT=unix:///host/var/run/docker.sock
@@ -96,9 +96,7 @@ services:
         - ../organizations/peerOrganizations/org1.example.com/peers/peer0.org1.example.com/tls:/etc/hyperledger/fabric/tls
         - ../config:/etc/hyperledger/fabric
         - peer0.org1.example.com:/var/hyperledger/production
-        - ../keyValueStorageSAI:/var/SAIStorage
-        - ../keyValueStorageLI1:/var/LI-Storage
-        - ../keyValueStorageGI1:/var/GI-Storage
+        - ../peerStorage1:/var
     working_dir: /opt/gopath/src/github.com/hyperledger/fabric/peer
     command: peer node start
     ports:
@@ -116,7 +114,7 @@ services:
 
     #image: hyperledger/fabric-rvp-peer:2.2.3
 
-    image: hyperledger/fabric-peer:2.2.11
+    image: hyperledger/fabric-peer:2.3.3
     environment:
       #Generic peer variables
       - CORE_VM_ENDPOINT=unix:///host/var/run/docker.sock
@@ -145,9 +143,7 @@ services:
         - ../organizations/peerOrganizations/org2.example.com/peers/peer0.org2.example.com/tls:/etc/hyperledger/fabric/tls
         - ../config:/etc/hyperledger/fabric
         - peer0.org2.example.com:/var/hyperledger/production
-        - ../keyValueStorageSAI:/var/SAIStorage
-        - ../keyValueStorageLI2:/var/LI-Storage
-        - ../keyValueStorageGI2:/var/GI-Storage
+        - ../peerStorage2:/var
     working_dir: /opt/gopath/src/github.com/hyperledger/fabric/peer
     command: peer node start
     ports:
