@@ -161,7 +161,7 @@ func (sc *SmartContract) getHistoryForAsset(stub shim.ChaincodeStubInterface, ar
 		var order Order
 		json.Unmarshal(historyData.Value, &order)
 
-		// Convert google.protobuf.Timestamp to string
+		//Convert google.protobuf.Timestamp to string
 		timestamp := time.Unix(historyData.Timestamp.Seconds, int64(historyData.Timestamp.Nanos)).String()
 
 		history = append(history, QueryResult{Key: historyData.TxId, Record: &order, Timestamp: timestamp})
@@ -184,7 +184,7 @@ func (sc *SmartContract) getHistoryForAssets(stub shim.ChaincodeStubInterface, a
 	}
 
 	var histories [][]QueryResult
-	for i, historyIer := range historyIers {
+	for _, historyIer := range historyIers {
 		var history []QueryResult
 		for historyIer.HasNext() {
 			historyData, err := historyIer.Next()
@@ -197,7 +197,7 @@ func (sc *SmartContract) getHistoryForAssets(stub shim.ChaincodeStubInterface, a
 
 			history = append(history, QueryResult{Key: historyData.TxId, Record: &order})
 		}
-		histories[i] = history
+		histories = append(histories, history)
 	}
 
 	historiesAsBytes, _ := json.Marshal(histories)

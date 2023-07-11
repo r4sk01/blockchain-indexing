@@ -10,6 +10,7 @@ import (
 	"os"
 	"path/filepath"
 	"sort"
+	"strings"
 	"sync"
 	"time"
 
@@ -270,8 +271,9 @@ func getHistoryForAsset(contract *gateway.Contract, key string) {
 	fmt.Println(string(result))
 }
 
-func getHistoryForAssets(contract *gateway.Contract, key string) {
-	result, err := contract.EvaluateTransaction("getHistoryForAssets", key)
+func getHistoryForAssets(contract *gateway.Contract, keys string) {
+	keys_list := strings.Split(keys, ",")
+	result, err := contract.EvaluateTransaction("getHistoryForAssets", keys_list...)
 	if err != nil {
 		log.Fatalf("Failed to evaluate transaction: %s\n", err)
 	}

@@ -28,22 +28,22 @@ const _ = proto.ProtoPackageIsVersion3 // please upgrade the proto package
 // When an endorser receives a SignedProposal message, it should verify the
 // signature over the proposal bytes. This verification requires the following
 // steps:
-// 1. Verification of the validity of the certificate that was used to produce
-//    the signature.  The certificate will be available once proposalBytes has
-//    been unmarshalled to a Proposal message, and Proposal.header has been
-//    unmarshalled to a Header message. While this unmarshalling-before-verifying
-//    might not be ideal, it is unavoidable because i) the signature needs to also
-//    protect the signing certificate; ii) it is desirable that Header is created
-//    once by the client and never changed (for the sake of accountability and
-//    non-repudiation). Note also that it is actually impossible to conclusively
-//    verify the validity of the certificate included in a Proposal, because the
-//    proposal needs to first be endorsed and ordered with respect to certificate
-//    expiration transactions. Still, it is useful to pre-filter expired
-//    certificates at this stage.
-// 2. Verification that the certificate is trusted (signed by a trusted CA) and
-//    that it is allowed to transact with us (with respect to some ACLs);
-// 3. Verification that the signature on proposalBytes is valid;
-// 4. Detect replay attacks;
+//  1. Verification of the validity of the certificate that was used to produce
+//     the signature.  The certificate will be available once proposalBytes has
+//     been unmarshalled to a Proposal message, and Proposal.header has been
+//     unmarshalled to a Header message. While this unmarshalling-before-verifying
+//     might not be ideal, it is unavoidable because i) the signature needs to also
+//     protect the signing certificate; ii) it is desirable that Header is created
+//     once by the client and never changed (for the sake of accountability and
+//     non-repudiation). Note also that it is actually impossible to conclusively
+//     verify the validity of the certificate included in a Proposal, because the
+//     proposal needs to first be endorsed and ordered with respect to certificate
+//     expiration transactions. Still, it is useful to pre-filter expired
+//     certificates at this stage.
+//  2. Verification that the certificate is trusted (signed by a trusted CA) and
+//     that it is allowed to transact with us (with respect to some ACLs);
+//  3. Verification that the signature on proposalBytes is valid;
+//  4. Detect replay attacks;
 type SignedProposal struct {
 	// The bytes of Proposal
 	ProposalBytes []byte `protobuf:"bytes,1,opt,name=proposal_bytes,json=proposalBytes,proto3" json:"proposal_bytes,omitempty"`
@@ -96,24 +96,24 @@ func (m *SignedProposal) GetSignature() []byte {
 }
 
 // A Proposal is sent to an endorser for endorsement.  The proposal contains:
-// 1. A header which should be unmarshaled to a Header message.  Note that
-//    Header is both the header of a Proposal and of a Transaction, in that i)
-//    both headers should be unmarshaled to this message; and ii) it is used to
-//    compute cryptographic hashes and signatures.  The header has fields common
-//    to all proposals/transactions.  In addition it has a type field for
-//    additional customization. An example of this is the ChaincodeHeaderExtension
-//    message used to extend the Header for type CHAINCODE.
-// 2. A payload whose type depends on the header's type field.
-// 3. An extension whose type depends on the header's type field.
+//  1. A header which should be unmarshaled to a Header message.  Note that
+//     Header is both the header of a Proposal and of a Transaction, in that i)
+//     both headers should be unmarshaled to this message; and ii) it is used to
+//     compute cryptographic hashes and signatures.  The header has fields common
+//     to all proposals/transactions.  In addition it has a type field for
+//     additional customization. An example of this is the ChaincodeHeaderExtension
+//     message used to extend the Header for type CHAINCODE.
+//  2. A payload whose type depends on the header's type field.
+//  3. An extension whose type depends on the header's type field.
 //
 // Let us see an example. For type CHAINCODE (see the Header message),
 // we have the following:
-// 1. The header is a Header message whose extensions field is a
-//    ChaincodeHeaderExtension message.
-// 2. The payload is a ChaincodeProposalPayload message.
-// 3. The extension is a ChaincodeAction that might be used to ask the
-//    endorsers to endorse a specific ChaincodeAction, thus emulating the
-//    submitting peer model.
+//  1. The header is a Header message whose extensions field is a
+//     ChaincodeHeaderExtension message.
+//  2. The payload is a ChaincodeProposalPayload message.
+//  3. The extension is a ChaincodeAction that might be used to ask the
+//     endorsers to endorse a specific ChaincodeAction, thus emulating the
+//     submitting peer model.
 type Proposal struct {
 	// The header of the proposal. It is the bytes of the Header
 	Header []byte `protobuf:"bytes,1,opt,name=header,proto3" json:"header,omitempty"`
@@ -275,14 +275,13 @@ func (m *ChaincodeProposalPayload) GetTransientMap() map[string][]byte {
 	return nil
 }
 
-// ChaincodeAction contains the actions the events generated by the execution
-// of the chaincode.
+// ChaincodeAction contains the executed chaincode results, response, and event.
 type ChaincodeAction struct {
 	// This field contains the read set and the write set produced by the
 	// chaincode executing this invocation.
 	Results []byte `protobuf:"bytes,1,opt,name=results,proto3" json:"results,omitempty"`
-	// This field contains the events generated by the chaincode executing this
-	// invocation.
+	// This field contains the event generated by the chaincode.
+	// Only a single marshaled ChaincodeEvent is included.
 	Events []byte `protobuf:"bytes,2,opt,name=events,proto3" json:"events,omitempty"`
 	// This field contains the result of executing this invocation.
 	Response *Response `protobuf:"bytes,3,opt,name=response,proto3" json:"response,omitempty"`
