@@ -107,10 +107,12 @@ func main() {
 		BulkInvokeParallel(contract, *file)
 	case "Invoke":
 		Invoke(contract, *file)
-	case "getHistoryForAsset": // Add a new case for the new function
+	case "getHistoryForAsset":
 		getHistoryForAsset(contract, *key)
-	case "getHistoryForAssets": // Add a new case for the new function
+	case "getHistoryForAssets":
 		getHistoryForAssets(contract, *key)
+	case "getHistoryForAssetsOld":
+		getHistoryForAssetsOld(contract, *key)
 	case "pointQuery":
 		pointQuery(contract, *key, *version)
 	case "versionQuery":
@@ -153,10 +155,6 @@ func BulkInvoke(contract *gateway.Contract, fileUrl string) {
 			return i + chunkSize
 		}()]
 
-		/*if i/chunkSize+1 == 501 {
-			break
-		}*/
-
 		chunkBytes, err := json.Marshal(chunk)
 		if err != nil {
 			log.Fatalf("Failed to marshal JSON: %s", err)
@@ -194,10 +192,15 @@ func BulkInvokeParallel(contract *gateway.Contract, fileUrl string) {
 
 	chunkSize := 500
 
-	// Create a wait group to synchronize goroutines
 	var wg sync.WaitGroup
 
+	// Create a buffered channel to limit number of goroutines
+	sem := make(chan bool, 10)
+
 	for i := 0; i < len(t.Table); i += chunkSize {
+
+		log.Printf("Processing chunk starting at index %d\n", i)
+
 		end := i + chunkSize
 		if end > len(t.Table) {
 			end = len(t.Table)
@@ -211,17 +214,26 @@ func BulkInvokeParallel(contract *gateway.Contract, fileUrl string) {
 		}
 
 		wg.Add(1)
+		// Before spawning a goroutine, acquire a slot in the channel
+		sem <- true
 		go func(data string) {
 			defer wg.Done()
 			_, err = contract.SubmitTransaction("CreateBulkParallel", data)
 			if err != nil {
 				log.Println(err)
 			}
+			// Once the transaction is complete, release the slot
+			<-sem
 		}(string(chunkBytes))
 	}
 
 	// Wait for all goroutines to finish
 	wg.Wait()
+
+	// Drain the semaphore channel
+	for i := 0; i < cap(sem); i++ {
+		sem <- true
+	}
 }
 
 func Invoke(contract *gateway.Contract, fileUrl string) {
@@ -263,28 +275,56 @@ func Invoke(contract *gateway.Contract, fileUrl string) {
 
 // getHistoryForAsset calls GetHistoryForKey API
 func getHistoryForAsset(contract *gateway.Contract, key string) {
+	startTime := time.Now()
+
 	result, err := contract.EvaluateTransaction("getHistoryForAsset", key)
 	if err != nil {
 		log.Fatalf("Failed to evaluate transaction: %s\n", err)
 	}
 
+	endTime := time.Now()
+	executionTime := endTime.Sub(startTime).Seconds()
+
 	fmt.Println(string(result))
+	log.Printf("Total execution time is: %f sec\n", executionTime)
 }
 
 func getHistoryForAssets(contract *gateway.Contract, keys string) {
+	startTime := time.Now()
+
 	keys_list := strings.Split(keys, ",")
 	result, err := contract.EvaluateTransaction("getHistoryForAssets", keys_list...)
 	if err != nil {
 		log.Fatalf("Failed to evaluate transaction: %s\n", err)
 	}
 
+	endTime := time.Now()
+	executionTime := endTime.Sub(startTime).Seconds()
+
 	fmt.Println(string(result))
+	log.Printf("Total execution time is: %f sec\n", executionTime)
+}
+
+func getHistoryForAssetsOld(contract *gateway.Contract, keys string) {
+	startTime := time.Now()
+
+	keys_list := strings.Split(keys, ",")
+	for _, key := range keys_list {
+		result, err := contract.EvaluateTransaction("getHistoryForAsset", key)
+		if err != nil {
+			log.Fatalf("Failed to evaluate transaction: %s\n", err)
+		}
+		fmt.Println(string(result))
+	}
+
+	endTime := time.Now()
+	executionTime := endTime.Sub(startTime).Seconds()
+
+	log.Printf("Total execution time is: %f sec\n", executionTime)
 }
 
 func pointQuery(contract *gateway.Contract, key string, version int) {
-	// TIMER START
 	startTime := time.Now()
-	// TIMER START
 
 	result, err := contract.EvaluateTransaction("getHistoryForAsset", key)
 	if err != nil {
@@ -297,7 +337,6 @@ func pointQuery(contract *gateway.Contract, key string, version int) {
 		log.Fatalf("Failed to unmarshal JSON: %s\n", err)
 	}
 
-	// sort assets by timestamp
 	sort.Slice(assets, func(i, j int) bool {
 		return assets[i].Timestamp < assets[j].Timestamp
 	})
@@ -320,9 +359,8 @@ func pointQuery(contract *gateway.Contract, key string, version int) {
 
 // versionQuery calls GetHistoryForKey API to execute Version Query
 func versionQuery(contract *gateway.Contract, key string, start int, end int) {
-	// TIMER START
 	startTime := time.Now()
-	// TIMER START
+
 	result, err := contract.EvaluateTransaction("getHistoryForAsset", key)
 	if err != nil {
 		log.Fatalf("Failed to evaluate transaction: %s\n", err)
@@ -334,7 +372,6 @@ func versionQuery(contract *gateway.Contract, key string, start int, end int) {
 		log.Fatalf("Failed to unmarshal JSON: %s\n", err)
 	}
 
-	// sort assets by timestamp
 	sort.Slice(assets, func(i, j int) bool {
 		return assets[i].Timestamp < assets[j].Timestamp
 	})
