@@ -171,6 +171,39 @@ func (sc *SmartContract) getHistoryForAsset(stub shim.ChaincodeStubInterface, ar
 	return shim.Success(historyAsBytes)
 }
 
+// // getHistoryForAssets calls custom GetHistoryForKeys() API
+// func (sc *SmartContract) getHistoryForAssets(stub shim.ChaincodeStubInterface, args []string) sc.Response {
+// 	if len(args) < 1 {
+// 		return shim.Error("Incorrect number of arguments. Expecting 1 or more")
+// 	}
+
+// 	// calling the GetHistoryForKeys() API with keys as args
+// 	historyIers, err := stub.GetHistoryForKeys(args)
+// 	if err != nil {
+// 		return shim.Error(err.Error())
+// 	}
+
+// 	var histories [][]QueryResult
+// 	for _, historyIer := range historyIers {
+// 		var history []QueryResult
+// 		for historyIer.HasNext() {
+// 			historyData, err := historyIer.Next()
+// 			if err != nil {
+// 				return shim.Error(err.Error())
+// 			}
+
+// 			var order Order
+// 			json.Unmarshal(historyData.Value, &order)
+
+// 			history = append(history, QueryResult{Key: historyData.TxId, Record: &order})
+// 		}
+// 		histories = append(histories, history)
+// 	}
+
+// 	historiesAsBytes, _ := json.Marshal(histories)
+// 	return shim.Success(historiesAsBytes)
+// }
+
 // getHistoryForAssets calls custom GetHistoryForKeys() API
 func (sc *SmartContract) getHistoryForAssets(stub shim.ChaincodeStubInterface, args []string) sc.Response {
 	if len(args) < 1 {
@@ -178,30 +211,29 @@ func (sc *SmartContract) getHistoryForAssets(stub shim.ChaincodeStubInterface, a
 	}
 
 	// calling the GetHistoryForKeys() API with keys as args
-	historyIers, err := stub.GetHistoryForKeys(args)
+	historyIer, err := stub.GetHistoryForKeys(args) // historyIters in old version
 	if err != nil {
 		return shim.Error(err.Error())
 	}
 
-	var histories [][]QueryResult
-	for _, historyIer := range historyIers {
-		var history []QueryResult
-		for historyIer.HasNext() {
-			historyData, err := historyIer.Next()
-			if err != nil {
-				return shim.Error(err.Error())
-			}
-
-			var order Order
-			json.Unmarshal(historyData.Value, &order)
-
-			history = append(history, QueryResult{Key: historyData.TxId, Record: &order})
+	var history []QueryResult
+	for historyIer.HasNext() {
+		historyData, err := historyIer.Next()
+		if err != nil {
+			return shim.Error(err.Error())
 		}
-		histories = append(histories, history)
+
+		var order Order
+		json.Unmarshal(historyData.Value, &order)
+
+		//Convert google.protobuf.Timestamp to string
+		timestamp := time.Unix(historyData.Timestamp.Seconds, int64(historyData.Timestamp.Nanos)).String()
+
+		history = append(history, QueryResult{Key: historyData.TxId, Record: &order, Timestamp: timestamp})
 	}
 
-	historiesAsBytes, _ := json.Marshal(histories)
-	return shim.Success(historiesAsBytes)
+	historyAsBytes, _ := json.Marshal(history)
+	return shim.Success(historyAsBytes)
 }
 
 func main() {
