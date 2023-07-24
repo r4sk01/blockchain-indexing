@@ -111,6 +111,8 @@ func main() {
 		getHistoryForAsset(contract, *key)
 	case "getHistoryForAssets":
 		getHistoryForAssets(contract, *key)
+	case "getHistoryForAssetRange": // Add a new case for the new function
+		getHistoryForAssetRange(contract, *key)
 	case "getHistoryForAssetsOld":
 		getHistoryForAssetsOld(contract, *key)
 	case "pointQuery":
@@ -321,6 +323,16 @@ func getHistoryForAssetsOld(contract *gateway.Contract, keys string) {
 	executionTime := endTime.Sub(startTime).Seconds()
 
 	log.Printf("Total execution time is: %f sec\n", executionTime)
+}
+
+func getHistoryForAssetRange(contract *gateway.Contract, keys string) {
+	keys_list := strings.Split(keys, ",")
+	result, err := contract.EvaluateTransaction("getHistoryForAssetRange", keys_list...)
+	if err != nil {
+		log.Fatalf("Failed to evaluate transaction: %s\n", err)
+	}
+
+	fmt.Println(string(result))
 }
 
 func pointQuery(contract *gateway.Contract, key string, version int) {

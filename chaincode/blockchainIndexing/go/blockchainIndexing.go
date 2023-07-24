@@ -61,6 +61,8 @@ func (sc *SmartContract) Invoke(stub shim.ChaincodeStubInterface) sc.Response {
 		return sc.getHistoryForAsset(stub, args)
 	case "getHistoryForAssets":
 		return sc.getHistoryForAssets(stub, args)
+	case "getHistoryForAssetRange":
+		return sc.getHistoryForAssetRange(stub, args)
 	default:
 		return shim.Error("Invalid Smart Contract function name.")
 	}
@@ -178,30 +180,89 @@ func (sc *SmartContract) getHistoryForAssets(stub shim.ChaincodeStubInterface, a
 	}
 
 	// calling the GetHistoryForKeys() API with keys as args
-	historyIers, err := stub.GetHistoryForKeys(args)
+	historyIer, err := stub.GetHistoryForKeys(args) // historyIters in old version
 	if err != nil {
 		return shim.Error(err.Error())
 	}
 
-	var histories [][]QueryResult
-	for _, historyIer := range historyIers {
-		var history []QueryResult
-		for historyIer.HasNext() {
-			historyData, err := historyIer.Next()
-			if err != nil {
-				return shim.Error(err.Error())
-			}
-
-			var order Order
-			json.Unmarshal(historyData.Value, &order)
-
-			history = append(history, QueryResult{Key: historyData.TxId, Record: &order})
+	var history []QueryResult
+	for historyIer.HasNext() {
+		historyData, err := historyIer.Next()
+		if err != nil {
+			return shim.Error(err.Error())
 		}
-		histories = append(histories, history)
+
+		var order Order
+		json.Unmarshal(historyData.Value, &order)
+
+		//Convert google.protobuf.Timestamp to string
+		timestamp := time.Unix(historyData.Timestamp.Seconds, int64(historyData.Timestamp.Nanos)).String()
+
+		history = append(history, QueryResult{Key: historyData.TxId, Record: &order, Timestamp: timestamp})
 	}
 
-	historiesAsBytes, _ := json.Marshal(histories)
-	return shim.Success(historiesAsBytes)
+	// var histories [][]QueryResult
+	// for _, historyIer := range historyIers {
+	// 	var history []QueryResult
+	// 	for historyIer.HasNext() {
+	// 		historyData, err := historyIer.Next()
+	// 		if err != nil {
+	// 			return shim.Error(err.Error())
+	// 		}
+
+	// 		var order Order
+	// 		json.Unmarshal(historyData.Value, &order)
+
+	// 		history = append(history, QueryResult{Key: historyData.TxId, Record: &order})
+	// 	}
+	// 	histories = append(histories, history)
+	// }
+
+	// historiesAsBytes, _ := json.Marshal(histories)
+	// return shim.Success(historiesAsBytes)
+
+	historyAsBytes, _ := json.Marshal(history)
+	return shim.Success(historyAsBytes)
+}
+
+func (sc *SmartContract) getHistoryForAssetRange(stub shim.ChaincodeStubInterface, args []string) sc.Response {
+	if len(args) < 1 {
+		return shim.Error("Incorrect number of arguments. Expecting 1 or more")
+	}
+
+	start, _ := strconv.Atoi(args[0])
+	end, _ := strconv.Atoi(args[1])
+	size := end - start + 1
+	keys := make([]string, size)
+
+	for i := range keys {
+		keys[i] = strconv.Itoa(start + i)
+	}
+
+	// calling the GetHistoryForKeys() API with keys as args
+	historyIer, err := stub.GetHistoryForKeys(keys) // historyIters in old version
+	if err != nil {
+		return shim.Error(err.Error())
+	}
+
+	var history []QueryResult
+	for historyIer.HasNext() {
+		historyData, err := historyIer.Next()
+		if err != nil {
+			return shim.Error(err.Error())
+		}
+
+		var order Order
+		json.Unmarshal(historyData.Value, &order)
+
+		//Convert google.protobuf.Timestamp to string
+		timestamp := time.Unix(historyData.Timestamp.Seconds, int64(historyData.Timestamp.Nanos)).String()
+
+		history = append(history, QueryResult{Key: historyData.TxId, Record: &order, Timestamp: timestamp})
+	}
+
+	historyAsBytes, _ := json.Marshal(history)
+	return shim.Success(historyAsBytes)
 }
 
 func main() {
