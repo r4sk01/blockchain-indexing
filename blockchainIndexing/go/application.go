@@ -10,6 +10,7 @@ import (
 	"os"
 	"path/filepath"
 	"sort"
+	"strconv"
 	"strings"
 	"sync"
 	"time"
@@ -326,8 +327,18 @@ func getHistoryForAssetsOld(contract *gateway.Contract, keys string) {
 }
 
 func getHistoryForAssetRange(contract *gateway.Contract, keys string) {
-	keys_list := strings.Split(keys, ",")
-	result, err := contract.EvaluateTransaction("getHistoryForAssetRange", keys_list...)
+	startEndKeys := strings.Split(keys, ",")
+
+	start, _ := strconv.Atoi(startEndKeys[0])
+	end, _ := strconv.Atoi(startEndKeys[1])
+	size := end - start + 1
+	keys_list := make([]string, size)
+
+	for i := range keys {
+		keys_list[i] = strconv.Itoa(start + i)
+	}
+
+	result, err := contract.EvaluateTransaction("getHistoryForAssets", keys_list...)
 	if err != nil {
 		log.Fatalf("Failed to evaluate transaction: %s\n", err)
 	}
