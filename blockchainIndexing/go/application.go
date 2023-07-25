@@ -334,7 +334,7 @@ func getHistoryForAssetRange(contract *gateway.Contract, keys string) {
 	size := end - start + 1
 	keys_list := make([]string, size)
 
-	for i := range keys {
+	for i := range keys_list {
 		keys_list[i] = strconv.Itoa(start + i)
 	}
 
