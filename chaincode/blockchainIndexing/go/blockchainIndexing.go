@@ -232,10 +232,12 @@ func (sc *SmartContract) getVersionForAsset(stub shim.ChaincodeStubInterface, ar
 
 	version, _ := strconv.ParseUint(args[1], 10, 64)
 
-	versionData, err := stub.GetVersionForKey(args[0], version)
+	versionIter, err := stub.GetVersionForKey(args[0], version)
 	if err != nil {
 		return shim.Error(err.Error())
 	}
+
+	versionData, err := versionIter.Next()
 
 	var order Order
 	json.Unmarshal(versionData.Value, &order) // .Value?
