@@ -116,6 +116,8 @@ func main() {
 		getHistoryForAssetRange(contract, *key)
 	case "getHistoryForAssetsOld":
 		getHistoryForAssetsOld(contract, *key)
+	case "pointQueryOld":
+		pointQueryOld(contract, *key, *version)
 	case "pointQuery":
 		pointQuery(contract, *key, *version)
 	case "versionQuery":
@@ -346,7 +348,7 @@ func getHistoryForAssetRange(contract *gateway.Contract, keys string) {
 	fmt.Println(string(result))
 }
 
-func pointQuery(contract *gateway.Contract, key string, version int) {
+func pointQueryOld(contract *gateway.Contract, key string, version int) {
 	startTime := time.Now()
 
 	result, err := contract.EvaluateTransaction("getHistoryForAsset", key)
@@ -369,6 +371,26 @@ func pointQuery(contract *gateway.Contract, key string, version int) {
 	}
 
 	selectedAsset := assets[version]
+
+	assetJSON, err := json.Marshal(selectedAsset)
+	if err != nil {
+		log.Fatalf("Failed to marshal JSON: %s\n", err)
+	}
+	endTime := time.Now()
+	executionTime := endTime.Sub(startTime).Seconds()
+	fmt.Println(string(assetJSON))
+	log.Printf("Total execution time is: %f sec\n", executionTime)
+}
+
+func pointQuery(contract *gateway.Contract, key string, version int) {
+	startTime := time.Now()
+
+	versionString := strconv.Itoa(version)
+
+	selectedAsset, err := contract.EvaluateTransaction("getVersionForAsset", key, versionString)
+	if err != nil {
+		log.Fatalf("Failed to evaluate transaction: %s\n", err)
+	}
 
 	assetJSON, err := json.Marshal(selectedAsset)
 	if err != nil {

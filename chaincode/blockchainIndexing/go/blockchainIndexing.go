@@ -61,6 +61,8 @@ func (sc *SmartContract) Invoke(stub shim.ChaincodeStubInterface) sc.Response {
 		return sc.getHistoryForAsset(stub, args)
 	case "getHistoryForAssets":
 		return sc.getHistoryForAssets(stub, args)
+	case "getVersionForAsset":
+		return sc.getVersionForAsset(stub, args)
 	default:
 		return shim.Error("Invalid Smart Contract function name.")
 	}
@@ -221,6 +223,28 @@ func (sc *SmartContract) getHistoryForAssets(stub shim.ChaincodeStubInterface, a
 
 	historyAsBytes, _ := json.Marshal(history)
 	return shim.Success(historyAsBytes)
+}
+
+func (sc *SmartContract) getVersionForAsset(stub shim.ChaincodeStubInterface, args []string) sc.Response {
+	if len(args) != 2 {
+		return shim.Error("Incorrect number of arguments. Expecting 2")
+	}
+
+	version, _ := strconv.ParseUint(args[1], 10, 64)
+
+	versionData, err := stub.GetVersionForKey(args[0], version)
+	if err != nil {
+		return shim.Error(err.Error())
+	}
+
+	var order Order
+	json.Unmarshal(versionData.Value, &order) // .Value?
+
+	timestamp := time.Unix(versionData.Timestamp.Seconds, int64(versionData.Timestamp.Nanos)).String()
+	var result = QueryResult{Key: args[0], Record: &order, Timestamp: timestamp}
+
+	versionAsBytes, _ := json.Marshal(result)
+	return shim.Success(versionAsBytes)
 }
 
 func main() {
