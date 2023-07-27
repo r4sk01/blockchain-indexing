@@ -18,16 +18,16 @@ _Application was tested on Linux Ubuntu_
    4. To verify the result of previous step, you may execute:  
       `docker images`  
       Output of the previous command should have the following:  
-      `hyperledger/fabric-orderer       2.3                              772d36cc6a59   16 hours ago    37.3MB`  
-      `hyperledger/fabric-orderer       2.3.3                            772d36cc6a59   16 hours ago    37.3MB`  
-      `hyperledger/fabric-orderer       amd64-2.3.3-snapshot-946ed1bab   772d36cc6a59   16 hours ago    37.3MB`  
-      `hyperledger/fabric-orderer       latest                           772d36cc6a59   16 hours ago    37.3MB`  
-      `<none>                           <none>                           dce59bae6f09   16 hours ago    638MB`  
-      `hyperledger/fabric-peer          2.3                              f42ae35191cb   16 hours ago    56MB`  
-      `hyperledger/fabric-peer          2.3.3                            f42ae35191cb   16 hours ago    56MB`  
-      `hyperledger/fabric-peer          amd64-2.3.3-snapshot-946ed1bab   f42ae35191cb   16 hours ago    56MB`  
-      `hyperledger/fabric-peer          latest                           f42ae35191cb   16 hours ago    56MB`  
-      `<none>                           <none>                           da030ac0fa2b   16 hours ago    710MB`  
+      `hyperledger/fabric-orderer   2.3                             772d36cc6a59  16 hours ago  37.3MB`  
+      `hyperledger/fabric-orderer   2.3.3                           772d36cc6a59  16 hours ago  37.3MB`  
+      `hyperledger/fabric-orderer   amd64-2.3.3-snapshot-946ed1bab  772d36cc6a59  16 hours ago  37.3MB`  
+      `hyperledger/fabric-orderer   latest                          772d36cc6a59  16 hours ago  37.3MB`  
+      `<none>                       <none>                          dce59bae6f09  16 hours ago  638MB`  
+      `hyperledger/fabric-peer      2.3                             f42ae35191cb  16 hours ago  56MB`  
+      `hyperledger/fabric-peer      2.3.3                           f42ae35191cb  16 hours ago  56MB`  
+      `hyperledger/fabric-peer      amd64-2.3.3-snapshot-946ed1bab  f42ae35191cb  16 hours ago  56MB`  
+      `hyperledger/fabric-peer      latest                          f42ae35191cb  16 hours ago  56MB`  
+      `<none>                       <none>                          da030ac0fa2b  16 hours ago  710MB`  
 2. Substitute original HLF images with custom ones in network.  
    1. Make sure to clone the current [blockchain-indexing](https://github.com/r4sk01/blockchain-indexing) repository to your local machine.  
    2. Switch to the [ab-getHistoryForKeys](https://github.com/r4sk01/blockchain-indexing/tree/ab-getHistoryForKeys) branch.  
