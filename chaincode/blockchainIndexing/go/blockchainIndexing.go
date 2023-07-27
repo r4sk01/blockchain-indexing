@@ -237,16 +237,23 @@ func (sc *SmartContract) getVersionForAsset(stub shim.ChaincodeStubInterface, ar
 		return shim.Error(err.Error())
 	}
 
-	versionData, err := versionIter.Next()
+	if versionIter.HasNext() {
+		versionData, err := versionIter.Next()
+		if err != nil {
+			return shim.Error(err.Error())
+		}
 
-	var order Order
-	json.Unmarshal(versionData.Value, &order) // .Value?
+		var order Order
+		json.Unmarshal(versionData.Value, &order) // .Value?
 
-	timestamp := time.Unix(versionData.Timestamp.Seconds, int64(versionData.Timestamp.Nanos)).String()
-	var result = QueryResult{Key: args[0], Record: &order, Timestamp: timestamp}
+		timestamp := time.Unix(versionData.Timestamp.Seconds, int64(versionData.Timestamp.Nanos)).String()
+		var result = QueryResult{Key: args[0], Record: &order, Timestamp: timestamp}
 
-	versionAsBytes, _ := json.Marshal(result)
-	return shim.Success(versionAsBytes)
+		versionAsBytes, _ := json.Marshal(result)
+		return shim.Success(versionAsBytes)
+	}
+
+	return shim.Error("Version not found")
 }
 
 func main() {
