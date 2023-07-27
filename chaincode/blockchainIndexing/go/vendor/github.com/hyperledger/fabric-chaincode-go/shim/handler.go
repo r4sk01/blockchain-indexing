@@ -597,7 +597,7 @@ func (h *Handler) handleGetVersionForKey(key string, version uint64, channelID s
 	}
 	defer h.deleteResponseChannel(channelID, txid)
 
-	// Send GET_HISTORY_FOR_KEY message to peer chaincode support
+	// Send GET_VERSION_FOR_KEY message to peer chaincode support
 	payloadBytes := marshalOrPanic(&pb.GetVersionForKey{Key: key, Version: version})
 
 	msg := &pb.ChaincodeMessage{Type: pb.ChaincodeMessage_GET_VERSION_FOR_KEY, Payload: payloadBytes, Txid: txid, ChannelId: channelID}
