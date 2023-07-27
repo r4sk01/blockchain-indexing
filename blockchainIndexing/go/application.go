@@ -96,8 +96,8 @@ func main() {
 	transaction := flag.String("t", "defaultQuery", "Choose a transaction to run")
 	file := flag.String("f", "~", "file path for json data")
 	key := flag.String("k", "", "key for getHistoryForAsset")
-	version := flag.Int("version", 0, "version to query for point query")
-	start := flag.Int("start", 0, "start version for version query")
+	version := flag.Int("v", 1, "version to query for point query")
+	start := flag.Int("start", 1, "start version for version query")
 	end := flag.Int("end", 1, "end version for version query")
 	flag.Parse()
 
@@ -366,11 +366,11 @@ func pointQueryOld(contract *gateway.Contract, key string, version int) {
 		return assets[i].Timestamp < assets[j].Timestamp
 	})
 
-	if version < 0 || version >= len(assets) {
+	if version < 0 || version > len(assets) {
 		log.Fatalf("Version number out of range: %d\n", version)
 	}
 
-	selectedAsset := assets[version]
+	selectedAsset := assets[version-1]
 
 	assetJSON, err := json.Marshal(selectedAsset)
 	if err != nil {
@@ -383,22 +383,21 @@ func pointQueryOld(contract *gateway.Contract, key string, version int) {
 }
 
 func pointQuery(contract *gateway.Contract, key string, version int) {
+
+	fmt.Printf("Querying for version %d of key %s\n", version, key)
 	startTime := time.Now()
 
 	versionString := strconv.Itoa(version)
 
-	selectedAsset, err := contract.EvaluateTransaction("getVersionForAsset", key, versionString)
+	result, err := contract.EvaluateTransaction("getVersionForAsset", key, versionString)
 	if err != nil {
 		log.Fatalf("Failed to evaluate transaction: %s\n", err)
 	}
 
-	assetJSON, err := json.Marshal(selectedAsset)
-	if err != nil {
-		log.Fatalf("Failed to marshal JSON: %s\n", err)
-	}
 	endTime := time.Now()
 	executionTime := endTime.Sub(startTime).Seconds()
-	fmt.Println(string(assetJSON))
+
+	fmt.Println(string(result))
 	log.Printf("Total execution time is: %f sec\n", executionTime)
 }
 
