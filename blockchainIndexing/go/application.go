@@ -10,6 +10,7 @@ import (
 	"os"
 	"path/filepath"
 	"sort"
+	"strconv"
 	"strings"
 	"sync"
 	"time"
@@ -113,6 +114,10 @@ func main() {
 		getHistoryForAssets(contract, *key)
 	case "getHistoryForAssetsOld":
 		getHistoryForAssetsOld(contract, *key)
+	case "getHistoryForAssetRange":
+		getHistoryForAssetRange(contract, *key)
+	case "getHistoryForAssetRangeOld":
+		getHistoryForAssetRangeOld(contract, *key)
 	case "pointQuery":
 		pointQuery(contract, *key, *version)
 	case "versionQuery":
@@ -316,6 +321,64 @@ func getHistoryForAssetsOld(contract *gateway.Contract, keys string) {
 		}
 		fmt.Println(string(result))
 	}
+
+	endTime := time.Now()
+	executionTime := endTime.Sub(startTime).Seconds()
+
+	log.Printf("Total execution time is: %f sec\n", executionTime)
+}
+
+func getHistoryForAssetRange(contract *gateway.Contract, keys string) {
+	startEndKeys := strings.Split(keys, ",")
+
+	start, _ := strconv.Atoi(startEndKeys[0])
+	end, _ := strconv.Atoi(startEndKeys[1])
+	size := end - start + 1
+	keys_list := make([]string, size)
+
+	startTime := time.Now()
+
+	for i := range keys_list {
+		keys_list[i] = strconv.Itoa(start + i)
+	}
+
+	result, err := contract.EvaluateTransaction("getHistoryForAssets", keys_list...)
+	if err != nil {
+		log.Fatalf("Failed to evaluate transaction: %s\n", err)
+	}
+
+	fmt.Println(string(result))
+
+	endTime := time.Now()
+	executionTime := endTime.Sub(startTime).Seconds()
+
+	log.Printf("Total execution time is: %f sec\n", executionTime)
+}
+
+func getHistoryForAssetRangeOld(contract *gateway.Contract, keys string) {
+	startEndKeys := strings.Split(keys, ",")
+	start, _ := strconv.Atoi(startEndKeys[0])
+	end, _ := strconv.Atoi(startEndKeys[1])
+	size := end - start + 1
+	keys_list := make([]string, size)
+
+	for i := range keys_list {
+		keys_list[i] = strconv.Itoa(start + i)
+	}
+
+	startTime := time.Now()
+
+	var results []string
+
+	for _, key := range keys_list {
+		result, err := contract.EvaluateTransaction("getHistoryForAsset", key)
+		if err != nil {
+			log.Fatalf("Failed to evaluate transaction: %s\n", err)
+		}
+		results = append(results, string(result))
+	}
+
+	fmt.Println(results)
 
 	endTime := time.Now()
 	executionTime := endTime.Sub(startTime).Seconds()

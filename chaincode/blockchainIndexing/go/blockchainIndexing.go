@@ -171,7 +171,8 @@ func (sc *SmartContract) getHistoryForAsset(stub shim.ChaincodeStubInterface, ar
 	return shim.Success(historyAsBytes)
 }
 
-// // getHistoryForAssets calls custom GetHistoryForKeys() API
+// getHistoryForAssets calls custom GetHistoryForKeys() API
+// OLD
 // func (sc *SmartContract) getHistoryForAssets(stub shim.ChaincodeStubInterface, args []string) sc.Response {
 // 	if len(args) < 1 {
 // 		return shim.Error("Incorrect number of arguments. Expecting 1 or more")
@@ -205,6 +206,7 @@ func (sc *SmartContract) getHistoryForAsset(stub shim.ChaincodeStubInterface, ar
 // }
 
 // getHistoryForAssets calls custom GetHistoryForKeys() API
+// NEW
 func (sc *SmartContract) getHistoryForAssets(stub shim.ChaincodeStubInterface, args []string) sc.Response {
 	if len(args) < 1 {
 		return shim.Error("Incorrect number of arguments. Expecting 1 or more")
