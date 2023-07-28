@@ -238,7 +238,7 @@ type ChaincodeStubInterface interface {
 
 	GetHistoryForKeys(keys []string) (HistoryQueryIteratorInterface, error)
 
-	GetVersionForKey(key string, version uint64) (HistoryQueryIteratorInterface, error)
+	GetVersionsForKey(key string, start uint64, end uint64) (HistoryQueryIteratorInterface, error)
 
 	// GetPrivateData returns the value of the specified `key` from the specified
 	// `collection`. Note that GetPrivateData doesn't read data from the

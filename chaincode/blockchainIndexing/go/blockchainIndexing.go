@@ -61,8 +61,8 @@ func (sc *SmartContract) Invoke(stub shim.ChaincodeStubInterface) sc.Response {
 		return sc.getHistoryForAsset(stub, args)
 	case "getHistoryForAssets":
 		return sc.getHistoryForAssets(stub, args)
-	case "getVersionForAsset":
-		return sc.getVersionForAsset(stub, args)
+	case "getVersionsForAsset":
+		return sc.getVersionsForAsset(stub, args)
 	default:
 		return shim.Error("Invalid Smart Contract function name.")
 	}
@@ -225,19 +225,21 @@ func (sc *SmartContract) getHistoryForAssets(stub shim.ChaincodeStubInterface, a
 	return shim.Success(historyAsBytes)
 }
 
-func (sc *SmartContract) getVersionForAsset(stub shim.ChaincodeStubInterface, args []string) sc.Response {
-	if len(args) != 2 {
-		return shim.Error("Incorrect number of arguments. Expecting 2")
+func (sc *SmartContract) getVersionsForAsset(stub shim.ChaincodeStubInterface, args []string) sc.Response {
+	if len(args) != 3 {
+		return shim.Error("Incorrect number of arguments. Expecting 3")
 	}
 
-	version, _ := strconv.ParseUint(args[1], 10, 64)
+	start, _ := strconv.ParseUint(args[1], 10, 64)
+	end, _ := strconv.ParseUint(args[2], 10, 64)
 
-	versionIter, err := stub.GetVersionForKey(args[0], version)
+	versionIter, err := stub.GetVersionsForKey(args[0], start, end)
 	if err != nil {
 		return shim.Error(err.Error())
 	}
 
-	if versionIter.HasNext() {
+	var versions []QueryResult
+	for versionIter.HasNext() {
 		versionData, err := versionIter.Next()
 		if err != nil {
 			return shim.Error(err.Error())
@@ -247,13 +249,12 @@ func (sc *SmartContract) getVersionForAsset(stub shim.ChaincodeStubInterface, ar
 		json.Unmarshal(versionData.Value, &order) // .Value?
 
 		timestamp := time.Unix(versionData.Timestamp.Seconds, int64(versionData.Timestamp.Nanos)).String()
-		var result = QueryResult{Key: args[0], Record: &order, Timestamp: timestamp}
 
-		versionAsBytes, _ := json.Marshal(result)
-		return shim.Success(versionAsBytes)
+		versions = append(versions, QueryResult{Key: versionData.TxId, Record: &order, Timestamp: timestamp})
 	}
 
-	return shim.Error("Version not found")
+	versionAsBytes, _ := json.Marshal(versions)
+	return shim.Success(versionAsBytes)
 }
 
 func main() {

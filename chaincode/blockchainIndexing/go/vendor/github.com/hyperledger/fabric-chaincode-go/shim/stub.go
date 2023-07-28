@@ -441,8 +441,8 @@ func (s *ChaincodeStub) GetHistoryForKeys(keys []string) (HistoryQueryIteratorIn
 	return &HistoryQueryIterator{CommonIterator: &CommonIterator{s.handler, s.ChannelID, s.TxID, response, 0}}, nil
 }
 
-func (s *ChaincodeStub) GetVersionForKey(key string, version uint64) (HistoryQueryIteratorInterface, error) {
-	response, err := s.handler.handleGetVersionForKey(key, version, s.ChannelID, s.TxID)
+func (s *ChaincodeStub) GetVersionsForKey(key string, start uint64, end uint64) (HistoryQueryIteratorInterface, error) {
+	response, err := s.handler.handleGetVersionsForKey(key, start, end, s.ChannelID, s.TxID)
 	if err != nil {
 		return nil, err
 	}
