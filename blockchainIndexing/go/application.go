@@ -118,8 +118,12 @@ func main() {
 		getHistoryForAssetRange(contract, *key)
 	case "getHistoryForAssetRangeOld":
 		getHistoryForAssetRangeOld(contract, *key)
+	case "pointQueryOld":
+		pointQueryOld(contract, *key, *version)
 	case "pointQuery":
 		pointQuery(contract, *key, *version)
+	case "versionQueryOld":
+		versionQueryOld(contract, *key, *start, *end)
 	case "versionQuery":
 		versionQuery(contract, *key, *start, *end)
 	}
@@ -386,7 +390,7 @@ func getHistoryForAssetRangeOld(contract *gateway.Contract, keys string) {
 	log.Printf("Total execution time is: %f sec\n", executionTime)
 }
 
-func pointQuery(contract *gateway.Contract, key string, version int) {
+func pointQueryOld(contract *gateway.Contract, key string, version int) {
 	startTime := time.Now()
 
 	result, err := contract.EvaluateTransaction("getHistoryForAsset", key)
@@ -404,11 +408,11 @@ func pointQuery(contract *gateway.Contract, key string, version int) {
 		return assets[i].Timestamp < assets[j].Timestamp
 	})
 
-	if version < 0 || version >= len(assets) {
+	if version < 0 || version > len(assets) {
 		log.Fatalf("Version number out of range: %d\n", version)
 	}
 
-	selectedAsset := assets[version]
+	selectedAsset := assets[version-1]
 
 	assetJSON, err := json.Marshal(selectedAsset)
 	if err != nil {
@@ -420,8 +424,27 @@ func pointQuery(contract *gateway.Contract, key string, version int) {
 	log.Printf("Total execution time is: %f sec\n", executionTime)
 }
 
+func pointQuery(contract *gateway.Contract, key string, version int) {
+
+	fmt.Printf("Querying for version %d of key %s\n", version, key)
+	startTime := time.Now()
+
+	versionString := strconv.Itoa(version)
+
+	result, err := contract.EvaluateTransaction("getVersionsForAsset", key, versionString, versionString)
+	if err != nil {
+		log.Fatalf("Failed to evaluate transaction: %s\n", err)
+	}
+
+	endTime := time.Now()
+	executionTime := endTime.Sub(startTime).Seconds()
+
+	fmt.Println(string(result))
+	log.Printf("Total execution time is: %f sec\n", executionTime)
+}
+
 // versionQuery calls GetHistoryForKey API to execute Version Query
-func versionQuery(contract *gateway.Contract, key string, start int, end int) {
+func versionQueryOld(contract *gateway.Contract, key string, start int, end int) {
 	startTime := time.Now()
 
 	result, err := contract.EvaluateTransaction("getHistoryForAsset", key)
@@ -452,6 +475,26 @@ func versionQuery(contract *gateway.Contract, key string, start int, end int) {
 	endTime := time.Now()
 	executionTime := endTime.Sub(startTime).Seconds()
 	fmt.Println(string(assetsJSON))
+	log.Printf("Total execution time is: %f sec\n", executionTime)
+}
+
+func versionQuery(contract *gateway.Contract, key string, start int, end int) {
+
+	fmt.Printf("Querying for versions from %d to %d of key %s\n", start, end, key)
+	startTime := time.Now()
+
+	startString := strconv.Itoa(start)
+	endString := strconv.Itoa(end)
+
+	result, err := contract.EvaluateTransaction("getVersionsForAsset", key, startString, endString)
+	if err != nil {
+		log.Fatalf("Failed to evaluate transaction: %s\n", err)
+	}
+
+	endTime := time.Now()
+	executionTime := endTime.Sub(startTime).Seconds()
+
+	fmt.Println(string(result))
 	log.Printf("Total execution time is: %f sec\n", executionTime)
 }
 

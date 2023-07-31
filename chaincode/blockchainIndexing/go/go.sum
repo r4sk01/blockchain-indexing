@@ -4,6 +4,10 @@ github.com/client9/misspell v0.3.4/go.mod h1:qj6jICC3Q7zFZvVWo7KLAzC3yx5G7kyvSDk
 github.com/davecgh/go-spew v1.1.0/go.mod h1:J7Y8YcW2NihsgmVo/mv3lAwl/skON4iLHjSsI+c5H38=
 github.com/davecgh/go-spew v1.1.1 h1:vj9j/u1bqnvCEfJOwUhtlOARqs3+rkHYY13jYWTU97c=
 github.com/davecgh/go-spew v1.1.1/go.mod h1:J7Y8YcW2NihsgmVo/mv3lAwl/skON4iLHjSsI+c5H38=
+github.com/dgaron/fabric-chaincode-go v0.0.0-20230728171125-c298c3f19d55 h1:ic3FGCk3e9HyiQD+KBmWT5DoPQUxXTbhUXsxh04OERw=
+github.com/dgaron/fabric-chaincode-go v0.0.0-20230728171125-c298c3f19d55/go.mod h1:K7TPCd2iOeYo+kXyBkdLjotWGy4RCZdqWuH1CXXpH0E=
+github.com/dgaron/fabric-protos/bindings/go-apiv1 v0.0.0-20230728170636-34077e8f7509 h1:MsG0NpYVU0B1uztOkGnR30PmbRVpl/qjDtHLFBJ9o8I=
+github.com/dgaron/fabric-protos/bindings/go-apiv1 v0.0.0-20230728170636-34077e8f7509/go.mod h1:WWnyWP40P2roPmmvxsUXSvVI/CF6vwY1K1UFidnKBys=
 github.com/golang/glog v0.0.0-20160126235308-23def4e6c14b h1:VKtxabqXZkF25pY9ekfRL6a582T4P37/31XEstQ5p58=
 github.com/golang/glog v0.0.0-20160126235308-23def4e6c14b/go.mod h1:SBH7ygxi8pfUlaOkMMuAQtPIUF8ecWP5IEl/CR7VP2Q=
 github.com/golang/mock v1.1.1/go.mod h1:oTYuIxOrZwtPieC+H1uAHpcLFnEyAGVDL/k47Jfbm0A=

@@ -4,10 +4,10 @@ github.com/golang/protobuf/ptypes
 github.com/golang/protobuf/ptypes/any
 github.com/golang/protobuf/ptypes/duration
 github.com/golang/protobuf/ptypes/timestamp
-# github.com/hyperledger/fabric-chaincode-go v0.0.0-20200424173110-d7076418f212 => /home/andrey/Desktop/fabric-chaincode-go
+# github.com/hyperledger/fabric-chaincode-go v0.0.0-20200424173110-d7076418f212 => github.com/dgaron/fabric-chaincode-go v0.0.0-20230728171125-c298c3f19d55
 github.com/hyperledger/fabric-chaincode-go/shim
 github.com/hyperledger/fabric-chaincode-go/shim/internal
-# github.com/hyperledger/fabric-protos-go v0.0.0-20200424173316-dd554ba3746e => /home/andrey/Desktop/fabric-protos/bindings/go-apiv1
+# github.com/hyperledger/fabric-protos-go v0.0.0-20200424173316-dd554ba3746e => github.com/dgaron/fabric-protos/bindings/go-apiv1 v0.0.0-20230728170636-34077e8f7509
 github.com/hyperledger/fabric-protos-go/common
 github.com/hyperledger/fabric-protos-go/ledger/queryresult
 github.com/hyperledger/fabric-protos-go/ledger/rwset
