@@ -58,6 +58,8 @@ _Application was tested on Linux Ubuntu_
 
 ## Running the Queries
 
+0. Query Legend  
+   1. 
 1. Range Query  
    1. Range Query that uses New Handler specific for proposed algorithm:  
       `go run application.go -t getHistoryForAssetRange -k 36643,36742`  
@@ -70,9 +72,13 @@ _Application was tested on Linux Ubuntu_
 4. GetHistoryForAssetsOld - query that utilize old traditional HLF getHistoryForKey multiple times to return all the versions for given keys:  
    `go run application.go -t getHistoryForAssetsOld -k 1,99,100,91041`  
 5. Point Query  
-   _Work In Progress!_  
-6. Version Query  
-   _Work In Progress!_  
+   `go run application.go -t pointQuery -k 3844 -version 1`  
+6. Point Query Old  
+   `go run application.go -t pointQueryOld -k 3844 -version 1`  
+7. Version Query  
+   `go run application.go -t versionQuery -k 3844 -start 1 -end 2`  
+8. Version Query old  
+   `go run application.go -t versionQueryOld -k 3844 -start 1 -end 2`  
 
 ## Bringing the Network Down  
 
