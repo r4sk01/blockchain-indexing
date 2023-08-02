@@ -53,7 +53,7 @@ peer:
         interval: 7200s
         # Timeout is the duration the server waits for a response
         # from the client after sending a ping before closing the connection
-        timeout: 20s
+        timeout: 120s
         # MinInterval is the minimum permitted time between client pings.
         # If clients send pings more frequently, the peer server will
         # disconnect them
@@ -66,7 +66,7 @@ peer:
             interval: 60s
             # Timeout is the duration the client waits for a response from
             # peer nodes before closing the connection
-            timeout: 20s
+            timeout: 120s
         # DeliveryClient keepalive settings for communication with ordering
         # nodes.
         deliveryClient:
@@ -76,7 +76,7 @@ peer:
             interval: 60s
             # Timeout is the duration the client waits for a response from
             # ordering nodes before closing the connection
-            timeout: 20s
+            timeout: 120s
 
 
     # Gossip related configuration
@@ -158,9 +158,9 @@ peer:
         # Alive check interval(unit: second)
         aliveTimeInterval: 5s
         # Alive expiration timeout(unit: second)
-        aliveExpirationTimeout: 25s
+        aliveExpirationTimeout: 125s
         # Reconnect interval(unit: second)
-        reconnectInterval: 25s
+        reconnectInterval: 125s
         # Max number of attempts to connect to a peer
         maxConnectionAttempts: 120
         # Message expiration factor for alive messages
@@ -575,7 +575,7 @@ chaincode:
     # build the image, which might take more time. In production environment,
     # the chaincode image is unlikely to be deleted, so the timeout could be
     # reduced accordingly.
-    executetimeout: 30s
+    executetimeout: 120s
 
     # There are 2 modes: "dev" and "net".
     # In dev mode, user runs the chaincode after starting peer from
@@ -642,7 +642,7 @@ ledger:
        # Default of 10 retries results in 11 attempts over 2 minutes.
        maxRetriesOnStartup: 10
        # CouchDB request timeout (unit: duration, e.g. 20s)
-       requestTimeout: 35s
+       requestTimeout: 120s
        # Limit on the number of records per each CouchDB query
        # Note that chaincode queries are only bound by totalQueryLimit.
        # Internally the chaincode may execute multiple CouchDB queries,

@@ -61,8 +61,8 @@ func (sc *SmartContract) Invoke(stub shim.ChaincodeStubInterface) sc.Response {
 		return sc.getHistoryForAsset(stub, args)
 	case "getHistoryForAssets":
 		return sc.getHistoryForAssets(stub, args)
-	case "getVersionsForAsset":
-		return sc.getVersionsForAsset(stub, args)
+	// case "getVersionsForAsset":
+	// 	return sc.getVersionsForAsset(stub, args)
 	default:
 		return shim.Error("Invalid Smart Contract function name.")
 	}
@@ -174,103 +174,103 @@ func (sc *SmartContract) getHistoryForAsset(stub shim.ChaincodeStubInterface, ar
 }
 
 // getHistoryForAssets calls custom GetHistoryForKeys() API
-// OLD
-// func (sc *SmartContract) getHistoryForAssets(stub shim.ChaincodeStubInterface, args []string) sc.Response {
-// 	if len(args) < 1 {
-// 		return shim.Error("Incorrect number of arguments. Expecting 1 or more")
-// 	}
-
-// 	// calling the GetHistoryForKeys() API with keys as args
-// 	historyIers, err := stub.GetHistoryForKeys(args)
-// 	if err != nil {
-// 		return shim.Error(err.Error())
-// 	}
-
-// 	var histories [][]QueryResult
-// 	for _, historyIer := range historyIers {
-// 		var history []QueryResult
-// 		for historyIer.HasNext() {
-// 			historyData, err := historyIer.Next()
-// 			if err != nil {
-// 				return shim.Error(err.Error())
-// 			}
-
-// 			var order Order
-// 			json.Unmarshal(historyData.Value, &order)
-
-// 			history = append(history, QueryResult{Key: historyData.TxId, Record: &order})
-// 		}
-// 		histories = append(histories, history)
-// 	}
-
-// 	historiesAsBytes, _ := json.Marshal(histories)
-// 	return shim.Success(historiesAsBytes)
-// }
-
-// getHistoryForAssets calls custom GetHistoryForKeys() API
-// NEW
+// OLD Handler
 func (sc *SmartContract) getHistoryForAssets(stub shim.ChaincodeStubInterface, args []string) sc.Response {
 	if len(args) < 1 {
 		return shim.Error("Incorrect number of arguments. Expecting 1 or more")
 	}
 
 	// calling the GetHistoryForKeys() API with keys as args
-	historyIer, err := stub.GetHistoryForKeys(args) // historyIters in old version
+	historyIers, err := stub.GetHistoryForKeys(args)
 	if err != nil {
 		return shim.Error(err.Error())
 	}
 
-	var history []QueryResult
-	for historyIer.HasNext() {
-		historyData, err := historyIer.Next()
-		if err != nil {
-			return shim.Error(err.Error())
+	var histories [][]QueryResult
+	for _, historyIer := range historyIers {
+		var history []QueryResult
+		for historyIer.HasNext() {
+			historyData, err := historyIer.Next()
+			if err != nil {
+				return shim.Error(err.Error())
+			}
+
+			var order Order
+			json.Unmarshal(historyData.Value, &order)
+
+			history = append(history, QueryResult{Key: historyData.TxId, Record: &order})
 		}
-
-		var order Order
-		json.Unmarshal(historyData.Value, &order)
-
-		//Convert google.protobuf.Timestamp to string
-		timestamp := time.Unix(historyData.Timestamp.Seconds, int64(historyData.Timestamp.Nanos)).String()
-
-		history = append(history, QueryResult{Key: historyData.TxId, Record: &order, Timestamp: timestamp})
+		histories = append(histories, history)
 	}
 
-	historyAsBytes, _ := json.Marshal(history)
-	return shim.Success(historyAsBytes)
+	historiesAsBytes, _ := json.Marshal(histories)
+	return shim.Success(historiesAsBytes)
 }
 
-func (sc *SmartContract) getVersionsForAsset(stub shim.ChaincodeStubInterface, args []string) sc.Response {
-	if len(args) != 3 {
-		return shim.Error("Incorrect number of arguments. Expecting 3")
-	}
+// getHistoryForAssets calls custom GetHistoryForKeys() API
+// NEW Handler
+// func (sc *SmartContract) getHistoryForAssets(stub shim.ChaincodeStubInterface, args []string) sc.Response {
+// 	if len(args) < 1 {
+// 		return shim.Error("Incorrect number of arguments. Expecting 1 or more")
+// 	}
 
-	start, _ := strconv.ParseUint(args[1], 10, 64)
-	end, _ := strconv.ParseUint(args[2], 10, 64)
+// 	// calling the GetHistoryForKeys() API with keys as args
+// 	historyIer, err := stub.GetHistoryForKeys(args) // historyIters in old version
+// 	if err != nil {
+// 		return shim.Error(err.Error())
+// 	}
 
-	versionIter, err := stub.GetVersionsForKey(args[0], start, end)
-	if err != nil {
-		return shim.Error(err.Error())
-	}
+// 	var history []QueryResult
+// 	for historyIer.HasNext() {
+// 		historyData, err := historyIer.Next()
+// 		if err != nil {
+// 			return shim.Error(err.Error())
+// 		}
 
-	var versions []QueryResult
-	for versionIter.HasNext() {
-		versionData, err := versionIter.Next()
-		if err != nil {
-			return shim.Error(err.Error())
-		}
+// 		var order Order
+// 		json.Unmarshal(historyData.Value, &order)
 
-		var order Order
-		json.Unmarshal(versionData.Value, &order) // .Value?
+// 		//Convert google.protobuf.Timestamp to string
+// 		timestamp := time.Unix(historyData.Timestamp.Seconds, int64(historyData.Timestamp.Nanos)).String()
 
-		timestamp := time.Unix(versionData.Timestamp.Seconds, int64(versionData.Timestamp.Nanos)).String()
+// 		history = append(history, QueryResult{Key: historyData.TxId, Record: &order, Timestamp: timestamp})
+// 	}
 
-		versions = append(versions, QueryResult{Key: versionData.TxId, Record: &order, Timestamp: timestamp})
-	}
+// 	historyAsBytes, _ := json.Marshal(history)
+// 	return shim.Success(historyAsBytes)
+// }
 
-	versionAsBytes, _ := json.Marshal(versions)
-	return shim.Success(versionAsBytes)
-}
+// func (sc *SmartContract) getVersionsForAsset(stub shim.ChaincodeStubInterface, args []string) sc.Response {
+// 	if len(args) != 3 {
+// 		return shim.Error("Incorrect number of arguments. Expecting 3")
+// 	}
+
+// 	start, _ := strconv.ParseUint(args[1], 10, 64)
+// 	end, _ := strconv.ParseUint(args[2], 10, 64)
+
+// 	versionIter, err := stub.GetVersionsForKey(args[0], start, end)
+// 	if err != nil {
+// 		return shim.Error(err.Error())
+// 	}
+
+// 	var versions []QueryResult
+// 	for versionIter.HasNext() {
+// 		versionData, err := versionIter.Next()
+// 		if err != nil {
+// 			return shim.Error(err.Error())
+// 		}
+
+// 		var order Order
+// 		json.Unmarshal(versionData.Value, &order) // .Value?
+
+// 		timestamp := time.Unix(versionData.Timestamp.Seconds, int64(versionData.Timestamp.Nanos)).String()
+
+// 		versions = append(versions, QueryResult{Key: versionData.TxId, Record: &order, Timestamp: timestamp})
+// 	}
+
+// 	versionAsBytes, _ := json.Marshal(versions)
+// 	return shim.Success(versionAsBytes)
+// }
 
 func main() {
 	err := shim.Start(new(SmartContract))

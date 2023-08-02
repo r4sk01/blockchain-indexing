@@ -433,20 +433,18 @@ func (s *ChaincodeStub) GetHistoryForKey(key string) (HistoryQueryIteratorInterf
 	return &HistoryQueryIterator{CommonIterator: &CommonIterator{s.handler, s.ChannelID, s.TxID, response, 0}}, nil
 }
 
-func (s *ChaincodeStub) GetHistoryForKeys(keys []string) (HistoryQueryIteratorInterface, error) {
-	response, err := s.handler.handleGetHistoryForKeys(keys, s.ChannelID, s.TxID)
-	if err != nil {
-		return nil, err
+func (s *ChaincodeStub) GetHistoryForKeys(keys []string) ([]HistoryQueryIteratorInterface, error) {
+	var historyQueryIterators []HistoryQueryIteratorInterface
+	for _, key := range keys {
+		response, err := s.handler.handleGetHistoryForKey(key, s.ChannelID, s.TxID)
+		if err != nil {
+			return nil, err
+		}
+		iterator := &HistoryQueryIterator{CommonIterator: &CommonIterator{s.handler, s.ChannelID, s.TxID, response, 0}}
+		historyQueryIterators = append(historyQueryIterators, iterator)
 	}
-	return &HistoryQueryIterator{CommonIterator: &CommonIterator{s.handler, s.ChannelID, s.TxID, response, 0}}, nil
-}
 
-func (s *ChaincodeStub) GetVersionsForKey(key string, start uint64, end uint64) (HistoryQueryIteratorInterface, error) {
-	response, err := s.handler.handleGetVersionsForKey(key, start, end, s.ChannelID, s.TxID)
-	if err != nil {
-		return nil, err
-	}
-	return &HistoryQueryIterator{CommonIterator: &CommonIterator{s.handler, s.ChannelID, s.TxID, response, 0}}, nil
+	return historyQueryIterators, nil
 }
 
 // CreateCompositeKey documentation can be found in interfaces.go
