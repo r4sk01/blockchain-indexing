@@ -338,6 +338,8 @@ func getHistoryForAssetRange(contract *gateway.Contract, keys string) {
 	size := end - start + 1
 	keys_list := make([]string, size)
 
+	startTime := time.Now()
+
 	for i := range keys_list {
 		keys_list[i] = strconv.Itoa(start + i)
 	}
@@ -347,7 +349,10 @@ func getHistoryForAssetRange(contract *gateway.Contract, keys string) {
 		log.Fatalf("Failed to evaluate transaction: %s\n", err)
 	}
 
+	endTime := time.Now()
+	executionTime := endTime.Sub(startTime).Seconds()
 	fmt.Println(string(result))
+	log.Printf("Total execution time is: %f sec\n", executionTime)
 }
 
 func pointQueryOld(contract *gateway.Contract, key string, version int) {
