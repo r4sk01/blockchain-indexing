@@ -351,9 +351,9 @@ func getHistoryForAssetRange(contract *gateway.Contract, keys string) {
 		log.Fatalf("Failed to evaluate transaction: %s\n", err)
 	}
 
+	endTime := time.Now()
 	fmt.Println(string(result))
 
-	endTime := time.Now()
 	executionTime := endTime.Sub(startTime).Seconds()
 
 	log.Printf("Total execution time is: %f sec\n", executionTime)
@@ -381,10 +381,10 @@ func getHistoryForAssetRangeOld(contract *gateway.Contract, keys string) {
 		}
 		results = append(results, string(result))
 	}
+	endTime := time.Now()
 
 	fmt.Println(results)
 
-	endTime := time.Now()
 	executionTime := endTime.Sub(startTime).Seconds()
 
 	log.Printf("Total execution time is: %f sec\n", executionTime)
