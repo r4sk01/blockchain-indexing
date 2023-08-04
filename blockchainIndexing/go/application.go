@@ -338,11 +338,11 @@ func getHistoryForAssetRange(contract *gateway.Contract, keys string) {
 	size := end - start + 1
 	keys_list := make([]string, size)
 
-	startTime := time.Now()
-
 	for i := range keys_list {
 		keys_list[i] = strconv.Itoa(start + i)
 	}
+
+	startTime := time.Now()
 
 	result, err := contract.EvaluateTransaction("getHistoryForAssets", keys_list...)
 	if err != nil {
