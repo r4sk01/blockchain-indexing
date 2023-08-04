@@ -289,7 +289,7 @@ func pointQuery(contract *gateway.Contract, key string, version string, startBlk
 	log.Println("-----Point Query-----")
 	startTime := time.Now()
 
-	result, err := contract.EvaluateTransaction("pointQuery", key, version, startBlk, endBlk)
+	result, err := contract.EvaluateTransaction("PointQuery", key, version, startBlk, endBlk)
 	if err != nil {
 		log.Fatalf("Failed to evaluate transaction: %s\n", err)
 	}
@@ -307,7 +307,7 @@ func versionQuery(contract *gateway.Contract, key string, startVersion string, e
 	log.Println("-----Version Query-----")
 	startTime := time.Now()
 
-	result, err := contract.EvaluateTransaction("versionQuery", key, startVersion, endVersion, startBlk, endBlk)
+	result, err := contract.EvaluateTransaction("VersionQuery", key, startVersion, endVersion, startBlk, endBlk)
 	if err != nil {
 		log.Fatalf("Failed to evaluate transaction: %s\n", err)
 	}
@@ -325,7 +325,7 @@ func rangeQuery(contract *gateway.Contract, startKey string, endKey string, star
 	log.Println("-----Range Query-----")
 	startTime := time.Now()
 
-	result, err := contract.EvaluateTransaction("rangeQuery", startKey, endKey, startBlk, endBlk)
+	result, err := contract.EvaluateTransaction("RangeQuery", startKey, endKey, startBlk, endBlk)
 	if err != nil {
 		log.Fatalf("Failed to evaluate transaction: %s\n", err)
 	}
