@@ -3,7 +3,7 @@ module github.com/hyperledger/fabric-samples/chaincode/fabcar/go
 go 1.13
 
 require (
-	github.com/hyperledger/fabric-chaincode-go v0.0.0-20200424173110-d7076418f212
+	github.com/RUAN0007/fabric-chaincode-go v0.0.0-20200813083900-6f7b658127e9
 	github.com/hyperledger/fabric-protos-go v0.0.0-20200424173316-dd554ba3746e
 	github.com/kr/pretty v0.2.0 // indirect
 	github.com/stretchr/testify v1.5.1 // indirect
@@ -13,9 +13,5 @@ require (
 	gopkg.in/yaml.v2 v2.2.8 // indirect
 )
 
-replace github.com/hyperledger/fabric-protos-go => github.com/dgaron/fabric-protos/bindings/go-apiv1 v0.0.0-20230728170636-34077e8f7509
-
-// Handler
-// replace github.com/hyperledger/fabric-chaincode-go => github.com/dgaron/fabric-chaincode-go v0.0.0-20230728171125-c298c3f19d55
-// WO Handler
-replace github.com/hyperledger/fabric-chaincode-go => github.com/dgaron/fabric-chaincode-go v0.0.0-20230727170748-1c20ca7c07d9
+// replace github.com/hyperledger/fabric-protos-go => github.com/hyperledger/fabric-protos-go v0.0.0-20200424173316-dd554ba3746e
+// replace github.com/hyperledger/fabric-chaincode-go => github.com/RUAN0007/fabric-chaincode-go v0.0.0-20200813083900-6f7b658127e9

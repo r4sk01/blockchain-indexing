@@ -2,12 +2,10 @@ package main
 
 import (
 	"encoding/json"
+	"github.com/RUAN0007/fabric-chaincode-go/shim"
+	sc "github.com/hyperledger/fabric-protos-go/peer"
 	"log"
 	"strconv"
-	"time"
-
-	"github.com/hyperledger/fabric-chaincode-go/shim"
-	sc "github.com/hyperledger/fabric-protos-go/peer"
 )
 
 type Order struct {
@@ -57,15 +55,23 @@ func (sc *SmartContract) Invoke(stub shim.ChaincodeStubInterface) sc.Response {
 		return sc.CreateBulkParallel(stub, args)
 	case "Create":
 		return sc.Create(stub, args)
-	case "getHistoryForAsset":
-		return sc.getHistoryForAsset(stub, args)
-	case "getHistoryForAssets":
-		return sc.getHistoryForAssets(stub, args)
-	// case "getVersionsForAsset":
-	// 	return sc.getVersionsForAsset(stub, args)
+	case "PointQuery":
+		return sc.PointQuery(stub, args)
+	case "VersionQuery":
+		return sc.VersionQuery(stub, args)
+	case "RangeQuery":
+		return sc.RangeQuery(stub, args)
+	case "HistTest":
+		return sc.HistTest(stub, args)
 	default:
 		return shim.Error("Invalid Smart Contract function name.")
 	}
+}
+
+func (sc *SmartContract) Prov(stub shim.ChaincodeStubInterface, reads, writes map[string][]byte) map[string][]string {
+	var dependecies map[string][]string
+
+	return dependecies
 }
 
 func (sc *SmartContract) InitLedger(stub shim.ChaincodeStubInterface) sc.Response {
@@ -142,135 +148,130 @@ func (sc *SmartContract) CreateBulkParallel(stub shim.ChaincodeStubInterface, ar
 	return shim.Success(nil)
 }
 
-// getHistoryForAsset calls built in GetHistoryForKey() API
-func (sc *SmartContract) getHistoryForAsset(stub shim.ChaincodeStubInterface, args []string) sc.Response {
-	if len(args) != 1 {
-		return shim.Error("Incorrect number of arguments. Expecting 1")
-	}
+func (sc *SmartContract) HistTest(stub shim.ChaincodeStubInterface, args []string) sc.Response {
+	log.Println("-----Hist Test-----")
+	startKey, _ := strconv.ParseUint(args[0], 10, 64)
+	endKey, _ := strconv.ParseUint(args[1], 10, 64)
+	startBlk, _ := strconv.ParseUint(args[2], 10, 64)
+	endBlk, _ := strconv.ParseUint(args[3], 10, 64)
+	var results []string
 
-	historyIer, err := stub.GetHistoryForKey(args[0])
-	if err != nil {
-		return shim.Error(err.Error())
-	}
-
-	var history []QueryResult
-	for historyIer.HasNext() {
-		historyData, err := historyIer.Next()
-		if err != nil {
-			return shim.Error(err.Error())
-		}
-
-		var order Order
-		json.Unmarshal(historyData.Value, &order)
-
-		//Convert google.protobuf.Timestamp to string
-		timestamp := time.Unix(historyData.Timestamp.Seconds, int64(historyData.Timestamp.Nanos)).String()
-
-		history = append(history, QueryResult{Key: historyData.TxId, Record: &order, Timestamp: timestamp})
-	}
-
-	historyAsBytes, _ := json.Marshal(history)
-	return shim.Success(historyAsBytes)
-}
-
-// getHistoryForAssets calls custom GetHistoryForKeys() API
-// OLD Handler
-func (sc *SmartContract) getHistoryForAssets(stub shim.ChaincodeStubInterface, args []string) sc.Response {
-	if len(args) < 1 {
-		return shim.Error("Incorrect number of arguments. Expecting 1 or more")
-	}
-
-	// calling the GetHistoryForKeys() API with keys as args
-	historyIers, err := stub.GetHistoryForKeys(args)
-	if err != nil {
-		return shim.Error(err.Error())
-	}
-
-	var histories [][]QueryResult
-	for _, historyIer := range historyIers {
-		var history []QueryResult
-		for historyIer.HasNext() {
-			historyData, err := historyIer.Next()
+	for key := startKey; key <= endKey; key++ {
+		keyStr := strconv.FormatUint(key, 10)
+		log.Println(keyStr)
+		for startBlk <= endBlk {
+			val, _, err := stub.Hist(keyStr, startBlk)
 			if err != nil {
-				return shim.Error(err.Error())
+				shim.Error("Failed to get historical value: " + err.Error())
 			}
 
-			var order Order
-			json.Unmarshal(historyData.Value, &order)
+			results = append(results, val)
+			startBlk++
 
-			history = append(history, QueryResult{Key: historyData.TxId, Record: &order})
 		}
-		histories = append(histories, history)
+		startBlk, _ = strconv.ParseUint(args[0], 10, 64)
+
 	}
 
-	historiesAsBytes, _ := json.Marshal(histories)
-	return shim.Success(historiesAsBytes)
+	log.Println(results)
+
+	resultsBytes, err := json.Marshal(results)
+	if err != nil {
+		return shim.Error("failed to marshal order JSON: " + err.Error())
+	}
+	return shim.Success(resultsBytes)
+
 }
 
-// getHistoryForAssets calls custom GetHistoryForKeys() API
-// NEW Handler
-// func (sc *SmartContract) getHistoryForAssets(stub shim.ChaincodeStubInterface, args []string) sc.Response {
-// 	if len(args) < 1 {
-// 		return shim.Error("Incorrect number of arguments. Expecting 1 or more")
-// 	}
+func (sc *SmartContract) PointQuery(stub shim.ChaincodeStubInterface, args []string) sc.Response {
+	key := args[0]
+	version, _ := strconv.ParseUint(args[1], 10, 64)
+	startBlk, _ := strconv.ParseUint(args[2], 10, 64)
+	endBlk, _ := strconv.ParseUint(args[3], 10, 64)
+	var results []string
 
-// 	// calling the GetHistoryForKeys() API with keys as args
-// 	historyIer, err := stub.GetHistoryForKeys(args) // historyIters in old version
-// 	if err != nil {
-// 		return shim.Error(err.Error())
-// 	}
+	for startBlk <= endBlk {
+		val, _, err := stub.Hist(key, startBlk)
+		if err != nil {
+			shim.Error("Failed to get historical value: " + err.Error())
+		}
 
-// 	var history []QueryResult
-// 	for historyIer.HasNext() {
-// 		historyData, err := historyIer.Next()
-// 		if err != nil {
-// 			return shim.Error(err.Error())
-// 		}
+		results = append(results, val)
+		startBlk++
 
-// 		var order Order
-// 		json.Unmarshal(historyData.Value, &order)
+	}
 
-// 		//Convert google.protobuf.Timestamp to string
-// 		timestamp := time.Unix(historyData.Timestamp.Seconds, int64(historyData.Timestamp.Nanos)).String()
+	log.Printf("pointQuery results: %s\n", results)
 
-// 		history = append(history, QueryResult{Key: historyData.TxId, Record: &order, Timestamp: timestamp})
-// 	}
+	resultsBytes, err := json.Marshal(results[version])
+	if err != nil {
+		shim.Error("Marhsal failed with: " + err.Error())
+	}
 
-// 	historyAsBytes, _ := json.Marshal(history)
-// 	return shim.Success(historyAsBytes)
-// }
+	return shim.Success(resultsBytes)
 
-// func (sc *SmartContract) getVersionsForAsset(stub shim.ChaincodeStubInterface, args []string) sc.Response {
-// 	if len(args) != 3 {
-// 		return shim.Error("Incorrect number of arguments. Expecting 3")
-// 	}
+}
 
-// 	start, _ := strconv.ParseUint(args[1], 10, 64)
-// 	end, _ := strconv.ParseUint(args[2], 10, 64)
+func (sc *SmartContract) VersionQuery(stub shim.ChaincodeStubInterface, args []string) sc.Response {
+	key := args[0]
+	startVersion, _ := strconv.ParseUint(args[1], 10, 64)
+	endVersion, _ := strconv.ParseUint(args[2], 10, 64)
+	startBlk, _ := strconv.ParseUint(args[3], 10, 64)
+	endBlk, _ := strconv.ParseUint(args[4], 10, 64)
+	var results []string
 
-// 	versionIter, err := stub.GetVersionsForKey(args[0], start, end)
-// 	if err != nil {
-// 		return shim.Error(err.Error())
-// 	}
+	for startBlk <= endBlk {
+		val, _, err := stub.Hist(key, startBlk)
+		if err != nil {
+			shim.Error("Failed to get historical value: " + err.Error())
+		}
 
-// 	var versions []QueryResult
-// 	for versionIter.HasNext() {
-// 		versionData, err := versionIter.Next()
-// 		if err != nil {
-// 			return shim.Error(err.Error())
-// 		}
+		results = append(results, val)
+		startBlk++
 
-// 		var order Order
-// 		json.Unmarshal(versionData.Value, &order) // .Value?
+	}
 
-// 		timestamp := time.Unix(versionData.Timestamp.Seconds, int64(versionData.Timestamp.Nanos)).String()
+	log.Printf("versionQuery results: %s\n", results)
 
-// 		versions = append(versions, QueryResult{Key: versionData.TxId, Record: &order, Timestamp: timestamp})
-// 	}
+	resultsBytes, err := json.Marshal(results[startVersion : endVersion+1])
+	if err != nil {
+		shim.Error("Marhsal failed with: " + err.Error())
+	}
 
-// 	versionAsBytes, _ := json.Marshal(versions)
-// 	return shim.Success(versionAsBytes)
-// }
+	return shim.Success(resultsBytes)
+}
+
+func (sc *SmartContract) RangeQuery(stub shim.ChaincodeStubInterface, args []string) sc.Response {
+	startKey, _ := strconv.ParseUint(args[0], 10, 64)
+	endKey, _ := strconv.ParseUint(args[1], 10, 64)
+	startBlk, _ := strconv.ParseUint(args[2], 10, 64)
+	endBlk, _ := strconv.ParseUint(args[3], 10, 64)
+	var results []string
+
+	for key := startKey; key <= endKey; key++ {
+		keyStr := strconv.FormatUint(key, 10)
+		log.Println(keyStr)
+		for startBlk <= endBlk {
+			val, _, err := stub.Hist(keyStr, startBlk)
+			if err != nil {
+				shim.Error("Failed to get historical value: " + err.Error())
+			}
+
+			results = append(results, val)
+			startBlk++
+
+		}
+		startBlk, _ = strconv.ParseUint(args[0], 10, 64)
+
+	}
+
+	resultsBytes, err := json.Marshal(results)
+	if err != nil {
+		return shim.Error("failed to marshal order JSON: " + err.Error())
+	}
+	return shim.Success(resultsBytes)
+
+}
 
 func main() {
 	err := shim.Start(new(SmartContract))
