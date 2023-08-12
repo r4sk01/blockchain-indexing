@@ -112,7 +112,9 @@ func main() {
 		getHistoryForAsset(contract, *key)
 	case "getHistoryForAssets":
 		getHistoryForAssets(contract, *key)
-	case "getHistoryForAssetRange": // Add a new case for the new function
+	case "getHistoryForAssetRangeOld":
+		getHistoryForAssetRangeOld(contract, *key)
+	case "getHistoryForAssetRange":
 		getHistoryForAssetRange(contract, *key)
 	case "getHistoryForAssetsOld":
 		getHistoryForAssetsOld(contract, *key)
@@ -327,6 +329,33 @@ func getHistoryForAssetsOld(contract *gateway.Contract, keys string) {
 	endTime := time.Now()
 	executionTime := endTime.Sub(startTime).Seconds()
 
+	log.Printf("Total execution time is: %f sec\n", executionTime)
+}
+
+func getHistoryForAssetRangeOld(contract *gateway.Contract, keys string) {
+	startEndKeys := strings.Split(keys, ",")
+
+	start, _ := strconv.Atoi(startEndKeys[0])
+	end, _ := strconv.Atoi(startEndKeys[1])
+	size := end - start + 1
+	keys_list := make([]string, size)
+
+	for i := range keys_list {
+		keys_list[i] = strconv.Itoa(start + i)
+	}
+
+	startTime := time.Now()
+
+	for _, key := range keys_list {
+		_, err := contract.EvaluateTransaction("getHistoryForAsset", key)
+		if err != nil {
+			log.Fatalf("Failed to evaluate transaction: %s\n", err)
+		}
+		//fmt.Println(string(result))
+	}
+
+	endTime := time.Now()
+	executionTime := endTime.Sub(startTime).Seconds()
 	log.Printf("Total execution time is: %f sec\n", executionTime)
 }
 
