@@ -158,7 +158,7 @@ peer:
         # Alive check interval(unit: second)
         aliveTimeInterval: 5s
         # Alive expiration timeout(unit: second)
-        aliveExpirationTimeout: 125s
+        aliveExpirationTimeout: 300s
         # Reconnect interval(unit: second)
         reconnectInterval: 25s
         # Max number of attempts to connect to a peer
