@@ -1,0 +1,68 @@
+[ // Open list of blocks
+    [ // Open block
+        { // Header
+            baseFeePerGas: str,
+            difficulty: str,
+            extraData: str,
+            gasLimit: int,
+            gasUsed: int,
+            hash: str,
+            logsBloom: str,
+            miner: str,
+            mixHash: str,
+            nonce: int,
+            number: int,
+            parentHash: str,
+            receiptsRoot: str,
+            sha3Uncles: str,
+            size: int,
+            stateRoot: str,
+            timestamp: int,
+            totalDifficulty: str,
+            transactions: [str],
+            transactionsRoot: str,
+            uncles: [str?]
+        },
+        { // Transaction
+            blockHash: str,
+            blockNumber: int,
+            from: str,
+            gas: int,
+            gasPrice: str,
+                maxFeePerGas: str,
+                maxPriorityFeePerGas: str,
+            hash: str,
+            input: str,
+            nonce: int,
+            to: str,
+            transactionIndex: int,
+            value: str,
+            type: str,
+                accessList: [
+                    {
+                        address: str,
+                        storageKeys: [str]
+                    }
+                ],
+            chainId: str,
+            v: str,
+            r: str,
+            s: str
+        }
+    ],
+    [ // Block
+        { // header
+            ...
+        },
+        { // transaction
+            ...
+        },
+        { // transaction
+            ...
+        },
+        { // transaction
+            ...
+        },
+            ...
+    ]
+]
