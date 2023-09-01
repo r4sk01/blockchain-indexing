@@ -1,12 +1,5 @@
 node_modules
 .DS_Store
 
-sortUnsort10500/*
-
-test-network/keyValueStorageGI/*
-test-network/keyValueStorageGI1/*
-test-network/keyValueStorageGI2/*
-
-test-network/keyValueStorageLI1/*
-
-test-network/keyValueStorageLI2/*
+test-network/peerStorage1/*
+test-network/peerStorage2/*
