@@ -300,27 +300,27 @@ func BulkInvokeParallel(contract *gateway.Contract, fileUrl string) {
 	log.Printf("Starting bulk transaction at time: %s\n", startTime.Format(time.UnixDate))
 
 	log.Printf("Number of blocks: %d\n", len(chain))
-	// Insert N blocks at a time
-	N := 10
-	for i := 0; i < len(chain); i += N {
+
+	var chunkCounter int
+
+	CHUNK_LIMIT := 1000
+	var transactionChunk []Transaction
+	for i := 0; i < len(chain); i++ {
 		chunkTime := time.Now()
 
-		end := i + N
-		if end > len(chain) {
-			end = len(chain)
-		}
-		chunk := chain[i:end]
+		currentBlock := chain[i]
+		currentBlockNumTransactions := len(currentBlock.Transactions)
 
-		var transactions []Transaction
-		for _, block := range chunk {
-			transactions = append(transactions, block.Transactions...)
+		if len(transactionChunk)+currentBlockNumTransactions < CHUNK_LIMIT {
+			transactionChunk = append(transactionChunk, currentBlock.Transactions...)
+			continue
 		}
 
-		chunkBytes, err := json.Marshal(transactions)
+		chunkCounter++
+		chunkBytes, err := json.Marshal(transactionChunk)
 		if err != nil {
 			log.Fatalf("Failed to marshal JSON: %s", err)
 		}
-
 		wg.Add(1)
 		// Before spawning a goroutine, acquire a slot in the channel
 		sem <- true
@@ -334,18 +334,13 @@ func BulkInvokeParallel(contract *gateway.Contract, fileUrl string) {
 			<-sem
 		}(string(chunkBytes))
 
-		_, err = contract.SubmitTransaction("CreateBulk", string(chunkBytes))
-		if err != nil {
-			log.Fatalf("Failed to submit transaction: %s\n", err)
-		}
-
 		endTime := time.Now()
 		executionTime := endTime.Sub(chunkTime).Seconds()
-		log.Printf("Execution Time: %f sec at chunk %d", executionTime, i/N+1)
-	}
+		log.Printf("Execution Time: %f sec at chunk %d with length %d\n", executionTime, chunkCounter, len(transactionChunk))
 
-	endTime := time.Now()
-	executionTime := endTime.Sub(startTime).Seconds()
+		// Reset chunk to include only the current batch
+		transactionChunk = append([]Transaction{}, currentBlock.Transactions...)
+	}
 
 	// Wait for all goroutines to finish
 	wg.Wait()
@@ -354,9 +349,6 @@ func BulkInvokeParallel(contract *gateway.Contract, fileUrl string) {
 	for i := 0; i < cap(sem); i++ {
 		sem <- true
 	}
-
-	log.Printf("Finished bulk transaction at time: %s\n", endTime.Format(time.UnixDate))
-	log.Printf("Total execution time is: %f sec\n", executionTime)
 }
 
 func Invoke(contract *gateway.Contract, fileUrl string) {
