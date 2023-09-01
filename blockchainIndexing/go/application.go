@@ -25,27 +25,64 @@ type Asset struct {
 	Timestamp string                 `json:"timestamp"`
 }
 
-type Table struct {
-	Table []Order `json:"table"`
+type Chain []Block
+
+type Block struct {
+	Header       Header
+	Transactions []Transaction
 }
 
-type Order struct {
-	L_ORDERKEY      int     `json:"L_ORDERKEY"`
-	L_PARTKEY       int     `json:"L_PARTKEY"`
-	L_SUPPKEY       int     `json:"L_SUPPKEY"`
-	L_LINENUMBER    int     `json:"L_LINENUMBER"`
-	L_QUANTITY      int     `json:"L_QUANTITY"`
-	L_EXTENDEDPRICE float64 `json:"L_EXTENDEDPRICE"`
-	L_DISCOUNT      float64 `json:"L_DISCOUNT"`
-	L_TAX           float64 `json:"L_TAX"`
-	L_RETURNFLAG    string  `json:"L_RETURNFLAG"`
-	L_LINESTATUS    string  `json:"L_LINESTATUS"`
-	L_SHIPDATE      string  `json:"L_SHIPDATE"`
-	L_COMMITDATE    string  `json:"L_COMMITDATE"`
-	L_RECEIPTDATE   string  `json:"L_RECEIPTDATE"`
-	L_SHIPINSTRUCT  string  `json:"L_SHIPINSTRUCT"`
-	L_SHIPMODE      string  `json:"L_SHIPMODE"`
-	L_COMMENT       string  `json:"L_COMMENT"`
+type AccessListEntry struct {
+	Address     string   `json:"address"`
+	StorageKeys []string `json:"storageKeys"`
+}
+
+type Header struct {
+	BaseFeePerGas    string   `json:"baseFeePerGas"`
+	Difficulty       string   `json:"difficulty"`
+	ExtraData        string   `json:"extraData"`
+	GasLimit         int      `json:"gasLimit"`
+	GasUsed          int      `json:"gasUsed"`
+	Hash             string   `json:"hash"`
+	LogsBloom        string   `json:"logsBloom"`
+	Miner            string   `json:"miner"`
+	MixHash          string   `json:"mixHash"`
+	Nonce            string   `json:"nonce"`
+	Number           int      `json:"blockHash"`
+	ParentHash       string   `json:"parentHash"`
+	ReceiptsRoot     string   `json:"receiptsRoot"`
+	Sha3Uncles       string   `json:"sha3Uncles"`
+	Size             int      `json:"size"`
+	StateRoot        string   `json:"stateRoot"`
+	Timestamp        int      `json:"timestamp"`
+	TotalDifficulty  string   `json:"totalDifficulty"`
+	Transactions     []string `json:"transactions"`
+	TransactionsRoot string   `json:"transactionsRoot"`
+	Uncles           []string `json:"uncles"`
+}
+
+type Transaction struct {
+	BlockHash   string `json:"blockHash"`
+	BlockNumber int    `json:"blockNumber"`
+	From        string `json:"from"`
+	Gas         int    `json:"gas"`
+	GasPrice    string `json:"gasPrice"`
+
+	MaxFeePerGas         string `json:"maxFeePerGas"`
+	MaxPriorityFeePerGas string `json:"maxPriorityFeePerGas"`
+
+	Hash             string            `json:"hash"`
+	Input            string            `json:"input"`
+	Nonce            int               `json:"nonce"`
+	To               string            `json:"to"`
+	TransactionIndex int               `json:"transactionIndex"`
+	Value            string            `json:"value"`
+	Type             string            `json:"type"`
+	AccessList       []AccessListEntry `json:"accessList"`
+	ChainId          string            `json:"chainId"`
+	V                string            `json:"v"`
+	R                string            `json:"r"`
+	S                string            `json:"s"`
 }
 
 func main() {
@@ -136,41 +173,91 @@ func main() {
 
 }
 
+func unmarshalBlock(rawBlock []json.RawMessage) Block {
+	var (
+		header       Header
+		transactions []Transaction
+	)
+
+	// Unmarshal header
+	err := json.Unmarshal(rawBlock[0], &header)
+	if err != nil {
+		log.Fatalf("error while reading json file: %s", err)
+
+	}
+
+	// Unmarshal transactions
+	for i := 1; i < len(rawBlock); i++ {
+		var tx Transaction
+		err = json.Unmarshal(rawBlock[i], &tx)
+		if err != nil {
+			log.Fatalf("error while reading json file: %s", err)
+
+		}
+		transactions = append(transactions, tx)
+	}
+
+	return Block{Header: header, Transactions: transactions}
+}
+
+func parseFile(data []byte) Chain {
+	var chain Chain
+
+	var rawBlocks []json.RawMessage
+	err := json.Unmarshal(data, &rawBlocks)
+	if err != nil {
+		log.Fatalf("error while reading json file: %s", err)
+
+	}
+
+	for _, rawBlock := range rawBlocks {
+		var block []json.RawMessage
+		err = json.Unmarshal(rawBlock, &block)
+		if err != nil {
+			log.Fatalf("error while reading json file: %s", err)
+
+		}
+		chain = append(chain, unmarshalBlock(block))
+	}
+
+	return chain
+
+}
+
 func BulkInvoke(contract *gateway.Contract, fileUrl string) {
 	if fileUrl == "" || !filepath.IsAbs(fileUrl) {
 		log.Fatalln("File URL must be provided and must be an absolute path")
 
 	}
 
-	jsonData, err := ioutil.ReadFile(fileUrl)
+	jsonData, err := os.ReadFile(fileUrl)
 	if err != nil {
 		log.Fatalf("error while reading json file: %s", err)
 
 	}
 
-	var table Table
-	if err := json.Unmarshal([]byte(jsonData), &table); err != nil {
-		log.Fatalf("Failed to unmarshal JSON: %s", err)
-	}
-
-	orders := table.Table
+	chain := parseFile(jsonData)
 
 	startTime := time.Now()
 	log.Printf("Starting bulk transaction at time: %s\n", startTime.Format(time.UnixDate))
 
-	// Split orders into chunks of size 2500
-	chunkSize := 2500
-	for i := 0; i < len(orders); i += chunkSize {
+	// Insert N blocks at a time
+	N := 1
+	for i := 0; i < len(chain); i += N {
 		chunkTime := time.Now()
 
-		chunk := orders[i:func() int {
-			if i+chunkSize > len(orders) {
-				return len(orders)
-			}
-			return i + chunkSize
-		}()]
+		end := i + N
+		if end > len(chain) {
+			end = len(chain)
+		}
+		chunk := chain[i:end]
 
-		chunkBytes, err := json.Marshal(chunk)
+		var transactions []Transaction
+		for _, block := range chunk {
+			transactions = append(transactions, block.Transactions...)
+		}
+
+		chunkBytes, err := json.Marshal(transactions)
 		if err != nil {
 			log.Fatalf("Failed to marshal JSON: %s", err)
 		}
@@ -182,7 +269,7 @@ func BulkInvoke(contract *gateway.Contract, fileUrl string) {
 
 		endTime := time.Now()
 		executionTime := endTime.Sub(chunkTime).Seconds()
-		log.Printf("Execution Time: %f sec at chunk %d", executionTime, i/chunkSize+1)
+		log.Printf("Execution Time: %f sec at chunk %d", executionTime, i/N+1)
 	}
 
 	endTime := time.Now()
@@ -197,35 +284,41 @@ func BulkInvokeParallel(contract *gateway.Contract, fileUrl string) {
 		log.Fatalln("File URL is not absolute.")
 	}
 
-	raw, err := ioutil.ReadFile(fileUrl)
+	jsonData, err := os.ReadFile(fileUrl)
 	if err != nil {
 		log.Fatalln(err)
 	}
-
-	var t Table
-	json.Unmarshal(raw, &t)
-
-	chunkSize := 500
 
 	var wg sync.WaitGroup
 
 	// Create a buffered channel to limit number of goroutines
 	sem := make(chan bool, 10)
 
-	for i := 0; i < len(t.Table); i += chunkSize {
+	chain := parseFile(jsonData)
 
-		log.Printf("Processing chunk starting at index %d\n", i)
+	startTime := time.Now()
+	log.Printf("Starting bulk transaction at time: %s\n", startTime.Format(time.UnixDate))
 
-		end := i + chunkSize
-		if end > len(t.Table) {
-			end = len(t.Table)
+	log.Printf("Number of blocks: %d\n", len(chain))
+	// Insert N blocks at a time
+	N := 10
+	for i := 0; i < len(chain); i += N {
+		chunkTime := time.Now()
+
+		end := i + N
+		if end > len(chain) {
+			end = len(chain)
 		}
-		chunk := t.Table[i:end]
+		chunk := chain[i:end]
 
-		chunkBytes, err := json.Marshal(chunk)
+		var transactions []Transaction
+		for _, block := range chunk {
+			transactions = append(transactions, block.Transactions...)
+		}
+
+		chunkBytes, err := json.Marshal(transactions)
 		if err != nil {
-			log.Println(err)
-			continue
+			log.Fatalf("Failed to marshal JSON: %s", err)
 		}
 
 		wg.Add(1)
@@ -240,7 +333,19 @@ func BulkInvokeParallel(contract *gateway.Contract, fileUrl string) {
 			// Once the transaction is complete, release the slot
 			<-sem
 		}(string(chunkBytes))
+
+		_, err = contract.SubmitTransaction("CreateBulk", string(chunkBytes))
+		if err != nil {
+			log.Fatalf("Failed to submit transaction: %s\n", err)
+		}
+
+		endTime := time.Now()
+		executionTime := endTime.Sub(chunkTime).Seconds()
+		log.Printf("Execution Time: %f sec at chunk %d", executionTime, i/N+1)
 	}
+
+	endTime := time.Now()
+	executionTime := endTime.Sub(startTime).Seconds()
 
 	// Wait for all goroutines to finish
 	wg.Wait()
@@ -249,6 +354,9 @@ func BulkInvokeParallel(contract *gateway.Contract, fileUrl string) {
 	for i := 0; i < cap(sem); i++ {
 		sem <- true
 	}
+
+	log.Printf("Finished bulk transaction at time: %s\n", endTime.Format(time.UnixDate))
+	log.Printf("Total execution time is: %f sec\n", executionTime)
 }
 
 func Invoke(contract *gateway.Contract, fileUrl string) {
@@ -259,29 +367,25 @@ func Invoke(contract *gateway.Contract, fileUrl string) {
 		os.Exit(1)
 	}
 
-	jsonData, err := ioutil.ReadFile(fileUrl)
+	jsonData, err := os.ReadFile(fileUrl)
 	if err != nil {
 		log.Fatalf("error while reading json file: %s", err)
 
 	}
 
-	var table Table
-	if err := json.Unmarshal([]byte(jsonData), &table); err != nil {
-		log.Fatalf("Failed to unmarshal JSON: %s", err)
-	}
+	chain := parseFile(jsonData)
 
-	orders := table.Table
-
-	for i := 0; i < 10; i++ {
-
-		orderBytes, err := json.Marshal(orders[i])
-		if err != nil {
-			log.Fatalf("Failed to marshal JSON: %s", err)
-		}
-
-		_, err = contract.SubmitTransaction("Create", string(orderBytes))
-		if err != nil {
-			log.Fatalf("Failed to submit transaction: %s\n", err)
+	for i := 0; i < len(chain); i++ {
+		transactions := chain[i].Transactions
+		for _, transaction := range transactions {
+			transactionBytes, err := json.Marshal(transaction)
+			if err != nil {
+				log.Fatalf("Failed to marshal JSON: %s", err)
+			}
+			_, err = contract.SubmitTransaction("Create", string(transactionBytes))
+			if err != nil {
+				log.Fatalf("Failed to submit transaction: %s\n", err)
+			}
 		}
 	}
 
@@ -516,7 +620,7 @@ func populateWallet(wallet *gateway.Wallet) error {
 
 	certPath := filepath.Join(credPath, "signcerts", "cert.pem")
 	// read the certificate pem
-	cert, err := ioutil.ReadFile(filepath.Clean(certPath))
+	cert, err := os.ReadFile(filepath.Clean(certPath))
 	if err != nil {
 		return err
 	}
@@ -531,7 +635,7 @@ func populateWallet(wallet *gateway.Wallet) error {
 		return errors.New("keystore folder should have contain one file")
 	}
 	keyPath := filepath.Join(keyDir, files[0].Name())
-	key, err := ioutil.ReadFile(filepath.Clean(keyPath))
+	key, err := os.ReadFile(filepath.Clean(keyPath))
 	if err != nil {
 		return err
 	}

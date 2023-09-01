@@ -10,29 +10,39 @@ import (
 	sc "github.com/hyperledger/fabric-protos-go/peer"
 )
 
-type Order struct {
-	L_ORDERKEY      int     `json:"L_ORDERKEY"`
-	L_PARTKEY       int     `json:"L_PARTKEY"`
-	L_SUPPKEY       int     `json:"L_SUPPKEY"`
-	L_LINENUMBER    int     `json:"L_LINENUMBER"`
-	L_QUANTITY      int     `json:"L_QUANTITY"`
-	L_EXTENDEDPRICE float64 `json:"L_EXTENDEDPRICE"`
-	L_DISCOUNT      float64 `json:"L_DISCOUNT"`
-	L_TAX           float64 `json:"L_TAX"`
-	L_RETURNFLAG    string  `json:"L_RETURNFLAG"`
-	L_LINESTATUS    string  `json:"L_LINESTATUS"`
-	L_SHIPDATE      string  `json:"L_SHIPDATE"`
-	L_COMMITDATE    string  `json:"L_COMMITDATE"`
-	L_RECEIPTDATE   string  `json:"L_RECEIPTDATE"`
-	L_SHIPINSTRUCT  string  `json:"L_SHIPINSTRUCT"`
-	L_SHIPMODE      string  `json:"L_SHIPMODE"`
-	L_COMMENT       string  `json:"L_COMMENT"`
+type AccessListEntry struct {
+	Address     string   `json:"address"`
+	StorageKeys []string `json:"storageKeys"`
+}
+
+type Transaction struct {
+	BlockHash   string `json:"blockHash"`
+	BlockNumber int    `json:"blockNumber"`
+	From        string `json:"from"`
+	Gas         int    `json:"gas"`
+	GasPrice    string `json:"gasPrice"`
+
+	MaxFeePerGas         string `json:"maxFeePerGas"`
+	MaxPriorityFeePerGas string `json:"maxPriorityFeePerGas"`
+
+	Hash             string            `json:"hash"`
+	Input            string            `json:"input"`
+	Nonce            int               `json:"nonce"`
+	To               string            `json:"to"`
+	TransactionIndex int               `json:"transactionIndex"`
+	Value            string            `json:"value"`
+	Type             string            `json:"type"`
+	AccessList       []AccessListEntry `json:"accessList"`
+	ChainId          string            `json:"chainId"`
+	V                string            `json:"v"`
+	R                string            `json:"r"`
+	S                string            `json:"s"`
 }
 
 type QueryResult struct {
-	Key       string `json:"Key"`
-	Record    *Order `json:"record"`
-	Timestamp string `json:"timestamp"`
+	Key       string       `json:"Key"`
+	Record    *Transaction `json:"record"`
+	Timestamp string       `json:"timestamp"`
 }
 
 // SimpleContract contract for handling writing and reading from the world state
@@ -77,20 +87,20 @@ func (sc *SmartContract) InitLedger(stub shim.ChaincodeStubInterface) sc.Respons
 }
 
 func (sc *SmartContract) Create(stub shim.ChaincodeStubInterface, args []string) sc.Response {
-	var order Order
-	json.Unmarshal([]byte(args[0]), &order)
+	var transaction Transaction
+	json.Unmarshal([]byte(args[0]), &transaction)
 
-	orderBytes, err := json.Marshal(order)
+	transactionBytes, err := json.Marshal(transaction)
 	if err != nil {
-		return shim.Error("Failed to marshal order JSON: " + err.Error())
+		return shim.Error("Failed to marshal transaction JSON: " + err.Error())
 	}
 
-	orderKey := strconv.FormatInt(int64(order.L_ORDERKEY), 10)
-	log.Printf("Appending order: %s\n", orderKey)
+	transactionKey := transaction.From
+	log.Printf("Appending transaction: %s\n", transactionKey)
 
-	err = stub.PutState(orderKey, orderBytes)
+	err = stub.PutState(transactionKey, transactionBytes)
 	if err != nil {
-		return shim.Error("failed to put order on ledger: " + err.Error())
+		return shim.Error("failed to put transaction on ledger: " + err.Error())
 	}
 
 	return shim.Success(nil)
@@ -101,24 +111,24 @@ func (sc *SmartContract) Create(stub shim.ChaincodeStubInterface, args []string)
 func (sc *SmartContract) CreateBulk(stub shim.ChaincodeStubInterface, args []string) sc.Response {
 	buffer := args[0]
 
-	var orders []Order
-	json.Unmarshal([]byte(buffer), &orders)
+	var transactions []Transaction
+	json.Unmarshal([]byte(buffer), &transactions)
 
-	for _, order := range orders {
+	for _, transaction := range transactions {
 
-		orderBytes, err := json.Marshal(order)
+		transactionBytes, err := json.Marshal(transaction)
 		if err != nil {
-			return shim.Error("failed to marshal order JSON: " + err.Error())
+			return shim.Error("failed to marshal transaction JSON: " + err.Error())
 		}
 
-		orderKey := strconv.FormatInt(int64(order.L_ORDERKEY), 10)
+		transactionKey := transaction.From
 
 		// Fabric key must be a string
-		//fmt.Sprintf("%d", order.L_ORDERKEY)
-		log.Printf("Appending order %s with part %d\n", orderKey, order.L_PARTKEY)
-		err = stub.PutState(orderKey, orderBytes)
+		//fmt.Sprintf("%d", transaction.L_ORDERKEY)
+		log.Printf("Appending transaction %s with gasPrice %d\n", transactionKey, transaction.GasPrice)
+		err = stub.PutState(transactionKey, transactionBytes)
 		if err != nil {
-			return shim.Error("failed to put order on ledger: " + err.Error())
+			return shim.Error("failed to put transaction on ledger: " + err.Error())
 		}
 	}
 
@@ -127,18 +137,18 @@ func (sc *SmartContract) CreateBulk(stub shim.ChaincodeStubInterface, args []str
 }
 
 func (sc *SmartContract) CreateBulkParallel(stub shim.ChaincodeStubInterface, args []string) sc.Response {
-	var orders []Order
-	json.Unmarshal([]byte(args[0]), &orders)
+	var transactions []Transaction
+	json.Unmarshal([]byte(args[0]), &transactions)
 
-	for _, order := range orders {
-		orderBytes, err := json.Marshal(order)
+	for _, transaction := range transactions {
+		transactionBytes, err := json.Marshal(transaction)
 		if err != nil {
-			return shim.Error("Error marshaling order object: " + err.Error())
+			return shim.Error("Error marshaling transaction object: " + err.Error())
 		}
 
-		err = stub.PutState(strconv.Itoa(order.L_ORDERKEY), orderBytes)
+		err = stub.PutState(transaction.From, transactionBytes)
 		if err != nil {
-			return shim.Error("Failed to create order: " + err.Error())
+			return shim.Error("Failed to create transaction: " + err.Error())
 		}
 	}
 	return shim.Success(nil)
@@ -163,13 +173,13 @@ func (sc *SmartContract) getHistoryForAsset(stub shim.ChaincodeStubInterface, ar
 			return shim.Error(err.Error())
 		}
 
-		var order Order
-		json.Unmarshal(historyData.Value, &order)
+		var transaction Transaction
+		json.Unmarshal(historyData.Value, &transaction)
 
 		//Convert google.protobuf.Timestamp to string
 		timestamp := time.Unix(historyData.Timestamp.Seconds, int64(historyData.Timestamp.Nanos)).String()
 
-		history = append(history, QueryResult{Key: historyData.TxId, Record: &order, Timestamp: timestamp})
+		history = append(history, QueryResult{Key: historyData.TxId, Record: &transaction, Timestamp: timestamp})
 	}
 
 	historyAsBytes, _ := json.Marshal(history)
@@ -195,13 +205,13 @@ func (sc *SmartContract) getHistoryForAssets(stub shim.ChaincodeStubInterface, a
 			return shim.Error(err.Error())
 		}
 
-		var order Order
-		json.Unmarshal(historyData.Value, &order)
+		var transaction Transaction
+		json.Unmarshal(historyData.Value, &transaction)
 
 		//Convert google.protobuf.Timestamp to string
 		timestamp := time.Unix(historyData.Timestamp.Seconds, int64(historyData.Timestamp.Nanos)).String()
 
-		history = append(history, QueryResult{Key: historyData.TxId, Record: &order, Timestamp: timestamp})
+		history = append(history, QueryResult{Key: historyData.TxId, Record: &transaction, Timestamp: timestamp})
 	}
 
 	// var histories [][]QueryResult
@@ -213,10 +223,10 @@ func (sc *SmartContract) getHistoryForAssets(stub shim.ChaincodeStubInterface, a
 	// 			return shim.Error(err.Error())
 	// 		}
 
-	// 		var order Order
-	// 		json.Unmarshal(historyData.Value, &order)
+	// 		var transaction Transaction
+	// 		json.Unmarshal(historyData.Value, &transaction)
 
-	// 		history = append(history, QueryResult{Key: historyData.TxId, Record: &order})
+	// 		history = append(history, QueryResult{Key: historyData.TxId, Record: &transaction})
 	// 	}
 	// 	histories = append(histories, history)
 	// }
@@ -248,12 +258,12 @@ func (sc *SmartContract) getVersionsForAsset(stub shim.ChaincodeStubInterface, a
 			return shim.Error(err.Error())
 		}
 
-		var order Order
-		json.Unmarshal(versionData.Value, &order) // .Value?
+		var transaction Transaction
+		json.Unmarshal(versionData.Value, &transaction) // .Value?
 
 		timestamp := time.Unix(versionData.Timestamp.Seconds, int64(versionData.Timestamp.Nanos)).String()
 
-		versions = append(versions, QueryResult{Key: versionData.TxId, Record: &order, Timestamp: timestamp})
+		versions = append(versions, QueryResult{Key: versionData.TxId, Record: &transaction, Timestamp: timestamp})
 	}
 
 	versionAsBytes, _ := json.Marshal(versions)
