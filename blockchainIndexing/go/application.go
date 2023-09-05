@@ -299,11 +299,9 @@ func BulkInvokeParallel(contract *gateway.Contract, fileUrl string) {
 	startTime := time.Now()
 	log.Printf("Starting bulk transaction at time: %s\n", startTime.Format(time.UnixDate))
 
-	log.Printf("Number of blocks: %d\n", len(chain))
-
 	var chunkCounter int
 
-	CHUNK_LIMIT := 1000
+	CHUNK_LIMIT := 500
 	var transactionChunk []Transaction
 	for i := 0; i < len(chain); i++ {
 		chunkTime := time.Now()
@@ -512,6 +510,8 @@ func versionQueryOld(contract *gateway.Contract, key string, start int, end int)
 	if err != nil {
 		log.Fatalf("Failed to marshal JSON: %s\n", err)
 	}
+
+	log.Printf("Total number of assets is: %d\n", len(assets))
 
 	// fmt.Println(string(assetsJSON))
 	log.Printf("Total execution time is: %f sec\n", executionTime)
