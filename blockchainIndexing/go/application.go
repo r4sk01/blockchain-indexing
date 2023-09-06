@@ -489,7 +489,7 @@ func versionQuery(contract *gateway.Contract, key string, start int, end int) {
 	startString := strconv.Itoa(start)
 	endString := strconv.Itoa(end)
 
-	_, err := contract.EvaluateTransaction("getVersionsForAsset", key, startString, endString)
+	result, err := contract.EvaluateTransaction("getVersionsForAsset", key, startString, endString)
 	if err != nil {
 		log.Fatalf("Failed to evaluate transaction: %s\n", err)
 	}
@@ -497,7 +497,7 @@ func versionQuery(contract *gateway.Contract, key string, start int, end int) {
 	endTime := time.Now()
 	executionTime := endTime.Sub(startTime).Seconds()
 
-	//fmt.Println(string(result))
+	fmt.Println(string(result))
 	log.Printf("Total execution time is: %f sec\n", executionTime)
 }
 
