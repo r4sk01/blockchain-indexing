@@ -133,6 +133,7 @@ func main() {
 	transaction := flag.String("t", "defaultQuery", "Choose a transaction to run")
 	file := flag.String("f", "~", "file path for json data")
 	key := flag.String("k", "", "key for getHistoryForAsset")
+	rangeSize := flag.Int("r", 1, "size of key range")
 	version := flag.Int("v", 1, "version to query for point query")
 	start := flag.Int("start", 1, "start version for version query")
 	end := flag.Int("end", 1, "end version for version query")
@@ -152,7 +153,7 @@ func main() {
 	case "getHistoryForAssetsOld":
 		getHistoryForAssetsOld(contract, *key)
 	case "getHistoryForAssetRangeOld":
-		getHistoryForAssetRangeOld(contract, *key)
+		getHistoryForAssetRangeOld(contract, *key, *rangeSize)
 	case "pointQueryOld":
 		pointQueryOld(contract, *key, *version)
 	case "versionQueryOld":
@@ -162,7 +163,7 @@ func main() {
 	case "getHistoryForAssets":
 		getHistoryForAssets(contract, *key)
 	case "getHistoryForAssetRange":
-		getHistoryForAssetRange(contract, *key)
+		getHistoryForAssetRange(contract, *key, *rangeSize)
 
 	// GetVersionsForKey API Required
 	case "pointQuery":
@@ -300,6 +301,7 @@ func BulkInvokeParallel(contract *gateway.Contract, fileUrl string) {
 	log.Printf("Starting bulk transaction at time: %s\n", startTime.Format(time.UnixDate))
 
 	var chunkCounter int
+	totalTx := 0
 
 	CHUNK_LIMIT := 500
 	var transactionChunk []Transaction
@@ -313,6 +315,8 @@ func BulkInvokeParallel(contract *gateway.Contract, fileUrl string) {
 			transactionChunk = append(transactionChunk, currentBlock.Transactions...)
 			continue
 		}
+
+		totalTx += len(transactionChunk)
 
 		chunkCounter++
 		chunkBytes, err := json.Marshal(transactionChunk)
@@ -334,7 +338,7 @@ func BulkInvokeParallel(contract *gateway.Contract, fileUrl string) {
 
 		endTime := time.Now()
 		executionTime := endTime.Sub(chunkTime).Seconds()
-		log.Printf("Execution Time: %f sec at chunk %d with length %d\n", executionTime, chunkCounter, len(transactionChunk))
+		log.Printf("Execution Time: %f sec at chunk %d with length %d. Cumulative total: %d\n", executionTime, chunkCounter, len(transactionChunk), totalTx)
 
 		// Reset chunk to include only the current batch
 		transactionChunk = append([]Transaction{}, currentBlock.Transactions...)
@@ -416,31 +420,41 @@ func getHistoryForAssetsOld(contract *gateway.Contract, keys string) {
 	log.Printf("Total execution time is: %f sec\n", executionTime)
 }
 
-func getHistoryForAssetRangeOld(contract *gateway.Contract, keys string) {
-	startEndKeys := strings.Split(keys, ",")
-
-	start, _ := strconv.Atoi(startEndKeys[0])
-	end, _ := strconv.Atoi(startEndKeys[1])
-	size := end - start + 1
-	keys_list := make([]string, size)
-
-	for i := range keys_list {
-		keys_list[i] = strconv.Itoa(start + i)
+func IncrementHex(s string) string {
+	const HEX_TABLE = "0123456789abcdef"
+	sPlusOne := make([]byte, len(s))
+	carry := 1
+	for i := len(s) - 1; i >= 2; i-- {
+		digitVal := strings.IndexByte(HEX_TABLE, s[i])
+		digitVal = digitVal + carry
+		carry = digitVal / 16
+		newDigitVal := digitVal % 16
+		sPlusOne[i] = HEX_TABLE[newDigitVal]
 	}
+	return string(sPlusOne)
+}
+
+func getHistoryForAssetRangeOld(contract *gateway.Contract, key string, rangeSize int) {
 
 	startTime := time.Now()
 
-	for _, key := range keys_list {
-		_, err := contract.EvaluateTransaction("getHistoryForAsset", key)
+	numKeys := 0
+	for i := 0; i < rangeSize; i++ {
+		result, err := contract.EvaluateTransaction("getHistoryForAsset", key)
 		if err != nil {
 			log.Fatalf("Failed to evaluate transaction: %s\n", err)
 		}
-		//fmt.Println(string(result))
+		if string(result) != "null" {
+			numKeys++
+		}
+		// fmt.Println(string(result))
+		key = IncrementHex(key)
 	}
 
 	endTime := time.Now()
 	executionTime := endTime.Sub(startTime).Seconds()
 	log.Printf("Total execution time is: %f sec\n", executionTime)
+	log.Printf("%d keys found within rangeSize %d\n", numKeys, rangeSize)
 }
 
 func pointQueryOld(contract *gateway.Contract, key string, version int) {
@@ -533,16 +547,12 @@ func getHistoryForAssets(contract *gateway.Contract, keys string) {
 	log.Printf("Total execution time is: %f sec\n", executionTime)
 }
 
-func getHistoryForAssetRange(contract *gateway.Contract, keys string) {
-	startEndKeys := strings.Split(keys, ",")
+func getHistoryForAssetRange(contract *gateway.Contract, key string, rangeSize int) {
 
-	start, _ := strconv.Atoi(startEndKeys[0])
-	end, _ := strconv.Atoi(startEndKeys[1])
-	size := end - start + 1
-	keys_list := make([]string, size)
-
-	for i := range keys_list {
-		keys_list[i] = strconv.Itoa(start + i)
+	keys_list := []string{}
+	for i := 0; i < rangeSize; i++ {
+		keys_list = append(keys_list, key)
+		key = IncrementHex(key)
 	}
 
 	startTime := time.Now()
