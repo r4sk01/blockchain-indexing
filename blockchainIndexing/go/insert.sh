@@ -8,7 +8,7 @@ files=("blockTransactions17000000-17010000.json" "blockTransactions17010001-1701
     "blockTransactions17012001-17015000.json" "blockTransactions17015001-17020000.json" "blockTransactions17020001-17030000.json" \
     "blockTransactions17030001-17050000.json" "blockTransactions17090001-17100000.json")
 
-dataDir="/home/andrey/Documents/insert-tpch/ethereum/"
+dataDir="/home/andrey/Documents/insert-tpch/eth1020Mil/"
 
 #for file in ${files[@]}; do
 for file in $dataDir*; do
