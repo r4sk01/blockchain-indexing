@@ -66,7 +66,7 @@ peer:
             interval: 60s
             # Timeout is the duration the client waits for a response from
             # peer nodes before closing the connection
-            timeout: 300s
+            timeout: 1800s
         # DeliveryClient keepalive settings for communication with ordering
         # nodes.
         deliveryClient:
