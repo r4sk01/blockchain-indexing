@@ -85,6 +85,12 @@ type Transaction struct {
 	S                string            `json:"s"`
 }
 
+type QueryResult struct {
+	Key       string       `json:"key"`
+	Record    *Transaction `json:"record"`
+	Timestamp string       `json:"timestamp"`
+}
+
 func main() {
 
 	os.Setenv("DISCOVERY_AS_LOCALHOST", "true")
@@ -170,6 +176,12 @@ func main() {
 		pointQuery(contract, *key, *version)
 	case "versionQuery":
 		versionQuery(contract, *key, *start, *end)
+
+	// GetVersionsForKey API Required
+	case "pointQueryOldStyle":
+		pointQueryOldStyle(contract, *key, *version)
+	case "versionQueryOldStyle":
+		versionQueryOldStyle(contract, *key, *start, *end)
 	}
 
 }
@@ -605,6 +617,110 @@ func versionQuery(contract *gateway.Contract, key string, start int, end int) {
 
 	//fmt.Println(string(result))
 	log.Printf("Total execution time is: %f sec\n", executionTime)
+}
+
+func pointQueryOldStyle(contract *gateway.Contract, key string, version int) {
+	// log the beginning of the function for debugging purposes
+	log.Printf("Querying for all versions of key %s\n", key)
+	startTime := time.Now()
+
+	var allResults []QueryResult
+
+	startVersion := 0 // We start from version 0
+
+	for {
+		// Convert current versions to string format for the EvaluateTransaction function
+		startVersionString := strconv.Itoa(startVersion)
+		endVersionString := strconv.Itoa(startVersion + 999) // We fetch 1000 at a time
+
+		result, err := contract.EvaluateTransaction("getVersionsForAsset", key, startVersionString, endVersionString)
+		if err != nil {
+			log.Fatalf("Failed to evaluate transaction: %s\n", err)
+		}
+
+		// Unmarshal the result (bytes) into a slice of QueryResult
+		var currentResults []QueryResult
+		err = json.Unmarshal(result, &currentResults)
+		if err != nil {
+			log.Fatalf("Failed to unmarshal transaction result: %s\n", err)
+		}
+
+		allResults = append(allResults, currentResults...)
+
+		// Break the loop if the result is less than 1000 indicating we fetched all versions
+		if len(currentResults) < 1000 {
+			break
+		}
+
+		// Move to the next set of versions
+		startVersion += 1000
+	}
+
+	// Retrieve the result for the requested 'version'
+	if version < len(allResults) {
+		requestedResult := allResults[version]
+		fmt.Println(requestedResult)
+	} else {
+		log.Printf("Requested version %d not found in the results.\n", version)
+	}
+
+	// Logging the execution time
+	endTime := time.Now()
+	executionTime := endTime.Sub(startTime).Seconds()
+	log.Printf("Total execution time for pointQueryOldStyle is: %f sec\n", executionTime)
+}
+
+func versionQueryOldStyle(contract *gateway.Contract, key string, start int, end int) {
+	// log the beginning of the function for debugging purposes
+	log.Printf("Querying for versions %d to %d of key %s\n", start, end, key)
+	startTime := time.Now()
+
+	var allResults []QueryResult
+
+	currentVersion := 0 // We start from version 0
+
+	for {
+		// Convert current versions to string format for the EvaluateTransaction function
+		startVersionString := strconv.Itoa(currentVersion)
+		endVersionString := strconv.Itoa(currentVersion + 999) // We fetch 1000 at a time
+
+		result, err := contract.EvaluateTransaction("getVersionsForAsset", key, startVersionString, endVersionString)
+		if err != nil {
+			log.Fatalf("Failed to evaluate transaction: %s\n", err)
+		}
+
+		// Unmarshal the result (bytes) into a slice of QueryResult
+		var currentResults []QueryResult
+		err = json.Unmarshal(result, &currentResults)
+		if err != nil {
+			log.Fatalf("Failed to unmarshal transaction result: %s\n", err)
+		}
+
+		allResults = append(allResults, currentResults...)
+
+		// Break the loop if the result is less than 1000 indicating we fetched all versions
+		if len(currentResults) < 1000 {
+			break
+		}
+
+		// Move to the next set of versions
+		currentVersion += 1000
+	}
+
+	// Retrieve the results for the requested range (start to end)
+	if start < len(allResults) && end <= len(allResults) && start <= end {
+		requestedResults := allResults[start:end] // Slice to get range
+		for _, res := range requestedResults {
+			fmt.Println(res)
+		}
+	} else {
+		log.Printf("Requested version range %d to %d not found in the results.\n", start, end)
+	}
+
+	// Logging the execution time
+	endTime := time.Now()
+	executionTime := endTime.Sub(startTime).Seconds()
+	log.Printf("Total execution time for versionQueryOldStyle is: %f sec\n", executionTime)
 }
 
 func populateWallet(wallet *gateway.Wallet) error {
