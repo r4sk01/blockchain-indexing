@@ -6,13 +6,13 @@ client:
   connection:
     timeout:
       peer:
-        endorser: '1800'
-      orderer: '1800'
+        endorser: '18000'
+      orderer: '18000'
     options:
       grpc.max_receive_message_length: '-1'
       grpc.max_send_message_length: '-1'
-      grpc.keepalive_time_ms: '1800000'
-      grpc.keepalive_timeout_ms: '1800000'
+      grpc.keepalive_time_ms: '18000000'
+      grpc.keepalive_timeout_ms: '18000000'
 organizations:
   Org${ORG}:
     mspid: Org${ORG}MSP
@@ -31,8 +31,8 @@ peers:
       hostnameOverride: peer0.org${ORG}.example.com
       grpc.max_receive_message_length: '500000000'
       grpc.max_send_message_length: '500000000'
-      grpc.keepalive_time_ms: '1800000'
-      grpc.keepalive_timeout_ms: '1800000'
+      grpc.keepalive_time_ms: '18000000'
+      grpc.keepalive_timeout_ms: '18000000'
 certificateAuthorities:
   ca.org${ORG}.example.com:
     url: https://localhost:${CAPORT}
