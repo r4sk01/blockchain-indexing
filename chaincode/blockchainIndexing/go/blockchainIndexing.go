@@ -1,6 +1,7 @@
 package main
 
 import (
+	"encoding/hex"
 	"encoding/json"
 	"log"
 	"strconv"
@@ -95,7 +96,11 @@ func (sc *SmartContract) Create(stub shim.ChaincodeStubInterface, args []string)
 		return shim.Error("Failed to marshal transaction JSON: " + err.Error())
 	}
 
-	transactionKey := transaction.From
+	keyBytes, err := hex.DecodeString(transaction.From[2:])
+	if err != nil {
+		return shim.Error("Error: could not decode hex from string: " + transaction.From)
+	}
+	transactionKey := string(keyBytes)
 	log.Printf("Appending transaction: %s\n", transactionKey)
 
 	err = stub.PutState(transactionKey, transactionBytes)
@@ -121,7 +126,11 @@ func (sc *SmartContract) CreateBulk(stub shim.ChaincodeStubInterface, args []str
 			return shim.Error("failed to marshal transaction JSON: " + err.Error())
 		}
 
-		transactionKey := transaction.From
+		keyBytes, err := hex.DecodeString(transaction.From[2:])
+		if err != nil {
+			return shim.Error("Error: could not decode hex from string: " + transaction.From)
+		}
+		transactionKey := string(keyBytes)
 
 		// Fabric key must be a string
 		//fmt.Sprintf("%d", transaction.L_ORDERKEY)
@@ -146,7 +155,12 @@ func (sc *SmartContract) CreateBulkParallel(stub shim.ChaincodeStubInterface, ar
 			return shim.Error("Error marshaling transaction object: " + err.Error())
 		}
 
-		err = stub.PutState(transaction.From, transactionBytes)
+		keyBytes, err := hex.DecodeString(transaction.From[2:])
+		if err != nil {
+			return shim.Error("Error: could not decode hex from string: " + transaction.From)
+		}
+		transactionKey := string(keyBytes)
+		err = stub.PutState(transactionKey, transactionBytes)
 		if err != nil {
 			return shim.Error("Failed to create transaction: " + err.Error())
 		}
