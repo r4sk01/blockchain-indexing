@@ -176,6 +176,9 @@ func main() {
 
 	case "versionQueryFetchAll":
 		versionQueryFetchAll(contract, *key, *pageSize, *start, *end)
+
+	case "pointQueryFetchAll":
+		pointQueryFetchAll(contract, *key, *pageSize, *version)
 	}
 
 }
@@ -697,6 +700,45 @@ func versionQueryFetchAll(contract *gateway.Contract, key string, pageSize int, 
 
 	log.Printf("Total number of assets is: %d\n", len(totalAssets))
 	log.Printf("Requested assets found: %d\n", len(requestedAssets))
+	//fmt.Println(string(result))
+	log.Printf("Total execution time is: %f sec\n", executionTime)
+}
+
+func pointQueryFetchAll(contract *gateway.Contract, key string, pageSize int, version int) {
+
+	fmt.Printf("Fetching history for key %s with %d results at a time\n", key, pageSize)
+	startTime := time.Now()
+
+	var totalAssets []Asset
+	pageStart := 1
+	pageEnd := pageSize
+	for {
+		fmt.Printf("Calling getVersionsForAsset with start %d and end %d\n", pageStart, pageEnd)
+		result, err := contract.EvaluateTransaction("getVersionsForAsset", key, strconv.Itoa(pageStart), strconv.Itoa(pageEnd))
+		if err != nil {
+			log.Fatalf("Failed to evaluate transaction: %s\n", err)
+		}
+
+		var currentAssets []Asset
+		err = json.Unmarshal(result, &currentAssets)
+		if err != nil {
+			log.Fatalf("Failed to unmarshal JSON: %s\n", err)
+		}
+		totalAssets = append(totalAssets, currentAssets...)
+		if len(currentAssets) < pageSize {
+			break
+		}
+		pageStart = pageEnd + 1
+		pageEnd = pageStart + pageSize - 1
+	}
+
+	requestedAssets := totalAssets[version-1]
+
+	endTime := time.Now()
+	executionTime := endTime.Sub(startTime).Seconds()
+
+	log.Printf("Total number of assets is: %d\n", len(totalAssets))
+	log.Printf("Requested assets found: %d\n", requestedAssets)
 	//fmt.Println(string(result))
 	log.Printf("Total execution time is: %f sec\n", executionTime)
 }
