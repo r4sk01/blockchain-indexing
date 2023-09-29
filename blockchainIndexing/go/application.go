@@ -414,7 +414,7 @@ func getHistoryForAsset(contract *gateway.Contract, key string) {
 	}
 	fmt.Printf("Number of records found: %d\n", len(assets))
 
-	//fmt.Println(string(result))
+	fmt.Println(string(result))
 	log.Printf("Total execution time is: %f sec\n", executionTime)
 }
 

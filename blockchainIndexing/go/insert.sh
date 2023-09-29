@@ -2,7 +2,7 @@
 
 # go run application.go -t versionQueryOld -k 0xffec0067f5a79cff07527f63d83dd5462ccf8ba4 -start 100 -end 199
 
-# go run application.go -t BulkInvokeParallel -f /home/andrey/Documents/insert-tpch/ethereum/blockTransactions17000000-17010000.json
+# go run application.go -t BulkInvokeParallel -f /home/andrey/Documents/insert-tpch/ethereum/blockTransactions17010001-17011000.json
 
 # go run application.go -t getHistoryForAssetPaginated -k 0xffec0067f5a79cff07527f63d83dd5462ccf8ba4 -p 10
 
