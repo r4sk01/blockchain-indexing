@@ -1,0 +1,15 @@
+
+insert.sh inserts first six files, small enough not to cause problems
+
+/home/andrey/Documents/insert-tpch/ethereum/blockTransactions17030001-17050000.json 
+/home/andrey/Documents/insert-tpch/ethereum/blockTransactions17090001-17100000.json
+
+/home/andrey/Documents/insert-tpch/ethereum/Second100K/blockTransactions17100000-17125000.json
+/home/andrey/Documents/insert-tpch/ethereum/Second100K/blockTransactions17125001-17150000.json
+/home/andrey/Documents/insert-tpch/ethereum/Second100K/blockTransactions17150001-17175000.json
+
+/home/andrey/Documents/insert-tpch/ethereum/Third100K/blockTransactions17200000-17225000.json
+/home/andrey/Documents/insert-tpch/ethereum/Third100K/blockTransactions17225001-17250000.json
+/home/andrey/Documents/insert-tpch/ethereum/Third100K/blockTransactions17250001-17275000.json
+/home/andrey/Documents/insert-tpch/ethereum/Third100K/blockTransactions17275001-17300000.json
+

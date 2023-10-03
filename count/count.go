@@ -1,6 +1,7 @@
 package main
 
 import (
+	"bufio"
 	"encoding/json"
 	"fmt"
 	"log"
@@ -67,71 +68,55 @@ type Transaction struct {
 	S                string            `json:"s"`
 }
 
-func unmarshalBlock(rawBlock []json.RawMessage) Block {
-	var (
-		header       Header
-		transactions []Transaction
-	)
-
-	// Unmarshal header
-	err := json.Unmarshal(rawBlock[0], &header)
-	if err != nil {
-		log.Fatalf("error while reading json file: %s", err)
-
-	}
-
-	// Unmarshal transactions
-	for i := 1; i < len(rawBlock); i++ {
-		var tx Transaction
-		err = json.Unmarshal(rawBlock[i], &tx)
-		if err != nil {
-			log.Fatalf("error while reading json file: %s", err)
-
-		}
-		transactions = append(transactions, tx)
-	}
-
-	return Block{Header: header, Transactions: transactions}
-}
-
-func parseFile(data []byte) Chain {
-	var chain Chain
-
-	var rawBlocks []json.RawMessage
-	err := json.Unmarshal(data, &rawBlocks)
-	if err != nil {
-		log.Fatalf("error while reading json file: %s", err)
-
-	}
-
-	for _, rawBlock := range rawBlocks {
-		var block []json.RawMessage
-		err = json.Unmarshal(rawBlock, &block)
-		if err != nil {
-			log.Fatalf("error while reading json file: %s", err)
-
-		}
-		chain = append(chain, unmarshalBlock(block))
-	}
-
-	return chain
-
-}
-
 func main() {
 
-	jsonData, err := os.ReadFile(os.Args[1])
+	file, err := os.Open(os.Args[1])
 	if err != nil {
-		log.Fatalln(err)
+		log.Fatal(err)
 	}
-	chain := parseFile(jsonData)
+	defer file.Close()
+	decoder := json.NewDecoder(bufio.NewReader(file))
 
-	fmt.Printf("Number of blocks: %d\n", len(chain))
+	var transactions []Transaction
 
-	var sum int
-	for _, block := range chain {
-		sum += len(block.Transactions)
+	// Read the opening '['
+	if _, err := decoder.Token(); err != nil {
+		panic(err)
 	}
-	fmt.Printf("Number of transactions: %d\n", sum)
+
+	// Iterate over blocks
+	for decoder.More() {
+		// Read the opening '[' of the block
+		if _, err := decoder.Token(); err != nil {
+			panic(err)
+		}
+
+		// Process the block header
+		var blockHeader Header
+		if err := decoder.Decode(&blockHeader); err != nil {
+			panic(err)
+		}
+
+		// Process transactions
+		for decoder.More() {
+			var transaction Transaction
+			if err := decoder.Decode(&transaction); err != nil {
+				panic(err)
+			}
+			transactions = append(transactions, transaction)
+		}
+
+		// Read the closing ']' of the block
+		if _, err := decoder.Token(); err != nil {
+			panic(err)
+		}
+	}
+
+	// Read the closing ']' of the outermost array
+	if _, err := decoder.Token(); err != nil {
+		panic(err)
+	}
+
+	fmt.Printf("Number of transactions: %d\n", len(transactions))
 
 }

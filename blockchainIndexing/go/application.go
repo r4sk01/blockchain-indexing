@@ -1,6 +1,7 @@
 package main
 
 import (
+	"bufio"
 	"encoding/json"
 	"errors"
 	"flag"
@@ -183,109 +184,91 @@ func main() {
 
 }
 
-func unmarshalBlock(rawBlock []json.RawMessage) Block {
-	var (
-		header       Header
-		transactions []Transaction
-	)
-
-	// Unmarshal header
-	err := json.Unmarshal(rawBlock[0], &header)
-	if err != nil {
-		log.Fatalf("error while reading json file: %s", err)
-
-	}
-
-	// Unmarshal transactions
-	for i := 1; i < len(rawBlock); i++ {
-		var tx Transaction
-		err = json.Unmarshal(rawBlock[i], &tx)
-		if err != nil {
-			log.Fatalf("error while reading json file: %s", err)
-
-		}
-		transactions = append(transactions, tx)
-	}
-
-	return Block{Header: header, Transactions: transactions}
-}
-
-func parseFile(data []byte) Chain {
-	var chain Chain
-
-	var rawBlocks []json.RawMessage
-	err := json.Unmarshal(data, &rawBlocks)
-	if err != nil {
-		log.Fatalf("error while reading json file: %s", err)
-
-	}
-
-	for _, rawBlock := range rawBlocks {
-		var block []json.RawMessage
-		err = json.Unmarshal(rawBlock, &block)
-		if err != nil {
-			log.Fatalf("error while reading json file: %s", err)
-
-		}
-		chain = append(chain, unmarshalBlock(block))
-	}
-
-	return chain
-
-}
-
 func BulkInvoke(contract *gateway.Contract, fileUrl string) {
 	if fileUrl == "" || !filepath.IsAbs(fileUrl) {
 		log.Fatalln("File URL must be provided and must be an absolute path")
 
 	}
 
-	jsonData, err := os.ReadFile(fileUrl)
-	if err != nil {
-		log.Fatalf("error while reading json file: %s", err)
-
-	}
-
-	chain := parseFile(jsonData)
+	// Insert N transactions at a time
+	N := 500
+	var totalTransactions int
 
 	startTime := time.Now()
 	log.Printf("Starting bulk transaction at time: %s\n", startTime.Format(time.UnixDate))
 
-	// Insert N blocks at a time
-	N := 1
-	for i := 0; i < len(chain); i += N {
-		chunkTime := time.Now()
+	file, err := os.Open(fileUrl)
+	if err != nil {
+		log.Fatal(err)
+	}
+	defer file.Close()
+	decoder := json.NewDecoder(bufio.NewReader(file))
 
-		end := i + N
-		if end > len(chain) {
-			end = len(chain)
-		}
-		chunk := chain[i:end]
+	var transactions []Transaction
+	chunkCounter := 1
 
-		var transactions []Transaction
-		for _, block := range chunk {
-			transactions = append(transactions, block.Transactions...)
-		}
+	// Read the opening '['
+	if _, err := decoder.Token(); err != nil {
+		log.Fatal(err)
+	}
 
-		chunkBytes, err := json.Marshal(transactions)
-		if err != nil {
-			log.Fatalf("Failed to marshal JSON: %s", err)
-		}
-
-		_, err = contract.SubmitTransaction("CreateBulk", string(chunkBytes))
-		if err != nil {
-			log.Fatalf("Failed to submit transaction: %s\n", err)
+	// Iterate over blocks
+	for decoder.More() {
+		// Read the opening '[' of the block
+		if _, err := decoder.Token(); err != nil {
+			log.Fatal(err)
 		}
 
-		endTime := time.Now()
-		executionTime := endTime.Sub(chunkTime).Seconds()
-		log.Printf("Execution Time: %f sec at chunk %d", executionTime, i/N+1)
+		// Process the block header
+		var blockHeader Header
+		if err := decoder.Decode(&blockHeader); err != nil {
+			log.Fatal(err)
+		}
+
+		// Process transactions
+		for decoder.More() {
+			var transaction Transaction
+			if err := decoder.Decode(&transaction); err != nil {
+				log.Fatal(err)
+			}
+			transactions = append(transactions, transaction)
+		}
+
+		// Read the closing ']' of the block
+		if _, err := decoder.Token(); err != nil {
+			log.Fatal(err)
+		}
+
+		if len(transactions) >= N || !decoder.More() {
+			chunkTime := time.Now()
+			chunkBytes, err := json.Marshal(transactions)
+			if err != nil {
+				log.Fatalf("Failed to marshal JSON: %s", err)
+			}
+
+			_, err = contract.SubmitTransaction("CreateBulk", string(chunkBytes))
+			if err != nil {
+				log.Fatalf("Failed to submit transaction: %s\n", err)
+			}
+			endTime := time.Now()
+			executionTime := endTime.Sub(chunkTime).Seconds()
+			log.Printf("Execution Time: %f sec at chunk %d with length: %d\n", executionTime, chunkCounter, len(transactions))
+			chunkCounter++
+			totalTransactions += len(transactions)
+			transactions = []Transaction{}
+		}
+	}
+
+	// Read the closing ']' of the outermost array
+	if _, err := decoder.Token(); err != nil {
+		log.Fatal(err)
 	}
 
 	endTime := time.Now()
 	executionTime := endTime.Sub(startTime).Seconds()
 	log.Printf("Finished bulk transaction at time: %s\n", endTime.Format(time.UnixDate))
 	log.Printf("Total execution time is: %f sec\n", executionTime)
+	log.Printf("Total of %d transactions inserted\n", totalTransactions)
 
 }
 
@@ -293,64 +276,91 @@ func BulkInvokeParallel(contract *gateway.Contract, fileUrl string) {
 	if fileUrl == "" || !filepath.IsAbs(fileUrl) {
 		log.Fatalln("File URL is not absolute.")
 	}
-
-	jsonData, err := os.ReadFile(fileUrl)
-	if err != nil {
-		log.Fatalln(err)
-	}
+	// Insert N transactions at a time
+	N := 500
+	var totalTransactions int
 
 	var wg sync.WaitGroup
 
 	// Create a buffered channel to limit number of goroutines
 	sem := make(chan bool, 10)
 
-	chain := parseFile(jsonData)
-
 	startTime := time.Now()
 	log.Printf("Starting bulk transaction at time: %s\n", startTime.Format(time.UnixDate))
 
-	var chunkCounter int
-	totalTx := 0
+	file, err := os.Open(fileUrl)
+	if err != nil {
+		log.Fatal(err)
+	}
+	defer file.Close()
+	decoder := json.NewDecoder(bufio.NewReader(file))
 
-	CHUNK_LIMIT := 500
-	var transactionChunk []Transaction
-	for i := 0; i < len(chain); i++ {
-		chunkTime := time.Now()
+	var transactions []Transaction
+	chunkCounter := 1
 
-		currentBlock := chain[i]
-		currentBlockNumTransactions := len(currentBlock.Transactions)
+	// Read the opening '['
+	if _, err := decoder.Token(); err != nil {
+		log.Fatal(err)
+	}
 
-		if len(transactionChunk)+currentBlockNumTransactions < CHUNK_LIMIT {
-			transactionChunk = append(transactionChunk, currentBlock.Transactions...)
-			continue
+	// Iterate over blocks
+	for decoder.More() {
+		// Read the opening '[' of the block
+		if _, err := decoder.Token(); err != nil {
+			log.Fatal(err)
 		}
 
-		totalTx += len(transactionChunk)
-
-		chunkCounter++
-		chunkBytes, err := json.Marshal(transactionChunk)
-		if err != nil {
-			log.Fatalf("Failed to marshal JSON: %s", err)
+		// Process the block header
+		var blockHeader Header
+		if err := decoder.Decode(&blockHeader); err != nil {
+			log.Fatal(err)
 		}
-		wg.Add(1)
-		// Before spawning a goroutine, acquire a slot in the channel
-		sem <- true
-		go func(data string) {
-			defer wg.Done()
-			_, err = contract.SubmitTransaction("CreateBulkParallel", data)
-			if err != nil {
-				log.Println(err)
+
+		// Process transactions
+		for decoder.More() {
+			var transaction Transaction
+			if err := decoder.Decode(&transaction); err != nil {
+				log.Fatal(err)
 			}
-			// Once the transaction is complete, release the slot
-			<-sem
-		}(string(chunkBytes))
+			transactions = append(transactions, transaction)
+		}
 
-		endTime := time.Now()
-		executionTime := endTime.Sub(chunkTime).Seconds()
-		log.Printf("Execution Time: %f sec at chunk %d with length %d. Cumulative total: %d\n", executionTime, chunkCounter, len(transactionChunk), totalTx)
+		// Read the closing ']' of the block
+		if _, err := decoder.Token(); err != nil {
+			log.Fatal(err)
+		}
 
-		// Reset chunk to include only the current batch
-		transactionChunk = append([]Transaction{}, currentBlock.Transactions...)
+		if len(transactions) >= N || !decoder.More() {
+			chunkTime := time.Now()
+			chunkBytes, err := json.Marshal(transactions)
+			if err != nil {
+				log.Fatalf("Failed to marshal JSON: %s", err)
+			}
+			wg.Add(1)
+			// Before spawning a goroutine, acquire a slot in the channel
+			sem <- true
+			go func(data string) {
+				defer wg.Done()
+				_, err = contract.SubmitTransaction("CreateBulkParallel", data)
+				if err != nil {
+					log.Println(err)
+				}
+				// Once the transaction is complete, release the slot
+				<-sem
+			}(string(chunkBytes))
+			endTime := time.Now()
+			executionTime := endTime.Sub(chunkTime).Seconds()
+			log.Printf("Execution Time: %f sec at chunk %d with length: %d\n", executionTime, chunkCounter, len(transactions))
+			chunkCounter++
+			totalTransactions += len(transactions)
+			transactions = []Transaction{}
+		}
+
+	}
+
+	// Read the closing ']' of the outermost array
+	if _, err := decoder.Token(); err != nil {
+		log.Fatal(err)
 	}
 
 	// Wait for all goroutines to finish
@@ -360,6 +370,8 @@ func BulkInvokeParallel(contract *gateway.Contract, fileUrl string) {
 	for i := 0; i < cap(sem); i++ {
 		sem <- true
 	}
+
+	log.Printf("Total of %d transactions inserted\n", totalTransactions)
 }
 
 func Invoke(contract *gateway.Contract, fileUrl string) {
@@ -370,29 +382,67 @@ func Invoke(contract *gateway.Contract, fileUrl string) {
 		os.Exit(1)
 	}
 
-	jsonData, err := os.ReadFile(fileUrl)
-	if err != nil {
-		log.Fatalf("error while reading json file: %s", err)
+	var totalTransactions int
 
+	file, err := os.Open(fileUrl)
+	if err != nil {
+		log.Fatal(err)
+	}
+	defer file.Close()
+	decoder := json.NewDecoder(bufio.NewReader(file))
+
+	// Read the opening '['
+	if _, err := decoder.Token(); err != nil {
+		log.Fatal(err)
 	}
 
-	chain := parseFile(jsonData)
+	// Iterate over blocks
+	for decoder.More() {
+		// Read the opening '[' of the block
+		if _, err := decoder.Token(); err != nil {
+			log.Fatal(err)
+		}
 
-	for i := 0; i < len(chain); i++ {
-		transactions := chain[i].Transactions
-		for _, transaction := range transactions {
+		// Process the block header
+		var blockHeader Header
+		if err := decoder.Decode(&blockHeader); err != nil {
+			log.Fatal(err)
+		}
+
+		// Process transactions
+		for decoder.More() {
+			txStart := time.Now()
+			var transaction Transaction
+			if err := decoder.Decode(&transaction); err != nil {
+				log.Fatal(err)
+			}
 			transactionBytes, err := json.Marshal(transaction)
 			if err != nil {
 				log.Fatalf("Failed to marshal JSON: %s", err)
 			}
+
 			_, err = contract.SubmitTransaction("Create", string(transactionBytes))
 			if err != nil {
 				log.Fatalf("Failed to submit transaction: %s\n", err)
 			}
+			endTime := time.Now()
+			executionTime := endTime.Sub(txStart).Seconds()
+			log.Printf("Execution Time: %f sec\n", executionTime)
+			totalTransactions++
+		}
+
+		// Read the closing ']' of the block
+		if _, err := decoder.Token(); err != nil {
+			log.Fatal(err)
 		}
 	}
 
-	log.Println("Done")
+	// Read the closing ']' of the outermost array
+	if _, err := decoder.Token(); err != nil {
+		log.Fatal(err)
+	}
+
+	log.Printf("Total of %d transactions inserted\n", totalTransactions)
 }
 
 // getHistoryForAsset calls GetHistoryForKey API
@@ -414,7 +464,7 @@ func getHistoryForAsset(contract *gateway.Contract, key string) {
 	}
 	fmt.Printf("Number of records found: %d\n", len(assets))
 
-	fmt.Println(string(result))
+	fmt.Println(assets[0])
 	log.Printf("Total execution time is: %f sec\n", executionTime)
 }
 
