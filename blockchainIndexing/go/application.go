@@ -321,7 +321,7 @@ func BulkInvokeParallel(contract *gateway.Contract, fileUrl string) {
 	CHUNK_LIMIT := 500
 	var transactionChunk []Transaction
 	for i := 0; i < len(chain); i++ {
-		chunkTime := time.Now()
+		//chunkTime := time.Now()
 
 		currentBlock := chain[i]
 		currentBlockNumTransactions := len(currentBlock.Transactions)
@@ -351,9 +351,9 @@ func BulkInvokeParallel(contract *gateway.Contract, fileUrl string) {
 			<-sem
 		}(string(chunkBytes))
 
-		endTime := time.Now()
-		executionTime := endTime.Sub(chunkTime).Seconds()
-		log.Printf("Execution Time: %f sec at chunk %d with length %d. Cumulative total: %d\n", executionTime, chunkCounter, len(transactionChunk), totalTx)
+		//endTime := time.Now()
+		//executionTime := endTime.Sub(chunkTime).Seconds()
+		// log.Printf("Execution Time: %f sec at chunk %d with length %d. Cumulative total: %d\n", executionTime, chunkCounter, len(transactionChunk), totalTx)
 
 		// Reset chunk to include only the current batch
 		transactionChunk = append([]Transaction{}, currentBlock.Transactions...)
@@ -458,11 +458,11 @@ func getHistoryForAssetsOld(contract *gateway.Contract, keys string) {
 
 	keys_list := strings.Split(keys, ",")
 	for _, key := range keys_list {
-		result, err := contract.EvaluateTransaction("getHistoryForAsset", key)
+		_, err := contract.EvaluateTransaction("getHistoryForAsset", key)
 		if err != nil {
 			log.Fatalf("Failed to evaluate transaction: %s\n", err)
 		}
-		fmt.Println(string(result))
+		//fmt.Println(string(result))
 	}
 
 	endTime := time.Now()
@@ -586,7 +586,7 @@ func getHistoryForAssets(contract *gateway.Contract, keys string) {
 	startTime := time.Now()
 
 	keys_list := strings.Split(keys, ",")
-	result, err := contract.EvaluateTransaction("getHistoryForAssets", keys_list...)
+	_, err := contract.EvaluateTransaction("getHistoryForAssets", keys_list...)
 	if err != nil {
 		log.Fatalf("Failed to evaluate transaction: %s\n", err)
 	}
@@ -594,7 +594,7 @@ func getHistoryForAssets(contract *gateway.Contract, keys string) {
 	endTime := time.Now()
 	executionTime := endTime.Sub(startTime).Seconds()
 
-	fmt.Println(string(result))
+	//fmt.Println(string(result))
 	log.Printf("Total execution time is: %f sec\n", executionTime)
 }
 
