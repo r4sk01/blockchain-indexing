@@ -159,6 +159,8 @@ func main() {
 		versionQuery(contract, *key, *startV, *endV, *startB, *endB)
 	case "rangeQuery":
 		rangeQuery(contract, *startK, *endK, *startB, *endB)
+	case "getState":
+		getState(contract, *key)
 	}
 }
 
@@ -495,6 +497,16 @@ func rangeQuery(contract *gateway.Contract, startKey string, endKey string, star
 	log.Printf("Transaction has been evaluated, result is: %s\n", string(result))
 
 	log.Printf("Finished point query with execution time: %f sec\n", executionTime)
+}
+
+func getState(contract *gateway.Contract, key string) {
+	log.Println("-----stub.Hist() Test-----")
+
+	result, err := contract.EvaluateTransaction("getState", key)
+	if err != nil {
+		log.Fatalf("Failed to submit transaction: %s\n", err)
+	}
+	log.Printf("%v\n", result)
 }
 
 func populateWallet(wallet *gateway.Wallet) error {

@@ -77,6 +77,8 @@ func (sc *SmartContract) Invoke(stub shim.ChaincodeStubInterface) sc.Response {
 		return sc.HistTest(stub, args)
 	case "getHistoryForAsset":
 		return sc.getHistoryForAsset(stub, args)
+	case "getState":
+		return sc.getState(stub, args)
 	default:
 		return shim.Error("Invalid Smart Contract function name.")
 	}
@@ -317,6 +319,25 @@ func (sc *SmartContract) getHistoryForAsset(stub shim.ChaincodeStubInterface, ar
 
 	historyAsBytes, _ := json.Marshal(history)
 	return shim.Success(historyAsBytes)
+}
+
+func (sc *SmartContract) getState(stub shim.ChaincodeStubInterface, args []string) sc.Response {
+	log.Println("-----Hist Test-----")
+	key := args[0]
+
+	val, _, err := stub.GetState(key)
+	if err != nil {
+		shim.Error("Failed to get historical value: " + err.Error())
+	}
+
+	log.Println(val)
+
+	resultsBytes, err := json.Marshal(val)
+	if err != nil {
+		return shim.Error("failed to marshal order JSON: " + err.Error())
+	}
+	return shim.Success(resultsBytes)
+
 }
 
 func main() {
