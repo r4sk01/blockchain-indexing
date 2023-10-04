@@ -321,22 +321,23 @@ func (sc *SmartContract) getHistoryForAsset(stub shim.ChaincodeStubInterface, ar
 	return shim.Success(historyAsBytes)
 }
 
-func (sc *SmartContract) getState(stub shim.ChaincodeStubInterface, args []string) sc.Response {
+func (sc *SmartContract) getState(stub shim.ChaincodeStubInterface, args []string) Transaction {
 	log.Println("-----Hist Test-----")
 	key := args[0]
 
-	val, _, err := stub.GetState(key)
-	if err != nil {
-		shim.Error("Failed to get historical value: " + err.Error())
-	}
+	val, _ := stub.GetState(key)
 
-	log.Println(val)
+	var tx Transaction
+	json.Unmarshal(val, &tx)
+	return tx
 
-	resultsBytes, err := json.Marshal(val)
-	if err != nil {
-		return shim.Error("failed to marshal order JSON: " + err.Error())
-	}
-	return shim.Success(resultsBytes)
+	// log.Println(val)
+
+	// resultsBytes, err := json.Marshal(val)
+	// if err != nil {
+	// 	return shim.Error("failed to marshal order JSON: " + err.Error())
+	// }
+	// return shim.Success(resultsBytes)
 
 }
 

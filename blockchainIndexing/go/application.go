@@ -506,7 +506,9 @@ func getState(contract *gateway.Contract, key string) {
 	if err != nil {
 		log.Fatalf("Failed to submit transaction: %s\n", err)
 	}
-	log.Printf("%v\n", result)
+
+	log.Println(result)
+
 }
 
 func populateWallet(wallet *gateway.Wallet) error {
