@@ -149,6 +149,8 @@ func main() {
 		BulkInvokeParallel(contract, *file)
 	case "Invoke":
 		Invoke(contract, *file)
+	case "getHistoryForAsset":
+		getHistoryForAsset(contract, *key)
 	case "histTest":
 		histTest(contract, *startK, *endK, *startB, *endB)
 	case "pointQuery":
@@ -419,6 +421,22 @@ func Invoke(contract *gateway.Contract, fileUrl string) {
 	}
 
 	log.Printf("Total of %d transactions inserted\n", totalTransactions)
+}
+
+// getHistoryForAsset calls GetHistoryForKey API
+func getHistoryForAsset(contract *gateway.Contract, key string) {
+	startTime := time.Now()
+
+	result, err := contract.EvaluateTransaction("getHistoryForAsset", key)
+	if err != nil {
+		log.Fatalf("Failed to evaluate transaction: %s\n", err)
+	}
+
+	endTime := time.Now()
+	executionTime := endTime.Sub(startTime).Seconds()
+
+	fmt.Println(string(result))
+	log.Printf("Total execution time is: %f sec\n", executionTime)
 }
 
 func histTest(contract *gateway.Contract, startKey string, endKey string, startBlk string, endBlk string) {

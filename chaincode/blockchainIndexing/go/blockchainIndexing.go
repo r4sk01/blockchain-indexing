@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"log"
 	"strconv"
+	"time"
 
 	"github.com/RUAN0007/fabric-chaincode-go/shim"
 	sc "github.com/hyperledger/fabric-protos-go/peer"
@@ -74,6 +75,8 @@ func (sc *SmartContract) Invoke(stub shim.ChaincodeStubInterface) sc.Response {
 		return sc.RangeQuery(stub, args)
 	case "HistTest":
 		return sc.HistTest(stub, args)
+	case "getHistoryForAsset":
+		return sc.getHistoryForAsset(stub, args)
 	default:
 		return shim.Error("Invalid Smart Contract function name.")
 	}
@@ -282,6 +285,38 @@ func (sc *SmartContract) HistTest(stub shim.ChaincodeStubInterface, args []strin
 	}
 	return shim.Success(resultsBytes)
 
+}
+
+// getHistoryForAsset calls built in GetHistoryForKey() API
+func (sc *SmartContract) getHistoryForAsset(stub shim.ChaincodeStubInterface, args []string) sc.Response {
+	if len(args) != 1 {
+		return shim.Error("Incorrect number of arguments. Expecting 1")
+	}
+
+	historyItr, err := stub.GetHistoryForKey(args[0])
+	if err != nil {
+		return shim.Error(err.Error())
+	}
+	defer historyItr.Close()
+
+	var history []QueryResult
+	for historyItr.HasNext() {
+		historyData, err := historyItr.Next()
+		if err != nil {
+			return shim.Error(err.Error())
+		}
+
+		var transaction Transaction
+		json.Unmarshal(historyData.Value, &transaction)
+
+		//Convert google.protobuf.Timestamp to string
+		timestamp := time.Unix(historyData.Timestamp.Seconds, int64(historyData.Timestamp.Nanos)).String()
+
+		history = append(history, QueryResult{Key: historyData.TxId, Record: &transaction, Timestamp: timestamp})
+	}
+
+	historyAsBytes, _ := json.Marshal(history)
+	return shim.Success(historyAsBytes)
 }
 
 func main() {
