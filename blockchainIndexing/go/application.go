@@ -205,7 +205,7 @@ func BulkInvoke(contract *gateway.Contract, fileUrl string) {
 	decoder := json.NewDecoder(bufio.NewReader(file))
 
 	var transactions []Transaction
-	chunkCounter := 1
+	blockCounter := 1
 
 	// Read the opening '['
 	if _, err := decoder.Token(); err != nil {
@@ -239,20 +239,20 @@ func BulkInvoke(contract *gateway.Contract, fileUrl string) {
 			log.Fatal(err)
 		}
 
-		chunkTime := time.Now()
-		chunkBytes, err := json.Marshal(transactions)
+		blockTime := time.Now()
+		blockBytes, err := json.Marshal(transactions)
 		if err != nil {
 			log.Fatalf("Failed to marshal JSON: %s", err)
 		}
 
-		_, err = contract.SubmitTransaction("CreateBulk", string(chunkBytes))
+		_, err = contract.SubmitTransaction("CreateBulk", string(blockBytes))
 		if err != nil {
 			log.Fatalf("Failed to submit transaction: %s\n", err)
 		}
 		endTime := time.Now()
-		executionTime := endTime.Sub(chunkTime).Seconds()
-		log.Printf("Execution Time: %f sec at chunk %d with length: %d\n", executionTime, chunkCounter, len(transactions))
-		chunkCounter++
+		executionTime := endTime.Sub(blockTime).Seconds()
+		log.Printf("Execution Time: %f sec at block %d with length: %d\n", executionTime, blockCounter, len(transactions))
+		blockCounter++
 		totalTransactions += len(transactions)
 		transactions = []Transaction{}
 
@@ -293,7 +293,7 @@ func BulkInvokeParallel(contract *gateway.Contract, fileUrl string) {
 	decoder := json.NewDecoder(bufio.NewReader(file))
 
 	var transactions []Transaction
-	chunkCounter := 1
+	blockCounter := 1
 
 	// Read the opening '['
 	if _, err := decoder.Token(); err != nil {
@@ -327,8 +327,8 @@ func BulkInvokeParallel(contract *gateway.Contract, fileUrl string) {
 			log.Fatal(err)
 		}
 
-		chunkTime := time.Now()
-		chunkBytes, err := json.Marshal(transactions)
+		blockTime := time.Now()
+		blockBytes, err := json.Marshal(transactions)
 		if err != nil {
 			log.Fatalf("Failed to marshal JSON: %s", err)
 		}
@@ -343,11 +343,11 @@ func BulkInvokeParallel(contract *gateway.Contract, fileUrl string) {
 			}
 			// Once the transaction is complete, release the slot
 			<-sem
-		}(string(chunkBytes))
+		}(string(blockBytes))
 		endTime := time.Now()
-		executionTime := endTime.Sub(chunkTime).Seconds()
-		log.Printf("Execution Time: %f sec at chunk %d with length: %d\n", executionTime, chunkCounter, len(transactions))
-		chunkCounter++
+		executionTime := endTime.Sub(blockTime).Seconds()
+		log.Printf("Execution Time: %f sec at block %d with length: %d\n", executionTime, blockCounter, len(transactions))
+		blockCounter++
 		totalTransactions += len(transactions)
 		transactions = []Transaction{}
 
