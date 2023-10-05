@@ -319,7 +319,7 @@ func BulkInvokeParallel(contract *gateway.Contract, fileUrl string) {
 		}
 
 		if len(transactions) > 0 {
-			chunkTime := time.Now()
+			// chunkTime := time.Now()
 			chunkBytes, err := json.Marshal(transactions)
 			if err != nil {
 				log.Fatalf("Failed to marshal JSON: %s", err)
@@ -336,9 +336,9 @@ func BulkInvokeParallel(contract *gateway.Contract, fileUrl string) {
 				// Once the transaction is complete, release the slot
 				<-sem
 			}(string(chunkBytes))
-			endTime := time.Now()
-			executionTime := endTime.Sub(chunkTime).Seconds()
-			log.Printf("Execution Time: %f sec at chunk %d with length: %d\n", executionTime, chunkCounter, len(transactions))
+			// endTime := time.Now()
+			// executionTime := endTime.Sub(chunkTime).Seconds()
+			// log.Printf("Execution Time: %f sec at chunk %d with length: %d\n", executionTime, chunkCounter, len(transactions))
 			chunkCounter++
 			totalTransactions += len(transactions)
 			transactions = []Transaction{}
