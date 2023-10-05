@@ -500,15 +500,16 @@ func rangeQuery(contract *gateway.Contract, startKey string, endKey string, star
 }
 
 func getState(contract *gateway.Contract, key string) {
-	log.Println("-----stub.Hist() Test-----")
+	log.Println("-----stub.GetState() Test-----")
 
 	result, err := contract.EvaluateTransaction("getState", key)
 	if err != nil {
 		log.Fatalf("Failed to submit transaction: %s\n", err)
 	}
+	tx := Transaction{}
 
-	log.Println(result)
-
+	json.Unmarshal(result, &tx)
+	log.Printf("%v\n", tx)
 }
 
 func populateWallet(wallet *gateway.Wallet) error {
