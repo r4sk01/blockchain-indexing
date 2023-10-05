@@ -67,6 +67,8 @@ func (sc *SmartContract) Invoke(stub shim.ChaincodeStubInterface) sc.Response {
 		return sc.CreateBulkParallel(stub, args)
 	case "Create":
 		return sc.Create(stub, args)
+	case "getState":
+		return sc.getState(stub, args)
 	case "getHistoryForAsset":
 		return sc.getHistoryForAsset(stub, args)
 	// Requires GetHistoryForKeys API
@@ -152,6 +154,16 @@ func (sc *SmartContract) CreateBulkParallel(stub shim.ChaincodeStubInterface, ar
 		}
 	}
 	return shim.Success(nil)
+}
+
+func (sc *SmartContract) getState(stub shim.ChaincodeStubInterface, args []string) sc.Response {
+	log.Println("-----GetState Test-----")
+	key := args[0]=
+	val, err := stub.GetState(key)
+	if err != nil {
+		shim.Error("Failed to get state: " + err.Error())
+	}
+	return shim.Success(val)
 }
 
 // getHistoryForAsset calls built in GetHistoryForKey() API

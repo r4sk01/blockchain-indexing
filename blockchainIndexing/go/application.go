@@ -150,6 +150,8 @@ func main() {
 		BulkInvokeParallel(contract, *file)
 	case "Invoke":
 		Invoke(contract, *file)
+	case "getState":
+		getState(contract, *key)
 	case "getHistoryForAsset":
 		getHistoryForAsset(contract, *key)
 	case "getHistoryForAssetsOld":
@@ -443,6 +445,19 @@ func Invoke(contract *gateway.Contract, fileUrl string) {
 	}
 
 	log.Printf("Total of %d transactions inserted\n", totalTransactions)
+}
+
+func getState(contract *gateway.Contract, key string) {
+	log.Println("-----stub.GetState() Test-----")
+
+	result, err := contract.EvaluateTransaction("getState", key)
+	if err != nil {
+		log.Fatalf("Failed to submit transaction: %s\n", err)
+	}
+	tx := Transaction{}
+
+	json.Unmarshal(result, &tx)
+	log.Printf("%v\n", tx)
 }
 
 // getHistoryForAsset calls GetHistoryForKey API
