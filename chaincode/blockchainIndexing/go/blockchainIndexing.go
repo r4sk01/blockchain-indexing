@@ -223,8 +223,6 @@ func (sc *SmartContract) VersionQuery(stub shim.ChaincodeStubInterface, args []s
 }
 
 func (sc *SmartContract) RangeQuery(stub shim.ChaincodeStubInterface, args []string) sc.Response {
-	// startKey, _ := strconv.ParseUint(args[0], 10, 64)
-	// endKey, _ := strconv.ParseUint(args[1], 10, 64)
 	startBlk, _ := strconv.ParseUint(args[0], 10, 64)
 	endBlk, _ := strconv.ParseUint(args[1], 10, 64)
 
