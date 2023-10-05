@@ -158,7 +158,7 @@ func (sc *SmartContract) CreateBulkParallel(stub shim.ChaincodeStubInterface, ar
 
 func (sc *SmartContract) getState(stub shim.ChaincodeStubInterface, args []string) sc.Response {
 	log.Println("-----GetState Test-----")
-	key := args[0]=
+	key := args[0]
 	val, err := stub.GetState(key)
 	if err != nil {
 		shim.Error("Failed to get state: " + err.Error())
