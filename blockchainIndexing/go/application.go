@@ -509,7 +509,7 @@ func getState(contract *gateway.Contract, key string) {
 	tx := Transaction{}
 
 	json.Unmarshal(result, &tx)
-	log.Printf("%v\n", tx)
+	log.Printf("+%v\n", tx)
 }
 
 func populateWallet(wallet *gateway.Wallet) error {
