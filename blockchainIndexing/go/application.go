@@ -10,6 +10,7 @@ import (
 	"log"
 	"os"
 	"path/filepath"
+	"strings"
 	"sync"
 	"time"
 
@@ -158,7 +159,7 @@ func main() {
 	case "versionQuery":
 		versionQuery(contract, *key, *startV, *endV, *startB, *endB)
 	case "rangeQuery":
-		rangeQuery(contract, *startK, *endK, *startB, *endB)
+		rangeQuery(contract, *key, *startB, *endB)
 	case "getState":
 		getState(contract, *key)
 	}
@@ -479,11 +480,16 @@ func versionQuery(contract *gateway.Contract, key string, startVersion string, e
 	log.Printf("Finished point query with execution time: %f sec\n", executionTime)
 }
 
-func rangeQuery(contract *gateway.Contract, startKey string, endKey string, startBlk string, endBlk string) {
+func rangeQuery(contract *gateway.Contract, keys string, startBlk string, endBlk string) {
 	log.Println("-----Range Query-----")
 	startTime := time.Now()
 
-	result, err := contract.EvaluateTransaction("RangeQuery", startKey, endKey, startBlk, endBlk)
+	keys_list := strings.Split(keys, ",")
+	args := []string{}
+	args = append(args, startBlk)
+	args = append(args, endBlk)
+	args = append(args, keys_list...)
+	result, err := contract.EvaluateTransaction("RangeQuery", args...)
 	if err != nil {
 		log.Fatalf("Failed to evaluate transaction: %s\n", err)
 	}

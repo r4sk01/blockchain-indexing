@@ -223,17 +223,17 @@ func (sc *SmartContract) VersionQuery(stub shim.ChaincodeStubInterface, args []s
 }
 
 func (sc *SmartContract) RangeQuery(stub shim.ChaincodeStubInterface, args []string) sc.Response {
-	startKey, _ := strconv.ParseUint(args[0], 10, 64)
-	endKey, _ := strconv.ParseUint(args[1], 10, 64)
-	startBlk, _ := strconv.ParseUint(args[2], 10, 64)
-	endBlk, _ := strconv.ParseUint(args[3], 10, 64)
+	// startKey, _ := strconv.ParseUint(args[0], 10, 64)
+	// endKey, _ := strconv.ParseUint(args[1], 10, 64)
+	startBlk, _ := strconv.ParseUint(args[0], 10, 64)
+	endBlk, _ := strconv.ParseUint(args[1], 10, 64)
+
 	var results []string
 
-	for key := startKey; key <= endKey; key++ {
-		keyStr := strconv.FormatUint(key, 10)
-		log.Println(keyStr)
+	for _, key := range args[2:] {
+		log.Println(key)
 		for startBlk <= endBlk {
-			val, _, err := stub.Hist(keyStr, startBlk)
+			val, _, err := stub.Hist(key, startBlk)
 			if err != nil {
 				shim.Error("Failed to get historical value: " + err.Error())
 			}
