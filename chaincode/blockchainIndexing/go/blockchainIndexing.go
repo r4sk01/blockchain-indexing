@@ -322,7 +322,7 @@ func (sc *SmartContract) getHistoryForAsset(stub shim.ChaincodeStubInterface, ar
 }
 
 func (sc *SmartContract) getState(stub shim.ChaincodeStubInterface, args []string) sc.Response {
-	log.Println("-----Hist Test-----")
+	log.Println("-----GetState Test-----")
 	key := args[0]
 	val, err := stub.GetState(key)
 	if err != nil {
