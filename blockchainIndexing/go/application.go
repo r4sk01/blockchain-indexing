@@ -171,7 +171,6 @@ func BulkInvoke(contract *gateway.Contract, fileUrl string) {
 	}
 
 	// Insert N transactions at a time
-	N := 300
 	var totalTransactions int
 
 	startTime := time.Now()
@@ -219,7 +218,7 @@ func BulkInvoke(contract *gateway.Contract, fileUrl string) {
 			log.Fatal(err)
 		}
 
-		if len(transactions) >= N || !decoder.More() {
+		if len(transactions) > 0 {
 			chunkTime := time.Now()
 			chunkBytes, err := json.Marshal(transactions)
 			if err != nil {
@@ -256,8 +255,6 @@ func BulkInvokeParallel(contract *gateway.Contract, fileUrl string) {
 	if fileUrl == "" || !filepath.IsAbs(fileUrl) {
 		log.Fatalln("File URL is not absolute.")
 	}
-	// Insert N transactions at a time
-	N := 300
 	var totalTransactions int
 
 	var wg sync.WaitGroup
@@ -310,7 +307,7 @@ func BulkInvokeParallel(contract *gateway.Contract, fileUrl string) {
 			log.Fatal(err)
 		}
 
-		if len(transactions) >= N || !decoder.More() {
+		if len(transactions) > 0 {
 			chunkTime := time.Now()
 			chunkBytes, err := json.Marshal(transactions)
 			if err != nil {
@@ -437,7 +434,7 @@ func getHistoryForAsset(contract *gateway.Contract, key string) {
 	endTime := time.Now()
 	executionTime := endTime.Sub(startTime).Seconds()
 
-	fmt.Println(string(result))
+	fmt.Printf("%s\n", result)
 	log.Printf("Total execution time is: %f sec\n", executionTime)
 }
 
