@@ -192,8 +192,6 @@ func BulkInvoke(contract *gateway.Contract, fileUrl string) {
 
 	}
 
-	// Insert N transactions at a time
-	N := 500
 	var totalTransactions int
 
 	startTime := time.Now()
@@ -241,24 +239,23 @@ func BulkInvoke(contract *gateway.Contract, fileUrl string) {
 			log.Fatal(err)
 		}
 
-		if len(transactions) >= N || !decoder.More() {
-			chunkTime := time.Now()
-			chunkBytes, err := json.Marshal(transactions)
-			if err != nil {
-				log.Fatalf("Failed to marshal JSON: %s", err)
-			}
-
-			_, err = contract.SubmitTransaction("CreateBulk", string(chunkBytes))
-			if err != nil {
-				log.Fatalf("Failed to submit transaction: %s\n", err)
-			}
-			endTime := time.Now()
-			executionTime := endTime.Sub(chunkTime).Seconds()
-			log.Printf("Execution Time: %f sec at chunk %d with length: %d\n", executionTime, chunkCounter, len(transactions))
-			chunkCounter++
-			totalTransactions += len(transactions)
-			transactions = []Transaction{}
+		chunkTime := time.Now()
+		chunkBytes, err := json.Marshal(transactions)
+		if err != nil {
+			log.Fatalf("Failed to marshal JSON: %s", err)
 		}
+
+		_, err = contract.SubmitTransaction("CreateBulk", string(chunkBytes))
+		if err != nil {
+			log.Fatalf("Failed to submit transaction: %s\n", err)
+		}
+		endTime := time.Now()
+		executionTime := endTime.Sub(chunkTime).Seconds()
+		log.Printf("Execution Time: %f sec at chunk %d with length: %d\n", executionTime, chunkCounter, len(transactions))
+		chunkCounter++
+		totalTransactions += len(transactions)
+		transactions = []Transaction{}
+
 	}
 
 	// Read the closing ']' of the outermost array
@@ -278,8 +275,6 @@ func BulkInvokeParallel(contract *gateway.Contract, fileUrl string) {
 	if fileUrl == "" || !filepath.IsAbs(fileUrl) {
 		log.Fatalln("File URL is not absolute.")
 	}
-	// Insert N transactions at a time
-	N := 500
 	var totalTransactions int
 
 	var wg sync.WaitGroup
@@ -332,31 +327,29 @@ func BulkInvokeParallel(contract *gateway.Contract, fileUrl string) {
 			log.Fatal(err)
 		}
 
-		if len(transactions) >= N || !decoder.More() {
-			chunkTime := time.Now()
-			chunkBytes, err := json.Marshal(transactions)
-			if err != nil {
-				log.Fatalf("Failed to marshal JSON: %s", err)
-			}
-			wg.Add(1)
-			// Before spawning a goroutine, acquire a slot in the channel
-			sem <- true
-			go func(data string) {
-				defer wg.Done()
-				_, err = contract.SubmitTransaction("CreateBulkParallel", data)
-				if err != nil {
-					log.Println(err)
-				}
-				// Once the transaction is complete, release the slot
-				<-sem
-			}(string(chunkBytes))
-			endTime := time.Now()
-			executionTime := endTime.Sub(chunkTime).Seconds()
-			log.Printf("Execution Time: %f sec at chunk %d with length: %d\n", executionTime, chunkCounter, len(transactions))
-			chunkCounter++
-			totalTransactions += len(transactions)
-			transactions = []Transaction{}
+		chunkTime := time.Now()
+		chunkBytes, err := json.Marshal(transactions)
+		if err != nil {
+			log.Fatalf("Failed to marshal JSON: %s", err)
 		}
+		wg.Add(1)
+		// Before spawning a goroutine, acquire a slot in the channel
+		sem <- true
+		go func(data string) {
+			defer wg.Done()
+			_, err = contract.SubmitTransaction("CreateBulkParallel", data)
+			if err != nil {
+				log.Println(err)
+			}
+			// Once the transaction is complete, release the slot
+			<-sem
+		}(string(chunkBytes))
+		endTime := time.Now()
+		executionTime := endTime.Sub(chunkTime).Seconds()
+		log.Printf("Execution Time: %f sec at chunk %d with length: %d\n", executionTime, chunkCounter, len(transactions))
+		chunkCounter++
+		totalTransactions += len(transactions)
+		transactions = []Transaction{}
 
 	}
 
