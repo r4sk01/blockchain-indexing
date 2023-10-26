@@ -1,17 +1,34 @@
 #!/bin/bash
 
+# go run application.go -t BulkInvokeParallel -f /home/andrey/Documents/insert-tpch/ethereum/First100K/blockTransactions17010001-17011000.json
+
 # go run application.go -t versionQuery -k 0xffec0067f5a79cff07527f63d83dd5462ccf8ba4 -start 100 -end 
 
-# go run application.go -t BulkInvokeParallel -f /home/andrey/Documents/insert-tpch/ethereum/blockTransactions17010001-17011000.json
+# go run application.go -t getHistoryForAsset -k 0xffec0067f5a79cff07527f63d83dd5462ccf8ba4
 
-# go run application.go -t getHistoryForAsset -k 0xffec0067f5a79cff07527f63d83dd5462ccf8ba4 
+# go run application.go -t getHistoryForAssetRange -k 0xffec0067f5a79cff07527f63d83dd5462ccf8ba4 -r 3
 
-files1=("blockTransactions17000000-17010000.json" "blockTransactions17010001-17011000.json" "blockTransactions17011001-17012000.json" \ 
-    "blockTransactions17012001-17015000.json" "blockTransactions17015001-17020000.json" "blockTransactions17020001-17030000.json")
+filenames=(
+"First100K/blockTransactions17000000-17010000.json" 
+"First100K/blockTransactions17010001-17011000.json" 
+"First100K/blockTransactions17011001-17012000.json" 
+"First100K/blockTransactions17012001-17015000.json"
+"First100K/blockTransactions17015001-17020000.json"
+"First100K/blockTransactions17020001-17030000.json"
+"First100K/blockTransactions17030001-17050000.json"
+"First100K/blockTransactions17090001-17100000.json"
+"Second100K/blockTransactions17100000-17125000.json"
+"Second100K/blockTransactions17125001-17150000.json"
+"Second100K/blockTransactions17150001-17175000.json"
+"Third100K/blockTransactions17200000-17225000.json"
+"Third100K/blockTransactions17225001-17250000.json"
+"Third100K/blockTransactions17250001-17275000.json"
+"Third100K/blockTransactions17275001-17300000.json"
+)
 
-dataDir1="/home/andrey/Documents/insert-tpch/ethereum"
+dataDir="/home/andrey/Documents/insert-tpch/ethereum"
 
-for file in ${files1[@]}; do
-    echo "Inserting file: $file"
-    go run application.go -t BulkInvokeParallel -f "$dataDir1/$file" 
+for file in ${filenames[@]}; do
+    echo "Inserting file: $dataDir/$file"
+    go run application.go -t BulkInvokeParallel -f "$dataDir/$file" 
 done
