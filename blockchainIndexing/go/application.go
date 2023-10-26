@@ -472,7 +472,7 @@ func getHistoryForAsset(contract *gateway.Contract, key string) {
 	}
 	fmt.Printf("Number of records found: %d\n", len(assets))
 
-	fmt.Printf("%+v\n", assets[0])
+	//fmt.Printf("%+v\n", assets[0])
 	log.Printf("Total execution time is: %f sec\n", executionTime)
 }
 
@@ -631,17 +631,25 @@ func getHistoryForAssetRange(contract *gateway.Contract, key string, rangeSize i
 
 	scanner := bufio.NewScanner(file)
 	for scanner.Scan() {
-		key := scanner.Text()
-		all_keys = append(all_keys, key)
+		next_key := scanner.Text()
+		all_keys = append(all_keys, "0x"+next_key)
 	}
 
 	var key_index int
 
-	for key_index < len(all_keys) || all_keys[key_index] == key {
+	for key_index < len(all_keys) && all_keys[key_index] != key {
 		key_index++
 	}
 
-	keys_list := all_keys[key_index : key_index+rangeSize]
+	if key_index >= len(all_keys) {
+		log.Fatalf("Key %s not found\n", key)
+	}
+
+	end := key_index + rangeSize
+	if key_index+rangeSize >= len(all_keys) {
+		end = len(all_keys) - 1
+	}
+	keys_list := all_keys[key_index:end]
 
 	if err := scanner.Err(); err != nil {
 		log.Fatalf("Error reading file: %s\n", err)
@@ -650,14 +658,14 @@ func getHistoryForAssetRange(contract *gateway.Contract, key string, rangeSize i
 
 	startTime := time.Now()
 
-	_, err = contract.EvaluateTransaction("getHistoryForAssets", keys_list...)
+	result, err := contract.EvaluateTransaction("getHistoryForAssets", keys_list...)
 	if err != nil {
 		log.Fatalf("Failed to evaluate transaction: %s\n", err)
 	}
 
 	endTime := time.Now()
 	executionTime := endTime.Sub(startTime).Seconds()
-	//fmt.Println(string(result))
+	fmt.Println(string(result))
 	log.Printf("Total execution time is: %f sec\n", executionTime)
 }
 
