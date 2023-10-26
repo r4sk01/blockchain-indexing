@@ -509,11 +509,44 @@ func IncrementHex(s string) string {
 }
 
 func getHistoryForAssetRangeOld(contract *gateway.Contract, key string, rangeSize int) {
+	all_keys := []string{}
+	file, err := os.Open("./keys.txt")
+	if err != nil {
+		log.Fatalf("Failed to open keys file: %s\n", err)
+	}
+	defer file.Close()
+
+	scanner := bufio.NewScanner(file)
+	for scanner.Scan() {
+		next_key := scanner.Text()
+		all_keys = append(all_keys, next_key)
+	}
+
+	var key_index int
+
+	for key_index < len(all_keys) && all_keys[key_index] != key {
+		key_index++
+	}
+
+	if key_index >= len(all_keys) {
+		log.Fatalf("Key %s not found\n", key)
+	}
+
+	end := key_index + rangeSize
+	if key_index+rangeSize >= len(all_keys) {
+		end = len(all_keys) - 1
+	}
+	keys_list := all_keys[key_index:end]
+
+	if err := scanner.Err(); err != nil {
+		log.Fatalf("Error reading file: %s\n", err)
+		return
+	}
 
 	startTime := time.Now()
 
 	numKeys := 0
-	for i := 0; i < rangeSize; i++ {
+	for _, key := range keys_list {
 		result, err := contract.EvaluateTransaction("getHistoryForAsset", key)
 		if err != nil {
 			log.Fatalf("Failed to evaluate transaction: %s\n", err)
@@ -522,7 +555,6 @@ func getHistoryForAssetRangeOld(contract *gateway.Contract, key string, rangeSiz
 			numKeys++
 		}
 		// fmt.Println(string(result))
-		key = IncrementHex(key)
 	}
 
 	endTime := time.Now()
@@ -632,7 +664,7 @@ func getHistoryForAssetRange(contract *gateway.Contract, key string, rangeSize i
 	scanner := bufio.NewScanner(file)
 	for scanner.Scan() {
 		next_key := scanner.Text()
-		all_keys = append(all_keys, "0x"+next_key)
+		all_keys = append(all_keys, next_key)
 	}
 
 	var key_index int
