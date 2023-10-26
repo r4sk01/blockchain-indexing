@@ -3,3 +3,5 @@ node_modules
 
 test-network/peerStorage1/*
 test-network/peerStorage2/*
+
+keys.txt
