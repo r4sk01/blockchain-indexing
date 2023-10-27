@@ -135,6 +135,7 @@ func main() {
 	file := flag.String("f", "~", "file path for json data")
 	key := flag.String("k", "", "key for getHistoryForAsset")
 	rangeSize := flag.Int("r", 1, "size of key range")
+	keys_file := flag.String("keylist", "./1M-versions.txt", "keys list for range query")
 	version := flag.Int("v", 1, "version to query for point query")
 	start := flag.Int("start", 1, "start version for version query")
 	end := flag.Int("end", 1, "end version for version query")
@@ -157,7 +158,7 @@ func main() {
 	case "getHistoryForAssetsOld":
 		getHistoryForAssetsOld(contract, *key)
 	case "getHistoryForAssetRangeOld":
-		getHistoryForAssetRangeOld(contract, *key, *rangeSize)
+		getHistoryForAssetRangeOld(contract, *key, *rangeSize, *keys_file)
 	case "pointQueryOld":
 		pointQueryOld(contract, *key, *version)
 	case "versionQueryOld":
@@ -167,7 +168,7 @@ func main() {
 	case "getHistoryForAssets":
 		getHistoryForAssets(contract, *key)
 	case "getHistoryForAssetRange":
-		getHistoryForAssetRange(contract, *key, *rangeSize)
+		getHistoryForAssetRange(contract, *key, *rangeSize, *keys_file)
 
 	// GetVersionsForKey API Required
 	case "pointQuery":
@@ -508,9 +509,9 @@ func IncrementHex(s string) string {
 	return string(sPlusOne)
 }
 
-func getHistoryForAssetRangeOld(contract *gateway.Contract, key string, rangeSize int) {
+func getHistoryForAssetRangeOld(contract *gateway.Contract, key string, rangeSize int, keys_file string) {
 	all_keys := []string{}
-	file, err := os.Open("./keys.txt")
+	file, err := os.Open(keys_file)
 	if err != nil {
 		log.Fatalf("Failed to open keys file: %s\n", err)
 	}
@@ -518,7 +519,7 @@ func getHistoryForAssetRangeOld(contract *gateway.Contract, key string, rangeSiz
 
 	scanner := bufio.NewScanner(file)
 	for scanner.Scan() {
-		next_key := scanner.Text()
+		next_key := strings.Split(scanner.Text(), " ")[0]
 		all_keys = append(all_keys, next_key)
 	}
 
@@ -652,10 +653,10 @@ func getHistoryForAssets(contract *gateway.Contract, keys string) {
 	log.Printf("Total execution time is: %f sec\n", executionTime)
 }
 
-func getHistoryForAssetRange(contract *gateway.Contract, key string, rangeSize int) {
+func getHistoryForAssetRange(contract *gateway.Contract, key string, rangeSize int, keys_file string) {
 
 	all_keys := []string{}
-	file, err := os.Open("./keys.txt")
+	file, err := os.Open(keys_file)
 	if err != nil {
 		log.Fatalf("Failed to open keys file: %s\n", err)
 	}
@@ -663,7 +664,7 @@ func getHistoryForAssetRange(contract *gateway.Contract, key string, rangeSize i
 
 	scanner := bufio.NewScanner(file)
 	for scanner.Scan() {
-		next_key := scanner.Text()
+		next_key := strings.Split(scanner.Text(), " ")[0]
 		all_keys = append(all_keys, next_key)
 	}
 
