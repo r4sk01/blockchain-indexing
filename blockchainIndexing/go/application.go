@@ -10,6 +10,7 @@ import (
 	"log"
 	"os"
 	"path/filepath"
+	"regexp"
 	"sort"
 	"strconv"
 	"strings"
@@ -475,6 +476,9 @@ func getHistoryForAsset(contract *gateway.Contract, key string) {
 
 	//fmt.Printf("%+v\n", assets[0])
 	log.Printf("Total execution time is: %f sec\n", executionTime)
+	index_time, disk_time := get_average_read_times()
+	log.Printf("Average time to read index is %f microseconds\n", index_time)
+	log.Printf("Average time to read disk is %f microseconds\n", disk_time)
 }
 
 func getHistoryForAssetsOld(contract *gateway.Contract, keys string) {
@@ -495,19 +499,19 @@ func getHistoryForAssetsOld(contract *gateway.Contract, keys string) {
 	log.Printf("Total execution time is: %f sec\n", executionTime)
 }
 
-func IncrementHex(s string) string {
-	const HEX_TABLE = "0123456789abcdef"
-	sPlusOne := make([]byte, len(s))
-	carry := 1
-	for i := len(s) - 1; i >= 2; i-- {
-		digitVal := strings.IndexByte(HEX_TABLE, s[i])
-		digitVal = digitVal + carry
-		carry = digitVal / 16
-		newDigitVal := digitVal % 16
-		sPlusOne[i] = HEX_TABLE[newDigitVal]
-	}
-	return string(sPlusOne)
-}
+// func IncrementHex(s string) string {
+// 	const HEX_TABLE = "0123456789abcdef"
+// 	sPlusOne := make([]byte, len(s))
+// 	carry := 1
+// 	for i := len(s) - 1; i >= 2; i-- {
+// 		digitVal := strings.IndexByte(HEX_TABLE, s[i])
+// 		digitVal = digitVal + carry
+// 		carry = digitVal / 16
+// 		newDigitVal := digitVal % 16
+// 		sPlusOne[i] = HEX_TABLE[newDigitVal]
+// 	}
+// 	return string(sPlusOne)
+// }
 
 func getHistoryForAssetRangeOld(contract *gateway.Contract, key string, rangeSize int, keys_file string) {
 	all_keys := []string{}
@@ -546,14 +550,10 @@ func getHistoryForAssetRangeOld(contract *gateway.Contract, key string, rangeSiz
 
 	startTime := time.Now()
 
-	numKeys := 0
 	for _, key := range keys_list {
 		result, err := contract.EvaluateTransaction("getHistoryForAsset", key)
 		if err != nil {
 			log.Fatalf("Failed to evaluate transaction: %s\n", err)
-		}
-		if string(result) != "null" {
-			numKeys++
 		}
 		// fmt.Println(string(result))
 	}
@@ -561,7 +561,6 @@ func getHistoryForAssetRangeOld(contract *gateway.Contract, key string, rangeSiz
 	endTime := time.Now()
 	executionTime := endTime.Sub(startTime).Seconds()
 	log.Printf("Total execution time is: %f sec\n", executionTime)
-	log.Printf("%d keys found within rangeSize %d\n", numKeys, rangeSize)
 }
 
 func pointQueryOld(contract *gateway.Contract, key string, version int) {
@@ -700,6 +699,9 @@ func getHistoryForAssetRange(contract *gateway.Contract, key string, rangeSize i
 	executionTime := endTime.Sub(startTime).Seconds()
 	// fmt.Println(string(result))
 	log.Printf("Total execution time is: %f sec\n", executionTime)
+	index_time, disk_time := get_average_read_times()
+	log.Printf("Average time to read index is %f microseconds\n", index_time)
+	log.Printf("Average time to read disk is %f microseconds\n", disk_time)
 }
 
 func pointQuery(contract *gateway.Contract, key string, version int) {
@@ -860,6 +862,57 @@ func pointQueryFetchAll(contract *gateway.Contract, key string, pageSize int, ve
 	log.Printf("Requested assets found: %d\n", requestedAssets)
 	//fmt.Println(string(result))
 	log.Printf("Total execution time is: %f sec\n", executionTime)
+}
+
+func calculateAverage(arr []int) float64 {
+	sum := 0
+	for _, value := range arr {
+		sum += value
+	}
+
+	if len(arr) == 0 {
+		return 0.0
+	}
+
+	return float64(sum) / float64(len(arr))
+}
+
+func get_average_read_times() (float64, float64) {
+	time_file, err := os.Open("/home/andrey/Documents/blockchain-indexing/test-network/peer-storage1/read_times.txt")
+	if err != nil {
+		log.Printf("ERROR: Could not open time file: %s\n", err)
+	}
+	defer time_file.Close()
+
+	scanner := bufio.NewScanner(time_file)
+	index_times := []int{}
+	disk_times := []int{}
+
+	for scanner.Scan() {
+		line := scanner.Text()
+		index_pattern := `Time to read index: (\d+)`
+		disk_pattern := `Time to read disk: (\d+)`
+		re_index := regexp.MustCompile(index_pattern)
+		re_disk := regexp.MustCompile(disk_pattern)
+
+		if re_index.MatchString(line) {
+			matches := re_index.FindStringSubmatch(line)
+			value, err := strconv.Atoi(matches[1])
+			if err != nil {
+				log.Fatalf("Error converting time: %s\n", err)
+			}
+			index_times = Append(index_times, value)
+		} else if re_disk.MatchString(line) {
+			matches := re_disk.FindStringSubmatch(line)
+			value, err := strconv.Atoi(matches[1])
+			if err != nil {
+				log.Fatalf("Error converting time: %s\n", err)
+			}
+			disk_times = Append(disk_times, value)
+		}
+	}
+
+	return calculateAverage(index_times), calculateAverage(disk_times)
 }
 
 func populateWallet(wallet *gateway.Wallet) error {
