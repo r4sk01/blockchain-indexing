@@ -901,14 +901,14 @@ func get_average_read_times() (float64, float64) {
 			if err != nil {
 				log.Fatalf("Error converting time: %s\n", err)
 			}
-			index_times = Append(index_times, value)
+			index_times = append(index_times, value)
 		} else if re_disk.MatchString(line) {
 			matches := re_disk.FindStringSubmatch(line)
 			value, err := strconv.Atoi(matches[1])
 			if err != nil {
 				log.Fatalf("Error converting time: %s\n", err)
 			}
-			disk_times = Append(disk_times, value)
+			disk_times = append(disk_times, value)
 		}
 	}
 
