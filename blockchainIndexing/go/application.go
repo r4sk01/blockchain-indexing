@@ -551,7 +551,7 @@ func getHistoryForAssetRangeOld(contract *gateway.Contract, key string, rangeSiz
 	startTime := time.Now()
 
 	for _, key := range keys_list {
-		result, err := contract.EvaluateTransaction("getHistoryForAsset", key)
+		_, err = contract.EvaluateTransaction("getHistoryForAsset", key)
 		if err != nil {
 			log.Fatalf("Failed to evaluate transaction: %s\n", err)
 		}
@@ -878,7 +878,7 @@ func calculateAverage(arr []int) float64 {
 }
 
 func get_average_read_times() (float64, float64) {
-	time_file, err := os.Open("/home/andrey/Documents/blockchain-indexing/test-network/peer-storage1/read_times.txt")
+	time_file, err := os.Open("/home/andrey/Documents/insert-tpch/blockchain-indexing/test-network/peerStorage2/read_times.txt")
 	if err != nil {
 		log.Printf("ERROR: Could not open time file: %s\n", err)
 	}
