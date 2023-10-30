@@ -6,7 +6,7 @@
 
 # go run application.go -t getHistoryForAsset -k 0xffec0067f5a79cff07527f63d83dd5462ccf8ba4
 
-# go run application.go -t getHistoryForAssetRange -k 0xffec0067f5a79cff07527f63d83dd5462ccf8ba4 -r 3
+# go run application.go -t getHistoryForAssetRange -k 0xffec0067f5a79cff07527f63d83dd5462ccf8ba4 -r 3 -keylist 1M-versions.txt
 
 filenames=(
 "First100K/blockTransactions17000000-17010000.json" 
