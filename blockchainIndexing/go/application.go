@@ -476,7 +476,7 @@ func getHistoryForAsset(contract *gateway.Contract, key string) {
 
 	//fmt.Printf("%+v\n", assets[0])
 	log.Printf("Total execution time is: %f sec\n", executionTime)
-	index_total, index_average, disk_total, disk_average := get_average_read_times()
+	index_total, index_average, disk_total, disk_average := get_read_times()
 	log.Printf("Total time to read index is %d microseconds with average time of %f microseconds\n", index_total, index_average)
 	log.Printf("Total time to read disk is %d microseconds with average time of %f microseconds\n", disk_total, disk_average)
 }
@@ -699,9 +699,9 @@ func getHistoryForAssetRange(contract *gateway.Contract, key string, rangeSize i
 	executionTime := endTime.Sub(startTime).Seconds()
 	// fmt.Println(string(result))
 	log.Printf("Total execution time is: %f sec\n", executionTime)
-	index_time, disk_time := get_average_read_times()
-	log.Printf("Average time to read index is %f microseconds\n", index_time)
-	log.Printf("Average time to read disk is %f microseconds\n", disk_time)
+	index_total, index_average, disk_total, disk_average := get_read_times()
+	log.Printf("Total time to read index is %d microseconds with average time of %f microseconds\n", index_total, index_average)
+	log.Printf("Total time to read disk is %d microseconds with average time of %f microseconds\n", disk_total, disk_average)
 }
 
 func pointQuery(contract *gateway.Contract, key string, version int) {
@@ -877,7 +877,7 @@ func calculate_total_and_average(arr []int) (int, float64) {
 	return sum, float64(sum) / float64(len(arr))
 }
 
-func get_average_read_times() (int, float64, int, float64) {
+func get_read_times() (int, float64, int, float64) {
 	time_file, err := os.Open("/home/andrey/Documents/insert-tpch/blockchain-indexing/test-network/peerStorage2/read_times.txt")
 	if err != nil {
 		log.Printf("ERROR: Could not open time file: %s\n", err)
