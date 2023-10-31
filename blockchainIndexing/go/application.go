@@ -476,9 +476,9 @@ func getHistoryForAsset(contract *gateway.Contract, key string) {
 
 	//fmt.Printf("%+v\n", assets[0])
 	log.Printf("Total execution time is: %f sec\n", executionTime)
-	index_time, disk_time := get_average_read_times()
-	log.Printf("Average time to read index is %f microseconds\n", index_time)
-	log.Printf("Average time to read disk is %f microseconds\n", disk_time)
+	index_total, index_average, disk_total, disk_average := get_average_read_times()
+	log.Printf("Total time to read index is %d microseconds with average time of %f microseconds\n", index_total, index_average)
+	log.Printf("Total time to read disk is %d microseconds with average time of %f microseconds\n", disk_total, disk_average)
 }
 
 func getHistoryForAssetsOld(contract *gateway.Contract, keys string) {
@@ -864,20 +864,20 @@ func pointQueryFetchAll(contract *gateway.Contract, key string, pageSize int, ve
 	log.Printf("Total execution time is: %f sec\n", executionTime)
 }
 
-func calculateAverage(arr []int) float64 {
+func calculate_total_and_average(arr []int) (int, float64) {
 	sum := 0
 	for _, value := range arr {
 		sum += value
 	}
 
 	if len(arr) == 0 {
-		return 0.0
+		return 0, 0.0
 	}
 
-	return float64(sum) / float64(len(arr))
+	return sum, float64(sum) / float64(len(arr))
 }
 
-func get_average_read_times() (float64, float64) {
+func get_average_read_times() (int, float64, int, float64) {
 	time_file, err := os.Open("/home/andrey/Documents/insert-tpch/blockchain-indexing/test-network/peerStorage2/read_times.txt")
 	if err != nil {
 		log.Printf("ERROR: Could not open time file: %s\n", err)
@@ -911,8 +911,10 @@ func get_average_read_times() (float64, float64) {
 			disk_times = append(disk_times, value)
 		}
 	}
+	index_total, index_average := calculate_total_and_average(index_times)
+	disk_total, disk_average := calculate_total_and_average(disk_times)
 
-	return calculateAverage(index_times), calculateAverage(disk_times)
+	return index_total, index_average, disk_total, disk_average
 }
 
 func populateWallet(wallet *gateway.Wallet) error {
