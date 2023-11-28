@@ -1,5 +1,6 @@
 node_modules
 .DS_Store
 
-test-network/peerStorage1/*
-test-network/peerStorage2/*
+*keys.txt
+*versions.txt
+results.txt
