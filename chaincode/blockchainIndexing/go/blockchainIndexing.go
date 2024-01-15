@@ -291,7 +291,7 @@ func (sc *SmartContract) getUpdatesByBlockRange(stub shim.ChaincodeStubInterface
 	end, _ := strconv.ParseUint(args[2], 10, 64)
 	updates, _ := strconv.ParseUint(args[3], 10, 64)
 
-	resultsIter, err := stub.GetUpdatesByBlockRange(args[0], start, end, updates)
+	resultsIter, err := stub.GetUpdatesByBlockRange(start, end, updates)
 	if err != nil {
 		return shim.Error(err.Error())
 	}
