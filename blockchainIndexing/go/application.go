@@ -138,8 +138,9 @@ func main() {
 	rangeSize := flag.Int("r", 1, "size of key range")
 	keys_file := flag.String("keylist", "./1M-versions.txt", "keys list for range query")
 	version := flag.Int("v", 1, "version to query for point query")
-	start := flag.Int("start", 1, "start version for version query")
-	end := flag.Int("end", 1, "end version for version query")
+	start := flag.Int("start", 1, "start version for version query or starting block for block range query")
+	end := flag.Int("end", 1, "end version for version query or ending block for block range query")
+	updates := flag.Int("u", 0, "minimum updates required in range to appear in results")
 	pageSize := flag.Int("p", 1, "number of assets to fetch per chaincode call")
 	flag.Parse()
 
@@ -178,6 +179,10 @@ func main() {
 		versionQuery(contract, *key, *start, *end)
 	case "getHistoryForAssetPaginated":
 		getHistoryForAssetPaginated(contract, *key, *pageSize)
+
+	// GetUpdatesByBlockRange API Required
+	case "blockRangeQuery":
+		blockRangeQuery(contract, *start, *end, *updates)
 
 	case "versionQueryFetchAll":
 		versionQueryFetchAll(contract, *key, *pageSize, *start, *end)
@@ -747,6 +752,34 @@ func versionQuery(contract *gateway.Contract, key string, start int, end int) {
 
 	log.Printf("Total number of assets is: %d\n", len(assets))
 	//fmt.Println(string(result))
+	log.Printf("Total execution time is: %f sec\n", executionTime)
+}
+
+func blockRangeQuery(contract *gateway.Contract, start int, end int, updates int) {
+
+	fmt.Printf("Querying for keys within block range from %d to %d updated %d times or more \n", start, end, updates)
+	startTime := time.Now()
+
+	startString := strconv.Itoa(start)
+	endString := strconv.Itoa(end)
+	updatesString := strconv.Itoa(updates)
+
+	result, err := contract.EvaluateTransaction("getUpdatesByBlockRange", startString, endString, updatesString)
+	if err != nil {
+		log.Fatalf("Failed to evaluate transaction: %s\n", err)
+	}
+
+	endTime := time.Now()
+	executionTime := endTime.Sub(startTime).Seconds()
+
+	var assets []Asset
+	err = json.Unmarshal(result, &assets)
+	if err != nil {
+		log.Fatalf("Failed to unmarshal JSON: %s\n", err)
+	}
+
+	log.Printf("Total number of assets is: %d\n", len(assets))
+	fmt.Println(string(result))
 	log.Printf("Total execution time is: %f sec\n", executionTime)
 }
 

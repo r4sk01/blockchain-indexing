@@ -282,6 +282,39 @@ func (sc *SmartContract) getVersionsForAsset(stub shim.ChaincodeStubInterface, a
 	return shim.Success(versionAsBytes)
 }
 
+func (sc *SmartContract) getUpdatesByBlockRange(stub shim.ChaincodeStubInterface, args []string) sc.Response {
+	if len(args) != 4 {
+		return shim.Error("Incorrect number of arguments. Expecting 3")
+	}
+
+	start, _ := strconv.ParseUint(args[1], 10, 64)
+	end, _ := strconv.ParseUint(args[2], 10, 64)
+	updates, _ := strconv.ParseUint(args[3], 10, 64)
+
+	resultsIter, err := stub.GetUpdatesByBlockRange(args[0], start, end, updates)
+	if err != nil {
+		return shim.Error(err.Error())
+	}
+
+	var results []QueryResult
+	for resultsIter.HasNext() {
+		resultData, err := resultsIter.Next()
+		if err != nil {
+			return shim.Error(err.Error())
+		}
+
+		var transaction Transaction
+		json.Unmarshal(resultData.Value, &transaction) // .Value?
+
+		timestamp := time.Unix(resultData.Timestamp.Seconds, int64(resultData.Timestamp.Nanos)).String()
+
+		results = append(results, QueryResult{Key: resultData.TxId, Record: &transaction, Timestamp: timestamp})
+	}
+
+	resultsAsBytes, _ := json.Marshal(results)
+	return shim.Success(resultsAsBytes)
+}
+
 func main() {
 	err := shim.Start(new(SmartContract))
 	if err != nil {
