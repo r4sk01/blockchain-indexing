@@ -65,6 +65,8 @@ func (sc *SmartContract) Invoke(stub shim.ChaincodeStubInterface) sc.Response {
 	// Requires GetVersionsForKey API
 	case "getVersionsForAsset":
 		return sc.getVersionsForAsset(stub, args)
+	case "getUpdatesByBlockRange":
+		return sc.getUpdatesByBlockRange(stub, args)
 	default:
 		return shim.Error("Invalid Smart Contract function name.")
 	}
@@ -258,6 +260,39 @@ func (sc *SmartContract) getVersionsForAsset(stub shim.ChaincodeStubInterface, a
 
 	versionAsBytes, _ := json.Marshal(versions)
 	return shim.Success(versionAsBytes)
+}
+
+func (sc *SmartContract) getUpdatesByBlockRange(stub shim.ChaincodeStubInterface, args []string) sc.Response {
+	if len(args) != 3 {
+		return shim.Error("Incorrect number of arguments. Expecting 3")
+	}
+
+	start, _ := strconv.ParseUint(args[0], 10, 64)
+	end, _ := strconv.ParseUint(args[1], 10, 64)
+	updates, _ := strconv.ParseUint(args[2], 10, 64)
+
+	resultsIter, err := stub.GetUpdatesByBlockRange(start, end, updates)
+	if err != nil {
+		return shim.Error(err.Error())
+	}
+
+	var results []QueryResult
+	for resultsIter.HasNext() {
+		resultData, err := resultsIter.Next()
+		if err != nil {
+			return shim.Error(err.Error())
+		}
+
+		var order Order
+		json.Unmarshal(resultData.Value, &order) // .Value?
+
+		timestamp := time.Unix(resultData.Timestamp.Seconds, int64(resultData.Timestamp.Nanos)).String()
+
+		results = append(results, QueryResult{Key: resultData.TxId, Record: &order, Timestamp: timestamp})
+	}
+
+	resultsAsBytes, _ := json.Marshal(results)
+	return shim.Success(resultsAsBytes)
 }
 
 func main() {

@@ -240,6 +240,8 @@ type ChaincodeStubInterface interface {
 
 	GetVersionsForKey(key string, start uint64, end uint64) (HistoryQueryIteratorInterface, error)
 
+	GetUpdatesByBlockRange(start uint64, end uint64, updates uint64) (HistoryQueryIteratorInterface, error)
+
 	// GetPrivateData returns the value of the specified `key` from the specified
 	// `collection`. Note that GetPrivateData doesn't read data from the
 	// private writeset, which has not been committed to the `collection`. In

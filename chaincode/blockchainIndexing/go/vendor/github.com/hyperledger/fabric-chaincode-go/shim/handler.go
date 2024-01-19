@@ -625,6 +625,42 @@ func (h *Handler) handleGetVersionsForKey(key string, start uint64, end uint64, 
 	return nil, fmt.Errorf("incorrect chaincode message %s received. Expecting %s or %s", responseMsg.Type, pb.ChaincodeMessage_RESPONSE, pb.ChaincodeMessage_ERROR)
 }
 
+func (h *Handler) handleGetUpdatesByBlockRange(start uint64, end uint64, updates uint64, channelID string, txid string) (*pb.QueryResponse, error) {
+	// Create the channel on which to communicate the response from validating peer
+	respChan, err := h.createResponseChannel(channelID, txid)
+	if err != nil {
+		return nil, err
+	}
+	defer h.deleteResponseChannel(channelID, txid)
+
+	// Send GET_UPDATES_BY_BLOCK_RANGE message to peer chaincode support
+	payloadBytes := marshalOrPanic(&pb.GetUpdatesByBlockRange{Start: start, End: end, Updates: updates})
+
+	msg := &pb.ChaincodeMessage{Type: pb.ChaincodeMessage_GET_UPDATES_BY_BLOCK_RANGE, Payload: payloadBytes, Txid: txid, ChannelId: channelID}
+	var responseMsg pb.ChaincodeMessage
+
+	if responseMsg, err = h.sendReceive(msg, respChan); err != nil {
+		return nil, fmt.Errorf("[%s] error sending %s: %s", shorttxid(txid), pb.ChaincodeMessage_GET_UPDATES_BY_BLOCK_RANGE, err)
+	}
+
+	if responseMsg.Type == pb.ChaincodeMessage_RESPONSE {
+		// Success response
+		getUpdatesByBlockRangeResponse := &pb.QueryResponse{}
+		if err = proto.Unmarshal(responseMsg.Payload, getUpdatesByBlockRangeResponse); err != nil {
+			return nil, fmt.Errorf("[%s] unmarshal error", shorttxid(responseMsg.Txid))
+		}
+
+		return getUpdatesByBlockRangeResponse, nil
+	}
+	if responseMsg.Type == pb.ChaincodeMessage_ERROR {
+		// Error response
+		return nil, fmt.Errorf("%s", responseMsg.Payload[:])
+	}
+
+	// Incorrect chaincode message received
+	return nil, fmt.Errorf("incorrect chaincode message %s received. Expecting %s or %s", responseMsg.Type, pb.ChaincodeMessage_RESPONSE, pb.ChaincodeMessage_ERROR)
+}
+
 func (h *Handler) createResponse(status int32, payload []byte) pb.Response {
 	return pb.Response{Status: status, Payload: payload}
 }
