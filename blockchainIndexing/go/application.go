@@ -329,7 +329,7 @@ func BulkInvokeParallel(contract *gateway.Contract, fileUrl string) {
 			log.Fatal(err)
 		}
 
-		blockTime := time.Now()
+		// blockTime := time.Now()
 		blockBytes, err := json.Marshal(transactions)
 		if err != nil {
 			log.Fatalf("Failed to marshal JSON: %s", err)
@@ -346,9 +346,9 @@ func BulkInvokeParallel(contract *gateway.Contract, fileUrl string) {
 			// Once the transaction is complete, release the slot
 			<-sem
 		}(string(blockBytes))
-		endTime := time.Now()
-		executionTime := endTime.Sub(blockTime).Seconds()
-		log.Printf("Execution Time: %f sec at block %d with length: %d\n", executionTime, blockCounter, len(transactions))
+		// endTime := time.Now()
+		// executionTime := endTime.Sub(blockTime).Seconds()
+		// log.Printf("Execution Time: %f sec at block %d with length: %d\n", executionTime, blockCounter, len(transactions))
 		blockCounter++
 		totalTransactions += len(transactions)
 		transactions = []Transaction{}
@@ -476,9 +476,6 @@ func getHistoryForAsset(contract *gateway.Contract, key string) {
 
 	//fmt.Printf("%+v\n", assets[0])
 	log.Printf("Total execution time is: %f sec\n", executionTime)
-	index_time, disk_time := get_average_read_times()
-	log.Printf("Average time to read index is %f microseconds\n", index_time)
-	log.Printf("Average time to read disk is %f microseconds\n", disk_time)
 }
 
 func getHistoryForAssetsOld(contract *gateway.Contract, keys string) {
@@ -595,6 +592,9 @@ func pointQueryOld(contract *gateway.Contract, key string, version int) {
 	executionTime := endTime.Sub(startTime).Seconds()
 	fmt.Println(string(assetJSON))
 	log.Printf("Total execution time is: %f sec\n", executionTime)
+	index_total, index_average, disk_total, disk_average := get_read_times()
+	log.Printf("Total time to read index is %d microseconds with average time of %f microseconds\n", index_total, index_average)
+	log.Printf("Total time to read disk is %d microseconds with average time of %f microseconds\n", disk_total, disk_average)
 }
 
 // versionQuery calls GetHistoryForKey API to execute Version Query
@@ -699,9 +699,6 @@ func getHistoryForAssetRange(contract *gateway.Contract, key string, rangeSize i
 	executionTime := endTime.Sub(startTime).Seconds()
 	// fmt.Println(string(result))
 	log.Printf("Total execution time is: %f sec\n", executionTime)
-	index_time, disk_time := get_average_read_times()
-	log.Printf("Average time to read index is %f microseconds\n", index_time)
-	log.Printf("Average time to read disk is %f microseconds\n", disk_time)
 }
 
 func pointQuery(contract *gateway.Contract, key string, version int) {
@@ -721,6 +718,9 @@ func pointQuery(contract *gateway.Contract, key string, version int) {
 
 	fmt.Println(string(result))
 	log.Printf("Total execution time is: %f sec\n", executionTime)
+	index_total, index_average, disk_total, disk_average := get_read_times()
+	log.Printf("Total time to read index is %d microseconds with average time of %f microseconds\n", index_total, index_average)
+	log.Printf("Total time to read disk is %d microseconds with average time of %f microseconds\n", disk_total, disk_average)
 }
 
 func versionQuery(contract *gateway.Contract, key string, start int, end int) {
@@ -825,6 +825,45 @@ func versionQueryFetchAll(contract *gateway.Contract, key string, pageSize int, 
 	log.Printf("Total execution time is: %f sec\n", executionTime)
 }
 
+// func pointQueryFetchAll(contract *gateway.Contract, key string, pageSize int, version int) {
+
+// 	fmt.Printf("Fetching history for key %s with %d results at a time\n", key, pageSize)
+// 	startTime := time.Now()
+
+// 	var totalAssets []Asset
+// 	pageStart := 1
+// 	pageEnd := pageSize
+// 	for {
+// 		fmt.Printf("Calling getVersionsForAsset with start %d and end %d\n", pageStart, pageEnd)
+// 		result, err := contract.EvaluateTransaction("getVersionsForAsset", key, strconv.Itoa(pageStart), strconv.Itoa(pageEnd))
+// 		if err != nil {
+// 			log.Fatalf("Failed to evaluate transaction: %s\n", err)
+// 		}
+
+// 		var currentAssets []Asset
+// 		err = json.Unmarshal(result, &currentAssets)
+// 		if err != nil {
+// 			log.Fatalf("Failed to unmarshal JSON: %s\n", err)
+// 		}
+// 		totalAssets = append(totalAssets, currentAssets...)
+// 		if len(currentAssets) < pageSize {
+// 			break
+// 		}
+// 		pageStart = pageEnd + 1
+// 		pageEnd = pageStart + pageSize - 1
+// 	}
+
+// 	requestedAssets := totalAssets[version-1]
+
+// 	endTime := time.Now()
+// 	executionTime := endTime.Sub(startTime).Seconds()
+
+// 	log.Printf("Total number of assets is: %d\n", len(totalAssets))
+// 	log.Printf("Requested assets found: %d\n", requestedAssets)
+// 	//fmt.Println(string(result))
+// 	log.Printf("Total execution time is: %f sec\n", executionTime)
+// }
+
 func pointQueryFetchAll(contract *gateway.Contract, key string, pageSize int, version int) {
 
 	fmt.Printf("Fetching history for key %s with %d results at a time\n", key, pageSize)
@@ -833,6 +872,11 @@ func pointQueryFetchAll(contract *gateway.Contract, key string, pageSize int, ve
 	var totalAssets []Asset
 	pageStart := 1
 	pageEnd := pageSize
+
+	// Initialize accumulators and loop counter
+	var totalIndexTime, totalDiskTime int
+	var iterations int
+
 	for {
 		fmt.Printf("Calling getVersionsForAsset with start %d and end %d\n", pageStart, pageEnd)
 		result, err := contract.EvaluateTransaction("getVersionsForAsset", key, strconv.Itoa(pageStart), strconv.Itoa(pageEnd))
@@ -846,6 +890,13 @@ func pointQueryFetchAll(contract *gateway.Contract, key string, pageSize int, ve
 			log.Fatalf("Failed to unmarshal JSON: %s\n", err)
 		}
 		totalAssets = append(totalAssets, currentAssets...)
+
+		// Fetch the read times after each chaincode invocation and update the accumulators
+		index_total, _, disk_total, _ := get_read_times()
+		totalIndexTime += index_total
+		totalDiskTime += disk_total
+		iterations++
+
 		if len(currentAssets) < pageSize {
 			break
 		}
@@ -858,26 +909,31 @@ func pointQueryFetchAll(contract *gateway.Contract, key string, pageSize int, ve
 	endTime := time.Now()
 	executionTime := endTime.Sub(startTime).Seconds()
 
+	// Calculate the averages
+	averageIndexTime := float64(totalIndexTime) / float64(iterations*pageSize)
+	averageDiskTime := float64(totalDiskTime) / float64(iterations*pageSize)
+
 	log.Printf("Total number of assets is: %d\n", len(totalAssets))
 	log.Printf("Requested assets found: %d\n", requestedAssets)
-	//fmt.Println(string(result))
 	log.Printf("Total execution time is: %f sec\n", executionTime)
+	log.Printf("Total time to read index is %d microseconds with average time of %f microseconds\n", totalIndexTime, averageIndexTime)
+	log.Printf("Total time to read disk is %d microseconds with average time of %f microseconds\n", totalDiskTime, averageDiskTime)
 }
 
-func calculateAverage(arr []int) float64 {
+func calculate_total_and_average(arr []int) (int, float64) {
 	sum := 0
 	for _, value := range arr {
 		sum += value
 	}
 
 	if len(arr) == 0 {
-		return 0.0
+		return 0, 0.0
 	}
 
-	return float64(sum) / float64(len(arr))
+	return sum, float64(sum) / float64(len(arr))
 }
 
-func get_average_read_times() (float64, float64) {
+func get_read_times() (int, float64, int, float64) {
 	time_file, err := os.Open("/home/andrey/Documents/insert-tpch/blockchain-indexing/test-network/peerStorage2/read_times.txt")
 	if err != nil {
 		log.Printf("ERROR: Could not open time file: %s\n", err)
@@ -911,8 +967,10 @@ func get_average_read_times() (float64, float64) {
 			disk_times = append(disk_times, value)
 		}
 	}
+	index_total, index_average := calculate_total_and_average(index_times)
+	disk_total, disk_average := calculate_total_and_average(disk_times)
 
-	return calculateAverage(index_times), calculateAverage(disk_times)
+	return index_total, index_average, disk_total, disk_average
 }
 
 func populateWallet(wallet *gateway.Wallet) error {
