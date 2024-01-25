@@ -334,7 +334,7 @@ func BulkInvokeParallel(contract *gateway.Contract, fileUrl string) {
 			log.Fatal(err)
 		}
 
-		blockTime := time.Now()
+		// blockTime := time.Now()
 		blockBytes, err := json.Marshal(transactions)
 		if err != nil {
 			log.Fatalf("Failed to marshal JSON: %s", err)
@@ -351,9 +351,9 @@ func BulkInvokeParallel(contract *gateway.Contract, fileUrl string) {
 			// Once the transaction is complete, release the slot
 			<-sem
 		}(string(blockBytes))
-		endTime := time.Now()
-		executionTime := endTime.Sub(blockTime).Seconds()
-		log.Printf("Execution Time: %f sec at block %d with length: %d\n", executionTime, blockCounter, len(transactions))
+		// endTime := time.Now()
+		// executionTime := endTime.Sub(blockTime).Seconds()
+		// log.Printf("Execution Time: %f sec at block %d with length: %d\n", executionTime, blockCounter, len(transactions))
 		blockCounter++
 		totalTransactions += len(transactions)
 		transactions = []Transaction{}
@@ -481,9 +481,9 @@ func getHistoryForAsset(contract *gateway.Contract, key string) {
 
 	//fmt.Printf("%+v\n", assets[0])
 	log.Printf("Total execution time is: %f sec\n", executionTime)
-	index_total, index_average, disk_total, disk_average := get_read_times()
-	log.Printf("Total time to read index is %d microseconds with average time of %f microseconds\n", index_total, index_average)
-	log.Printf("Total time to read disk is %d microseconds with average time of %f microseconds\n", disk_total, disk_average)
+	//index_total, index_average, disk_total, disk_average := get_read_times()
+	//log.Printf("Total time to read index is %d microseconds with average time of %f microseconds\n", index_total, index_average)
+	//log.Printf("Total time to read disk is %d microseconds with average time of %f microseconds\n", disk_total, disk_average)
 }
 
 func getHistoryForAssetsOld(contract *gateway.Contract, keys string) {
@@ -779,7 +779,7 @@ func blockRangeQuery(contract *gateway.Contract, start int, end int, updates int
 	}
 
 	log.Printf("Total number of assets is: %d\n", len(assets))
-	fmt.Println(string(result))
+	// fmt.Println(string(result))
 	log.Printf("Total execution time is: %f sec\n", executionTime)
 }
 
