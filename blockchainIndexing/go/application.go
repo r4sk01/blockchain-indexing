@@ -219,7 +219,9 @@ func BulkInvokeParallel(contract *gateway.Contract, fileUrl string) {
 
 	for i := 0; i < len(t.Table); i += chunkSize {
 
-		log.Printf("Processing chunk starting at index %d\n", i)
+		if i%10000 == 0 {
+			log.Printf("Processing chunk starting at index %d\n", i)
+		}
 
 		end := i + chunkSize
 		if end > len(t.Table) {
@@ -305,7 +307,14 @@ func getHistoryForAsset(contract *gateway.Contract, key string) {
 	endTime := time.Now()
 	executionTime := endTime.Sub(startTime).Seconds()
 
-	fmt.Println(string(result))
+	var assets []Asset
+	err = json.Unmarshal(result, &assets)
+	if err != nil {
+		log.Fatalf("Failed to unmarshal JSON: %s\n", err)
+	}
+
+	log.Printf("Total number of assets is: %d\n", len(assets))
+	// fmt.Println(string(result))
 	log.Printf("Total execution time is: %f sec\n", executionTime)
 }
 
@@ -378,13 +387,16 @@ func pointQueryOld(contract *gateway.Contract, key string, version int) {
 
 	selectedAsset := assets[version-1]
 
-	assetJSON, err := json.Marshal(selectedAsset)
+	_, err = json.Marshal(selectedAsset)
 	if err != nil {
 		log.Fatalf("Failed to marshal JSON: %s\n", err)
 	}
 	endTime := time.Now()
 	executionTime := endTime.Sub(startTime).Seconds()
-	fmt.Println(string(assetJSON))
+
+	log.Printf("Total number of assets is: %d\n", len(assets))
+
+	//fmt.Println(string(assetJSON))
 	log.Printf("Total execution time is: %f sec\n", executionTime)
 }
 
@@ -422,6 +434,8 @@ func versionQueryOld(contract *gateway.Contract, key string, start int, end int)
 		log.Fatalf("Failed to marshal JSON: %s\n", err)
 	}
 
+	log.Printf("Total number of assets is: %d\n", len(assets))
+
 	// fmt.Println(string(assetsJSON))
 	log.Printf("Total execution time is: %f sec\n", executionTime)
 }
@@ -438,7 +452,14 @@ func getHistoryForAssets(contract *gateway.Contract, keys string) {
 	endTime := time.Now()
 	executionTime := endTime.Sub(startTime).Seconds()
 
-	fmt.Println(string(result))
+	var assets []Asset
+	err = json.Unmarshal(result, &assets)
+	if err != nil {
+		log.Fatalf("Failed to unmarshal JSON: %s\n", err)
+	}
+
+	log.Printf("Total number of assets is: %d\n", len(assets))
+	// fmt.Println(string(result))
 	log.Printf("Total execution time is: %f sec\n", executionTime)
 }
 
@@ -456,14 +477,21 @@ func getHistoryForAssetRange(contract *gateway.Contract, keys string) {
 
 	startTime := time.Now()
 
-	_, err := contract.EvaluateTransaction("getHistoryForAssets", keys_list...)
+	result, err := contract.EvaluateTransaction("getHistoryForAssets", keys_list...)
 	if err != nil {
 		log.Fatalf("Failed to evaluate transaction: %s\n", err)
 	}
 
 	endTime := time.Now()
 	executionTime := endTime.Sub(startTime).Seconds()
-	//fmt.Println(string(result))
+	var assets []Asset
+	err = json.Unmarshal(result, &assets)
+	if err != nil {
+		log.Fatalf("Failed to unmarshal JSON: %s\n", err)
+	}
+
+	log.Printf("Total number of assets is: %d\n", len(assets))
+	// fmt.Println(string(result))
 	log.Printf("Total execution time is: %f sec\n", executionTime)
 }
 
@@ -482,7 +510,14 @@ func pointQuery(contract *gateway.Contract, key string, version int) {
 	endTime := time.Now()
 	executionTime := endTime.Sub(startTime).Seconds()
 
-	fmt.Println(string(result))
+	var assets []Asset
+	err = json.Unmarshal(result, &assets)
+	if err != nil {
+		log.Fatalf("Failed to unmarshal JSON: %s\n", err)
+	}
+
+	log.Printf("Total number of assets is: %d\n", len(assets))
+	// fmt.Println(string(result))
 	log.Printf("Total execution time is: %f sec\n", executionTime)
 }
 
@@ -502,7 +537,14 @@ func versionQuery(contract *gateway.Contract, key string, start int, end int) {
 	endTime := time.Now()
 	executionTime := endTime.Sub(startTime).Seconds()
 
-	fmt.Println(string(result))
+	var assets []Asset
+	err = json.Unmarshal(result, &assets)
+	if err != nil {
+		log.Fatalf("Failed to unmarshal JSON: %s\n", err)
+	}
+
+	log.Printf("Total number of assets is: %d\n", len(assets))
+	// fmt.Println(string(result))
 	log.Printf("Total execution time is: %f sec\n", executionTime)
 }
 
@@ -530,7 +572,7 @@ func blockRangeQuery(contract *gateway.Contract, start int, end int, updates int
 	}
 
 	log.Printf("Total number of assets is: %d\n", len(assets))
-	fmt.Println(string(result))
+	// fmt.Println(string(result))
 	log.Printf("Total execution time is: %f sec\n", executionTime)
 }
 
