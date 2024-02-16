@@ -373,7 +373,8 @@ func BulkInvokeParallel(contract *gateway.Contract, fileUrl string) {
 		sem <- true
 	}
 
-	log.Printf("Total of %d transactions inserted\n", totalTransactions)
+	endTime := time.Since(startTime).Seconds()
+	log.Printf("Time to insert %d transactions: %f\n", totalTransactions, endTime)
 }
 
 func Invoke(contract *gateway.Contract, fileUrl string) {
