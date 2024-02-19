@@ -214,6 +214,8 @@ func BulkInvokeParallel(contract *gateway.Contract, fileUrl string) {
 
 	var wg sync.WaitGroup
 
+	startTime := time.Now()
+
 	// Create a buffered channel to limit number of goroutines
 	sem := make(chan bool, 10)
 
@@ -256,6 +258,9 @@ func BulkInvokeParallel(contract *gateway.Contract, fileUrl string) {
 	for i := 0; i < cap(sem); i++ {
 		sem <- true
 	}
+
+	executionTime := time.Since(startTime).Seconds()
+	log.Printf("Total execution time is: %f sec\n", executionTime)
 }
 
 func Invoke(contract *gateway.Contract, fileUrl string) {
