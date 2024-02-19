@@ -202,7 +202,7 @@ func BulkInvoke(contract *gateway.Contract, fileUrl string) {
 	var totalTransactions int
 
 	startTime := time.Now()
-	log.Printf("Starting bulk transaction at time: %s\n", startTime.Format(time.UnixDate))
+	// log.Printf("Starting bulk transaction at time: %s\n", startTime.Format(time.UnixDate))
 
 	file, err := os.Open(fileUrl)
 	if err != nil {
@@ -246,7 +246,7 @@ func BulkInvoke(contract *gateway.Contract, fileUrl string) {
 			log.Fatal(err)
 		}
 
-		blockTime := time.Now()
+		//blockTime := time.Now()
 		blockBytes, err := json.Marshal(transactions)
 		if err != nil {
 			log.Fatalf("Failed to marshal JSON: %s", err)
@@ -256,12 +256,15 @@ func BulkInvoke(contract *gateway.Contract, fileUrl string) {
 		if err != nil {
 			log.Fatalf("Failed to submit transaction: %s\n", err)
 		}
-		endTime := time.Now()
-		executionTime := endTime.Sub(blockTime).Seconds()
-		log.Printf("Execution Time: %f sec at block %d with length: %d\n", executionTime, blockCounter, len(transactions))
+		//endTime := time.Now()
+		//executionTime := endTime.Sub(blockTime).Seconds()
+		//log.Printf("Execution Time: %f sec at block %d with length: %d\n", executionTime, blockCounter, len(transactions))
 		blockCounter++
 		totalTransactions += len(transactions)
 		transactions = []Transaction{}
+		if blockCounter%100000 == 0 {
+			log.Printf("%d transactions inserted", blockCounter)
+		}
 
 	}
 
@@ -270,9 +273,7 @@ func BulkInvoke(contract *gateway.Contract, fileUrl string) {
 		log.Fatal(err)
 	}
 
-	endTime := time.Now()
-	executionTime := endTime.Sub(startTime).Seconds()
-	log.Printf("Finished bulk transaction at time: %s\n", endTime.Format(time.UnixDate))
+	executionTime := time.Since(startTime).Seconds()
 	log.Printf("Total execution time is: %f sec\n", executionTime)
 	log.Printf("Total of %d transactions inserted\n", totalTransactions)
 
@@ -290,7 +291,7 @@ func BulkInvokeParallel(contract *gateway.Contract, fileUrl string) {
 	sem := make(chan bool, 10)
 
 	startTime := time.Now()
-	log.Printf("Starting bulk transaction at time: %s\n", startTime.Format(time.UnixDate))
+	// log.Printf("Starting bulk transaction at time: %s\n", startTime.Format(time.UnixDate))
 
 	file, err := os.Open(fileUrl)
 	if err != nil {
@@ -373,8 +374,8 @@ func BulkInvokeParallel(contract *gateway.Contract, fileUrl string) {
 		sem <- true
 	}
 
-	endTime := time.Since(startTime).Seconds()
-	log.Printf("Time to insert %d transactions: %f\n", totalTransactions, endTime)
+	executionTime := time.Since(startTime).Seconds()
+	log.Printf("Time to insert %d transactions: %f seconds\n", totalTransactions, executionTime)
 }
 
 func Invoke(contract *gateway.Contract, fileUrl string) {

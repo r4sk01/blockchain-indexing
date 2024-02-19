@@ -1,13 +1,49 @@
 #!/bin/bash
 
-results=insertResults-original.txt
+results=insertResults-1M.txt
 
-echo "Inserting 1 Million" >> "$results"
+filenames=(
+"blockTransactions17000000-17010000.json"
+# "blockTransactions17010001-17011000.json" 
+# "blockTransactions17011001-17012000.json" 
+# "blockTransactions17012001-17015000.json"
+# "blockTransactions17015001-17020000.json"
+# "blockTransactions17020001-17030000.json"
+# "blockTransactions17030001-17050000.json"
+# "blockTransactions17090001-17100000.json"
+)
 
+dataDir="/home/andrey/Documents/insert-tpch/ethereum/First100K"
+
+echo "" >> "$results"
+echo "VERSION" >> "$results"
+
+echo "" >> "$results"
+echo "PARALLEL" >> "$results"
 for ((i = 0; i < 3; i++)); do
-    echo ./original-startFabric.sh go
+    ./original-startFabric.sh go
+    sleep 10
     pushd go
-    go run application.go -t BulkInvokeParallel -f /home/andrey/Documents/insert-tpch/ethereum/First100K/blockTransactions17000000-17010000.json >> "$results" 2>&1
+
+    for file in ${filenames[@]}; do
+        echo "Inserting file: $dataDir/$file"
+        go run application.go -t BulkInvokeParallel -f "$dataDir/$file" >> ../"$results" 2>&1
+    done
+
     popd
-    echo ./original-networkDown.sh
+    ./original-networkDown.sh
 done
+
+# echo "" >> "$results"
+# echo "SEQUENTIAL" >> "$results"
+# ./original-startFabric.sh go
+# sleep 10
+# pushd go
+
+# for file in ${filenames[@]}; do
+#     echo "Inserting file: $dataDir/$file"
+#     go run application.go -t BulkInvoke -f "$dataDir/$file" >> ../"$results" 2>&1
+# done
+
+# popd
+# ./original-networkDown.sh
