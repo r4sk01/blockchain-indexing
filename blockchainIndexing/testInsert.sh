@@ -9,7 +9,7 @@ echo "ORIGINAL" >> "$results"
 echo "" >> "$results"
 echo "PARALLEL" >> "$results"
 for ((i = 0; i < 3; i++)); do
-    ./original-startFabric.sh go
+    ./startFabric.sh go
     sleep 10
     pushd go
 
@@ -19,7 +19,7 @@ for ((i = 0; i < 3; i++)); do
     done
 
     popd
-    ./original-networkDown.sh
+    ./networkDown.sh
 done
 
 # echo "" >> "$results"
