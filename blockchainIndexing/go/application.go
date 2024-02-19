@@ -221,9 +221,9 @@ func BulkInvokeParallel(contract *gateway.Contract, fileUrl string) {
 
 	for i := 0; i < len(t.Table); i += chunkSize {
 
-		if i%10000 == 0 {
-			log.Printf("Processing chunk starting at index %d\n", i)
-		}
+		// if i%10000 == 0 {
+		// 	log.Printf("Processing chunk starting at index %d\n", i)
+		// }
 
 		end := i + chunkSize
 		if end > len(t.Table) {

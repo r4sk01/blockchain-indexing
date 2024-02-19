@@ -2,6 +2,7 @@
 
 results=insertResults-TPCH-1M.txt
 
+dataFile=/home/andrey/Documents/insert-tpch/sortUnsort10500/unsortedMilEntries.json
 
 echo "" >> "$results"
 echo "ORIGINAL" >> "$results"
@@ -13,25 +14,22 @@ for ((i = 0; i < 3; i++)); do
     sleep 10
     pushd go
 
-    for file in ${filenames[@]}; do
-        echo "Inserting file: /home/andrey/Documents/insert-tpch/sortUnsort10500/unsortedMilEntries.json"
-        go run application.go -t BulkInvokeParallel -f /home/andrey/Documents/insert-tpch/sortUnsort10500/unsortedMilEntries.json >> ../"$results" 2>&1
-    done
+    echo "Inserting file: $dataFile"
+    go run application.go -t BulkInvokeParallel -f "$dataFile" >> ../"$results" 2>&1
 
     popd
     ./networkDown.sh
 done
 
-# echo "" >> "$results"
-# echo "SEQUENTIAL" >> "$results"
-# ./original-startFabric.sh go
-# sleep 10
-# pushd go
+echo "" >> "$results"
+echo "SEQUENTIAL" >> "$results"
+./startFabric.sh go
+sleep 10
+pushd go
 
-# for file in ${filenames[@]}; do
-#     echo "Inserting file: $dataDir/$file"
-#     go run application.go -t BulkInvoke -f "$dataDir/$file" >> ../"$results" 2>&1
-# done
+echo "Inserting file: $dataFile"
+go run application.go -t BulkInvoke -f "$dataFile" >> ../"$results" 2>&1
 
-# popd
-# ./original-networkDown.sh
+
+popd
+./networkDown.sh
