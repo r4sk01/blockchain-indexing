@@ -163,10 +163,9 @@ func BulkInvoke(contract *gateway.Contract, fileUrl string) {
 	startTime := time.Now()
 	log.Printf("Starting bulk transaction at time: %s\n", startTime.Format(time.UnixDate))
 
-	// Split orders into chunks of size 2500
-	chunkSize := 2500
+	chunkSize := 500
 	for i := 0; i < len(orders); i += chunkSize {
-		chunkTime := time.Now()
+		//chunkTime := time.Now()
 
 		chunk := orders[i:func() int {
 			if i+chunkSize > len(orders) {
@@ -185,14 +184,12 @@ func BulkInvoke(contract *gateway.Contract, fileUrl string) {
 			log.Fatalf("Failed to submit transaction: %s\n", err)
 		}
 
-		endTime := time.Now()
-		executionTime := endTime.Sub(chunkTime).Seconds()
-		log.Printf("Execution Time: %f sec at chunk %d", executionTime, i/chunkSize+1)
+		//endTime := time.Now()
+		//executionTime := endTime.Sub(chunkTime).Seconds()
+		//log.Printf("Execution Time: %f sec at chunk %d", executionTime, i/chunkSize+1)
 	}
 
-	endTime := time.Now()
-	executionTime := endTime.Sub(startTime).Seconds()
-	log.Printf("Finished bulk transaction at time: %s\n", endTime.Format(time.UnixDate))
+	executionTime := time.Since(startTime).Seconds()
 	log.Printf("Total execution time is: %f sec\n", executionTime)
 
 }
