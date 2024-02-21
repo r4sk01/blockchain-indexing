@@ -5,19 +5,17 @@ results=insertResults-TPCH-12M.txt
 dataFile=/home/andrey/Documents/insert-tpch/sortUnsort12KK/unsorted12KKEntries.json
 
 function insert() {
-    pushd /home/andrey/Documents/insert-tpch/blockchain-indexing/blockchainIndexing
     printf "PARALLEL\n\n" >> "$results"
     for ((i = 0; i < 3; i++)); do
         ./startFabric.sh go
         sleep 10
-        pushd go
+        pushd ./go
         printf "Inserting $dataFile\n\n" >> ../"$results"
         go run application.go -t BulkInvokeParallel -f "$dataFile" >> ../"$results" 2>&1
         popd
         ./networkDown.sh
     done
     printf "\n" >> "$results"
-    popd
 }
 
 function buildImages() {
