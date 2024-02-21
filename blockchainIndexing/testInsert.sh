@@ -1,50 +1,54 @@
 #!/bin/bash
+#
+# Purpose: Build images for each index version and insert 12M TPCH, outputs results to file
+#
+# Author: Daniel Garon
+# Date: 2024-02-21
+#
 
 results=/home/andrey/Desktop/insertResults-TPCH-12M.txt
 
 dataFile=/home/andrey/Documents/insert-tpch/sortUnsort12KK/unsorted12KKEntries.json
 
-function insert() {
-    printf "PARALLEL\n\n" >> "$results"
-    for ((i = 0; i < 3; i++)); do
-        ./startFabric.sh go
-        sleep 10
-        pushd ./go || exit
-        {
-            printf "Inserting %s\n\n" "$dataFile"
-            go run application.go -t BulkInvokeParallel -f "$dataFile"
-            printf "\n"
-        } >> "$results" 2>&1
-        popd || exit
-        ./networkDown.sh
+branches=(
+    dgaron-2.3-blockRangeQueryOriginalIndex
+    dgaron-2.3-blockRangeQuery-VBI
+    dgaron-2.3-blockRangeQuery-BBI
+)
+
+function main() {
+    for branch in "${branches[@]}"; do
+        echo "$branch"
+        buildImages "$branch"
+        insert
     done
-    printf "\n" >> "$results"
+}
+
+function insert() {
+    printf "PARALLEL\n\n"
+    for ((i = 0; i < 3; i++)); do
+        ./startFabric.sh go &> /dev/null
+        sleep 10
+        pushd ./go || exit           
+        printf "Inserting %s\n\n" "$dataFile"
+        go run application.go -t BulkInvokeParallel -f "$dataFile"
+        printf "\n"
+        popd || exit
+        ./networkDown.sh &> /dev/null
+    done
+    printf "\n"
 }
 
 function buildImages() {
+    pushd /home/andrey/Desktop/fabric-rvp || exit
+    git checkout "$1"
     make docker-clean
     echo "y" | docker image prune
     make peer-docker
     make orderer-docker
+    popd || exit
 }
 
-pushd /home/andrey/Desktop/fabric-rvp || exit
-git checkout dgaron-2.3-blockRangeQueryOriginalIndex
-buildImages
-popd || exit
-printf "ORIGINAL\n\n" >> "$results"
-insert
+main >> "$results" 2>&1
 
-pushd /home/andrey/Desktop/fabric-rvp || exit
-git checkout dgaron-2.3-blockRangeQuery-VBI
-buildImages
-popd || exit
-printf "VERSION\n\n" >> "$results"
-insert
-
-pushd /home/andrey/Desktop/fabric-rvp || exit
-git checkout dgaron-2.3-blockRangeQuery-BBI
-buildImages
-popd || exit
-printf "BLOCK\n\n" >> "$results"
-insert
+exit 0
