@@ -16,7 +16,7 @@ branches=(
     dgaron-2.3-blockRangeQuery-BBI
 )
 
-function main() {
+main() {
     for branch in "${branches[@]}"; do
         echo "$branch"
         buildImages "$branch"
@@ -24,7 +24,7 @@ function main() {
     done
 }
 
-function insert() {
+insert() {
     printf "PARALLEL\n\n"
     for ((i = 0; i < 3; i++)); do
         ./startFabric.sh go &> /dev/null
@@ -39,7 +39,7 @@ function insert() {
     printf "\n"
 }
 
-function buildImages() {
+buildImages() {
     pushd /home/andrey/Desktop/fabric-rvp || exit
     git checkout "$1"
     make docker-clean
