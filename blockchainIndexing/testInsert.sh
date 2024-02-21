@@ -14,7 +14,7 @@ function insert() {
             printf "Inserting %s\n\n" "$dataFile"
             go run application.go -t BulkInvokeParallel -f "$dataFile"
             printf "\n"
-        } >> "$results"
+        } >> "$results" 2>&1
         popd || exit
         ./networkDown.sh
     done
