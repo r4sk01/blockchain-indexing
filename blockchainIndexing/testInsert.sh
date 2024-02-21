@@ -28,7 +28,7 @@ insert() {
     for ((i = 0; i < 3; i++)); do
         ./startFabric.sh go &> /dev/null
         sleep 10
-        pushd ./go || exit           
+        pushd ./go || exit
         printf "Inserting %s\n\n" "$dataFile"
         go run application.go -t BulkInvokeParallel -f "$dataFile"
         printf "\n"
