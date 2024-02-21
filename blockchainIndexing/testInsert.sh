@@ -1,10 +1,10 @@
 #!/bin/bash
 #
-# Purpose: Build images for each index version and insert 12M TPCH, outputs results to file
+# Purpose: Build images for each index version, insert 12M TPCH, & output results to file
 #
 # Author: Daniel Garon
-# Date: 2024-02-21
-#
+# Date: 2024-02-21 
+# Checked with shellcheck.net
 
 main() {
     local results=/home/andrey/Desktop/insertResults-TPCH-12M.txt
