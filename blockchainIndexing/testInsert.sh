@@ -9,11 +9,13 @@ function insert() {
     for ((i = 0; i < 3; i++)); do
         ./startFabric.sh go
         sleep 10
-        pushd ./go
-        printf "Inserting $dataFile\n\n" >> "$results"
-        go run application.go -t BulkInvokeParallel -f "$dataFile" >> "$results" 2>&1
-        printf "\n" >> "$results"
-        popd
+        pushd ./go || exit
+        {
+            printf "Inserting %s\n\n" "$dataFile"
+            go run application.go -t BulkInvokeParallel -f "$dataFile"
+            printf "\n"
+        } >> "$results"
+        popd || exit
         ./networkDown.sh
     done
     printf "\n" >> "$results"
@@ -26,23 +28,23 @@ function buildImages() {
     make orderer-docker
 }
 
-pushd /home/andrey/Desktop/fabric-rvp
+pushd /home/andrey/Desktop/fabric-rvp || exit
 git checkout dgaron-2.3-blockRangeQueryOriginalIndex
 buildImages
-popd
+popd || exit
 printf "ORIGINAL\n\n" >> "$results"
 insert
 
-pushd /home/andrey/Desktop/fabric-rvp
+pushd /home/andrey/Desktop/fabric-rvp || exit
 git checkout dgaron-2.3-blockRangeQuery-VBI
 buildImages
-popd
+popd || exit
 printf "VERSION\n\n" >> "$results"
 insert
 
-pushd /home/andrey/Desktop/fabric-rvp
+pushd /home/andrey/Desktop/fabric-rvp || exit
 git checkout dgaron-2.3-blockRangeQuery-BBI
 buildImages
-popd
+popd || exit
 printf "BLOCK\n\n" >> "$results"
 insert
