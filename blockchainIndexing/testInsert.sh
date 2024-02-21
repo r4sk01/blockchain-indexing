@@ -6,25 +6,24 @@
 # Date: 2024-02-21
 #
 
-results=/home/andrey/Desktop/insertResults-TPCH-12M.txt
-
-dataFile=/home/andrey/Documents/insert-tpch/sortUnsort12KK/unsorted12KKEntries.json
-
-branches=(
-    dgaron-2.3-blockRangeQueryOriginalIndex
-    dgaron-2.3-blockRangeQuery-VBI
-    dgaron-2.3-blockRangeQuery-BBI
-)
-
 main() {
+    local results=/home/andrey/Desktop/insertResults-TPCH-12M.txt
+    local branches=(
+        dgaron-2.3-blockRangeQueryOriginalIndex
+        dgaron-2.3-blockRangeQuery-VBI
+        dgaron-2.3-blockRangeQuery-BBI
+    )
     for branch in "${branches[@]}"; do
-        echo "$branch"
-        buildImages "$branch"
-        insert
+        {
+            echo "$branch"
+            buildImages "$branch"
+            insert
+        } >> "$results" 2>&1
     done
 }
 
 insert() {
+    local dataFile=/home/andrey/Documents/insert-tpch/sortUnsort12KK/unsorted12KKEntries.json
     printf "PARALLEL\n\n"
     for ((i = 0; i < 3; i++)); do
         ./startFabric.sh go &> /dev/null
@@ -49,6 +48,6 @@ buildImages() {
     popd || exit
 }
 
-main >> "$results" 2>&1
+main
 
 exit 0
