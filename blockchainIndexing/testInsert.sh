@@ -1,6 +1,6 @@
 #!/bin/bash
 
-results=insertResults-TPCH-12M.txt
+results=/home/andrey/Desktop/insertResults-TPCH-12M.txt
 
 dataFile=/home/andrey/Documents/insert-tpch/sortUnsort12KK/unsorted12KKEntries.json
 
@@ -10,8 +10,8 @@ function insert() {
         ./startFabric.sh go
         sleep 10
         pushd ./go
-        printf "Inserting $dataFile\n\n" >> ../"$results"
-        go run application.go -t BulkInvokeParallel -f "$dataFile" >> ../"$results" 2>&1
+        printf "Inserting $dataFile\n\n" >> "$results"
+        go run application.go -t BulkInvokeParallel -f "$dataFile" >> "$results" 2>&1
         popd
         ./networkDown.sh
     done
