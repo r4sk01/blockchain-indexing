@@ -1,41 +1,53 @@
 #!/bin/bash
+#
+# Purpose: Build images for each index version, insert 12M TPCH, & output results to file
+#
+# Author: Daniel Garon
+# Date: 2024-02-21 
+# Checked with shellcheck.net
 
-results=insertResults-TPCH-1M.txt
+main() {
+    local results=/home/andrey/Desktop/insertResults-TPCH-12M.txt
+    local branches=(
+        dgaron-2.3-blockRangeQueryOriginalIndex
+        dgaron-2.3-blockRangeQuery-VBI
+        dgaron-2.3-blockRangeQuery-BBI
+    )
+    for branch in "${branches[@]}"; do
+        {
+            echo "$branch"
+            buildImages "$branch"
+            insert
+        } >> "$results" 2>&1
+    done
+}
 
-dataFile=/home/andrey/Documents/insert-tpch/sortUnsort10500/unsortedMilEntries.json
+insert() {
+    local dataFile=/home/andrey/Documents/insert-tpch/sortUnsort12KK/unsorted12KKEntries.json
+    printf "PARALLEL\n\n"
+    for ((i = 0; i < 3; i++)); do
+        ./startFabric.sh go &> /dev/null
+        sleep 10
+        pushd ./go || exit
+        printf "Inserting %s\n\n" "$dataFile"
+        go run application.go -t BulkInvokeParallel -f "$dataFile"
+        printf "\n"
+        popd || exit
+        ./networkDown.sh &> /dev/null
+    done
+    printf "\n"
+}
 
-echo "" >> "$results"
-echo "BLOCK" >> "$results"
+buildImages() {
+    pushd /home/andrey/Desktop/fabric-rvp || exit
+    git checkout "$1"
+    make docker-clean
+    echo "y" | docker image prune
+    make peer-docker
+    make orderer-docker
+    popd || exit
+}
 
-echo "" >> "$results"
-echo "PARALLEL" >> "$results"
-for ((i = 0; i < 3; i++)); do
-    ./startFabric.sh go
-    sleep 10
-    pushd go
+main
 
-    echo "Inserting file: $dataFile"
-    go run application.go -t BulkInvokeParallel -f "$dataFile" >> ../"$results" 2>&1
-
-    if (( i == 2 )); then
-        echo "" >> ../"$results"
-        for ((j=0; j < 6; j++)); do
-            go run application.go -t blockRangeQuery -start 100 -end 360 -u 7 >> ../"$results" 2>&1
-        done
-    fi
-
-    popd
-    ./networkDown.sh
-done
-
-# echo "" >> "$results"
-# echo "SEQUENTIAL" >> "$results"
-# ./startFabric.sh go
-# sleep 10
-# pushd go
-
-# echo "Inserting file: $dataFile"
-# go run application.go -t BulkInvoke -f "$dataFile" >> ../"$results" 2>&1
-
-# popd
-# ./networkDown.sh
+exit 0
