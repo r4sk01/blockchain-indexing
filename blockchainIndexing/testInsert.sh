@@ -15,8 +15,8 @@ main() {
     )
     for branch in "${branches[@]}"; do
         {
-            echo "$branch"
-            buildImages "$branch" &> /dev/null
+            echo "Building images for $branch"
+            buildImages "$branch"
             insert
         } >> "$results" 2>&1
     done
@@ -41,10 +41,12 @@ insert() {
 buildImages() {
     pushd /home/andrey/Desktop/fabric-rvp || exit
     git checkout "$1"
-    make docker-clean
-    echo "y" | docker image prune
-    make peer-docker
-    make orderer-docker
+    {
+        make docker-clean 
+        echo "y" | docker image prune
+        make peer-docker
+        make orderer-docker
+    } &> /dev/null
     popd || exit
 }
 
