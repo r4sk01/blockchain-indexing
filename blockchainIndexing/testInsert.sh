@@ -9,14 +9,14 @@
 main() {
     local results=/home/andrey/Desktop/insertResults-TPCH-12M.txt
     local branches=(
-        dgaron-2.3-blockRangeQueryOriginalIndex
+        dgaron-2.3-blockRangeQuery-OriginalIndex
         dgaron-2.3-blockRangeQuery-VBI
         dgaron-2.3-blockRangeQuery-BBI
     )
     for branch in "${branches[@]}"; do
         {
             echo "$branch"
-            buildImages "$branch"
+            buildImages "$branch" &> /dev/null
             insert
         } >> "$results" 2>&1
     done
