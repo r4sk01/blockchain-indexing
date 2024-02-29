@@ -1,50 +1,59 @@
 #!/bin/bash
+#
+# Purpose: Build images for each index version, insert 12M TPCH, & output results to file
+#
+# Author: Daniel Garon
+# Date: 2024-02-21 
+# Checked with shellcheck.net
 
-results=insertResults-10M.txt
+main() {
+    local results=/home/andrey/Desktop/insertResults-ethereum-sequential.txt
+    local branches=(
+        dgaron-2.3-blockRangeQuery-OriginalIndex
+        # dgaron-2.3-blockRangeQuery-VBI
+        # dgaron-2.3-blockRangeQuery-BBI
+    )
+    for branch in "${branches[@]}"; do
+        {
+            echo "Building images for $branch"
+            buildImages "$branch"
+            insert
+        } >> "$results" 2>&1
+    done
+}
 
-filenames=(
-"blockTransactions17000000-17010000.json"
-"blockTransactions17010001-17011000.json" 
-"blockTransactions17011001-17012000.json" 
-"blockTransactions17012001-17015000.json"
-"blockTransactions17015001-17020000.json"
-"blockTransactions17020001-17030000.json"
-"blockTransactions17030001-17050000.json"
-"blockTransactions17090001-17100000.json"
-)
+insert() {
+    local dataDir="/home/andrey/Documents/insert-tpch/ethereum/First100K"
+    printf "SEQUENTIAL\n"
 
-dataDir="/home/andrey/Documents/insert-tpch/ethereum/First100K"
-
-echo "" >> "$results"
-echo "BLOCK" >> "$results"
-
-echo "" >> "$results"
-echo "PARALLEL" >> "$results"
-for ((i = 0; i < 3; i++)); do
-    ./original-startFabric.sh go
+    ./original-startFabric.sh go &> /dev/null
     sleep 10
-    pushd go
+    pushd ./go || exit
 
-    echo "" >> ../"$results"
-    for file in ${filenames[@]}; do
-        echo "Inserting file: $dataDir/$file"
-        go run application.go -t BulkInvokeParallel -f "$dataDir/$file" >> ../"$results" 2>&1
+    for file in "$dataDir"/*; do
+        printf "Inserting %s\n\n" "$file"
+        go run application.go -t BulkInvoke -f "$file"
+        printf "\n"
     done
 
-    popd
-    ./original-networkDown.sh
-done
+    popd || exit
+    ./original-networkDown.sh &> /dev/null
 
-# echo "" >> "$results"
-# echo "SEQUENTIAL" >> "$results"
-# ./original-startFabric.sh go
-# sleep 10
-# pushd go
+    printf "\n"
+}
 
-# for file in ${filenames[@]}; do
-#     echo "Inserting file: $dataDir/$file"
-#     go run application.go -t BulkInvoke -f "$dataDir/$file" >> ../"$results" 2>&1
-# done
+buildImages() {
+    pushd /home/andrey/Desktop/fabric-rvp || exit
+    git checkout "$1"
+    {
+        make docker-clean 
+        echo "y" | docker image prune
+        make peer-docker
+        make orderer-docker
+    } &> /dev/null
+    popd || exit
+}
 
-# popd
-# ./original-networkDown.sh
+main
+
+exit 0

@@ -246,7 +246,7 @@ func BulkInvoke(contract *gateway.Contract, fileUrl string) {
 			log.Fatal(err)
 		}
 
-		blockTime := time.Now()
+		//blockTime := time.Now()
 		blockBytes, err := json.Marshal(transactions)
 		if err != nil {
 			log.Fatalf("Failed to marshal JSON: %s", err)
@@ -256,14 +256,11 @@ func BulkInvoke(contract *gateway.Contract, fileUrl string) {
 		if err != nil {
 			log.Fatalf("Failed to submit transaction: %s\n", err)
 		}
-		executionTime := time.Since(blockTime).Seconds()
-		log.Printf("Execution Time: %f sec at block %d with length: %d\n", executionTime, blockCounter, len(transactions))
+		// executionTime := time.Since(blockTime).Seconds()
+		// log.Printf("Execution Time: %f sec at block %d with length: %d\n", executionTime, blockCounter, len(transactions))
 		blockCounter++
 		totalTransactions += len(transactions)
 		transactions = []Transaction{}
-		if blockCounter%10000 == 0 {
-			log.Printf("%d transactions inserted", blockCounter)
-		}
 
 	}
 
