@@ -10,31 +10,31 @@ main() {
     local results=/home/andrey/Desktop/insertResults-TPCH-12M.txt
     local branches=(
         dgaron-2.3-blockRangeQuery-OriginalIndex
-        dgaron-2.3-blockRangeQuery-VBI
-        dgaron-2.3-blockRangeQuery-BBI
+        # dgaron-2.3-blockRangeQuery-VBI
+        # dgaron-2.3-blockRangeQuery-BBI
     )
     for branch in "${branches[@]}"; do
         {
             echo "Building images for $branch"
             buildImages "$branch"
-            insert
+            for ((i = 0; i < 3; i++)); do
+                insert
+            done
         } >> "$results" 2>&1
     done
 }
 
 insert() {
     local dataFile=/home/andrey/Documents/insert-tpch/sortUnsort12KK/unsorted12KKEntries.json
-    printf "PARALLEL\n\n"
-    for ((i = 0; i < 3; i++)); do
-        ./startFabric.sh go &> /dev/null
-        sleep 10
-        pushd ./go || exit
-        printf "Inserting %s\n\n" "$dataFile"
-        go run application.go -t BulkInvokeParallel -f "$dataFile"
-        printf "\n"
-        popd || exit
-        ./networkDown.sh &> /dev/null
-    done
+    printf "SEQUENTIAL\n"
+    ./startFabric.sh go &> /dev/null
+    sleep 10
+    pushd ./go || exit
+    printf "Inserting %s\n\n" "$dataFile"
+    go run application.go -t BulkInvoke -f "$dataFile"
+    printf "\n"
+    popd || exit
+    ./networkDown.sh &> /dev/null
     printf "\n"
 }
 
