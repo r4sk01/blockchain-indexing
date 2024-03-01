@@ -1,12 +1,12 @@
 #!/bin/bash
+set -euo pipefail
+IFS=$'\n\t'
 #
 # Purpose: Build images for each index version, insert 12M TPCH, & output results to file
 #
 # Author: Daniel Garon
 # Date: 2024-02-21 
 # Checked with shellcheck.net
-set -euo pipefail
-IFS=$'\n\t'
 
 main() {
     local results=/home/andrey/Desktop/insertResults-TPCH-12M.txt
