@@ -5,6 +5,8 @@
 # Author: Daniel Garon
 # Date: 2024-02-21 
 # Checked with shellcheck.net
+set -euo pipefail
+IFS=$'\n\t'
 
 main() {
     local results=/home/andrey/Desktop/insertResults-TPCH-12M.txt
@@ -29,17 +31,17 @@ insert() {
     printf "SEQUENTIAL\n"
     ./startFabric.sh go &> /dev/null
     sleep 10
-    pushd ./go || exit
+    pushd ./go
     printf "Inserting %s\n\n" "$dataFile"
     go run application.go -t BulkInvoke -f "$dataFile"
     printf "\n"
-    popd || exit
+    popd
     ./networkDown.sh &> /dev/null
     printf "\n"
 }
 
 buildImages() {
-    pushd /home/andrey/Desktop/fabric-rvp || exit
+    pushd /home/andrey/Desktop/fabric-rvp
     git checkout "$1"
     {
         make docker-clean 
@@ -47,7 +49,7 @@ buildImages() {
         make peer-docker
         make orderer-docker
     } &> /dev/null
-    popd || exit
+    popd
 }
 
 main
