@@ -1,4 +1,6 @@
 #!/bin/bash
+set -euo pipefail
+IFS=$'\n\t'
 #
 # Purpose: Build images for each index version, insert 12M TPCH, & output results to file
 #
@@ -28,7 +30,7 @@ insert() {
 
     ./original-startFabric.sh go &> /dev/null
     sleep 10
-    pushd ./go || exit
+    pushd ./go
 
     for file in "$dataDir"/*; do
         printf "Inserting %s\n\n" "$file"
@@ -36,14 +38,14 @@ insert() {
         printf "\n"
     done
 
-    popd || exit
+    popd
     ./original-networkDown.sh &> /dev/null
 
     printf "\n"
 }
 
 buildImages() {
-    pushd /home/andrey/Desktop/fabric-rvp || exit
+    pushd /home/andrey/Desktop/fabric-rvp
     git checkout "$1"
     {
         make docker-clean 
@@ -51,7 +53,7 @@ buildImages() {
         make peer-docker
         make orderer-docker
     } &> /dev/null
-    popd || exit
+    popd
 }
 
 main
