@@ -693,18 +693,23 @@ func getHistoryForAssetRange(contract *gateway.Contract, key string, rangeSize i
 
 	startTime := time.Now()
 
-	_, err = contract.EvaluateTransaction("getHistoryForAssets", keys_list...)
+	result, err := contract.EvaluateTransaction("getHistoryForAssets", keys_list...)
 	if err != nil {
 		log.Fatalf("Failed to evaluate transaction: %s\n", err)
 	}
 
 	endTime := time.Now()
 	executionTime := endTime.Sub(startTime).Seconds()
+
+	var assets []Asset
+	err = json.Unmarshal(result, &assets)
+	if err != nil {
+		log.Fatalf("Failed to unmarshal JSON: %s\n", err)
+	}
+
+	log.Printf("Total number of assets is: %d\n", len(assets))
 	// fmt.Println(string(result))
 	log.Printf("Total execution time is: %f sec\n", executionTime)
-	index_total, index_average, disk_total, disk_average := get_read_times()
-	log.Printf("Total time to read index is %d microseconds with average time of %f microseconds\n", index_total, index_average)
-	log.Printf("Total time to read disk is %d microseconds with average time of %f microseconds\n", disk_total, disk_average)
 }
 
 func pointQuery(contract *gateway.Contract, key string, version int) {
