@@ -504,7 +504,7 @@ func GetHistoryForVersion(contract *gateway.Contract, key string, version int) {
 
 	versionString := strconv.Itoa(version)
 
-	result, err := contract.EvaluateTransaction("getVersionsForAsset", key, versionString, versionString)
+	result, err := contract.EvaluateTransaction("GetHistoryForVersionRange", key, versionString, versionString)
 	if err != nil {
 		log.Fatalf("Failed to evaluate transaction: %s\n", err)
 	}
@@ -531,7 +531,7 @@ func GetHistoryForVersionRange(contract *gateway.Contract, key string, start int
 	startString := strconv.Itoa(start)
 	endString := strconv.Itoa(end)
 
-	result, err := contract.EvaluateTransaction("getVersionsForAsset", key, startString, endString)
+	result, err := contract.EvaluateTransaction("GetHistoryForVersionRange", key, startString, endString)
 	if err != nil {
 		log.Fatalf("Failed to evaluate transaction: %s\n", err)
 	}
@@ -559,7 +559,7 @@ func GetHistoryForBlockRange(contract *gateway.Contract, start int, end int, upd
 	endString := strconv.Itoa(end)
 	updatesString := strconv.Itoa(updates)
 
-	result, err := contract.EvaluateTransaction("getUpdatesByBlockRange", startString, endString, updatesString)
+	result, err := contract.EvaluateTransaction("GetHistoryForBlockRange", startString, endString, updatesString)
 	if err != nil {
 		log.Fatalf("Failed to evaluate transaction: %s\n", err)
 	}

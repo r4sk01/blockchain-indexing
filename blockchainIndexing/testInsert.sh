@@ -18,22 +18,12 @@ main() {
         {
             echo "Building images for $branch"
             buildImages "$branch"
-            insert
-            run_tests
+            insert_and_test
         } >> "$results" 2>&1
     done
 }
 
-run_tests() {
-    pushd ./go
-    go run application.go -t GetHistoryForKey -k 7
-    go run application.go -t GetHistoryForKeyRange -k 7
-    go run application.go -t GetHistoryForVersionRange -k 7 -s 3 -e 6
-    go run application.go -t GetHistoryForBlockRange -s 10 -e 20 -u 3
-    popd
-}
-
-insert() {
+insert_and_test() {
     local dataFile=/home/andrey/Documents/insert-tpch/sortUnsort10500/unsorted10KEntries.json
     ./startFabric.sh go &> /dev/null
     sleep 10
@@ -41,6 +31,10 @@ insert() {
     printf "Inserting %s\n\n" "$dataFile"
     go run application.go -t BulkInvokeParallel -f "$dataFile"
     printf "\n"
+    go run application.go -t GetHistoryForKey -k 7
+    go run application.go -t GetHistoryForKeyRange -k 1,7
+    go run application.go -t GetHistoryForVersionRange -k 7 -s 3 -e 6
+    go run application.go -t GetHistoryForBlockRange -s 10 -e 20 -u 3
     popd
     ./networkDown.sh &> /dev/null
     printf "\n"
