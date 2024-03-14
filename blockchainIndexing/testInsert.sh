@@ -25,14 +25,14 @@ main() {
 }
 
 run_tests() {
-    go run application.go -t GetHistoryForKey -k 7
-    go run application.go -t GetHistoryForKeyRange -k 7
-    go run application.go -t GetHistoryForVersionRange -k 7 -s 3 -e 6
+    go run application.go -t GetHistoryForKey -k 0x00000000000124d994209fbb955e0217b5c2eca1
+    go run application.go -t GetHistoryForKeyRange -k 0x00000000000124d994209fbb955e0217b5c2eca1
+    go run application.go -t GetHistoryForVersionRange -k 0x00000000000124d994209fbb955e0217b5c2eca1 -s 3 -e 6
     go run application.go -t GetHistoryForBlockRange -s 10 -e 20 -u 3
 }
 
 insert() {
-    local dataFile=home/andrey/Documents/insert-tpch/ethereum/First100K/blockTransactions17000000-17010000.json
+    local dataFile=/home/andrey/Documents/insert-tpch/ethereum/First100K/blockTransactions17000000-17010000.json
     ./startFabric.sh go &> /dev/null
     sleep 10
     pushd ./go
