@@ -32,7 +32,7 @@ run_tests() {
 }
 
 insert() {
-    local dataFile=/home/andrey/Documents/insert-tpch/sortUnsort10500/unsorted1KKEntries.json
+    local dataFile=/home/andrey/Documents/insert-tpch/sortUnsort10500/unsortedMilEntries.json
     ./startFabric.sh go &> /dev/null
     sleep 10
     pushd ./go
