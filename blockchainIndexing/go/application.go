@@ -144,8 +144,6 @@ func main() {
 	pageSize := flag.Int("p", 1, "number of assets to fetch per chaincode call")
 	flag.Parse()
 
-	// /var/hyperledger/production/ledgersData/historyLeveldb
-
 	switch *transaction {
 	case "BulkInvoke":
 		BulkInvoke(contract, *file)
