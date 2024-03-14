@@ -95,10 +95,10 @@ func main() {
 
 	transaction := flag.String("t", "defaultQuery", "Choose a transaction to run")
 	file := flag.String("f", "~", "file path for json data")
-	key := flag.String("k", "", "key for getHistoryForAsset")
+	key := flag.String("k", "", "key for GetHistoryForKey")
 	version := flag.Int("v", 1, "version to query for point query")
-	start := flag.Int("start", 1, "start version for version query or starting block for block range query")
-	end := flag.Int("end", 1, "end version for version query or ending block for block range query")
+	start := flag.Int("s", 1, "start version for version query or starting block for block range query")
+	end := flag.Int("e", 1, "end version for version query or ending block for block range query")
 	updates := flag.Int("u", 0, "minimum updates required in range to appear in results")
 	flag.Parse()
 
@@ -111,32 +111,32 @@ func main() {
 		BulkInvokeParallel(contract, *file)
 	case "Invoke":
 		Invoke(contract, *file)
-	case "getHistoryForAsset":
-		getHistoryForAsset(contract, *key)
-	case "getHistoryForAssetsOld":
-		getHistoryForAssetsOld(contract, *key)
-	case "getHistoryForAssetRangeOld":
-		getHistoryForAssetRangeOld(contract, *key)
-	case "pointQueryOld":
-		pointQueryOld(contract, *key, *version)
-	case "versionQueryOld":
-		versionQueryOld(contract, *key, *start, *end)
+	case "GetHistoryForKey":
+		GetHistoryForKey(contract, *key)
+	case "GetHistoryForOrderedKeyRangeOld":
+		GetHistoryForOrderedKeyRangeOld(contract, *key)
+	case "GetHistoryForKeyRangeOld":
+		GetHistoryForKeyRangeOld(contract, *key)
+	case "GetHistoryForVersionOld":
+		GetHistoryForVersionOld(contract, *key, *version)
+	case "GetHistoryForVersionRangeOld":
+		GetHistoryForVersionRangeOld(contract, *key, *start, *end)
 
-	// GetHistoryForKeys API Required
-	case "getHistoryForAssets":
-		getHistoryForAssets(contract, *key)
-	case "getHistoryForAssetRange":
-		getHistoryForAssetRange(contract, *key)
+	// GetHistoryForKeyRange API Required
+	case "GetHistoryForOrderedKeyRange":
+		GetHistoryForOrderedKeyRange(contract, *key)
+	case "GetHistoryForKeyRange":
+		GetHistoryForKeyRange(contract, *key)
 
-	// GetVersionsForKey API Required
-	case "pointQuery":
-		pointQuery(contract, *key, *version)
-	case "versionQuery":
-		versionQuery(contract, *key, *start, *end)
+	// GetHistoryForVersionRange API Required
+	case "GetHistoryForVersion":
+		GetHistoryForVersion(contract, *key, *version)
+	case "GetHistoryForVersionRange":
+		GetHistoryForVersionRange(contract, *key, *start, *end)
 
-	// GetUpdatesByBlockRange API Required
-	case "blockRangeQuery":
-		blockRangeQuery(contract, *start, *end, *updates)
+	// GetHistoryForBlockRange API Required
+	case "GetHistoryForBlockRange":
+		GetHistoryForBlockRange(contract, *start, *end, *updates)
 	}
 
 }
@@ -297,11 +297,11 @@ func Invoke(contract *gateway.Contract, fileUrl string) {
 	log.Println("Done")
 }
 
-// getHistoryForAsset calls GetHistoryForKey API
-func getHistoryForAsset(contract *gateway.Contract, key string) {
+// GetHistoryForKey calls GetHistoryForKey API
+func GetHistoryForKey(contract *gateway.Contract, key string) {
 	startTime := time.Now()
 
-	result, err := contract.EvaluateTransaction("getHistoryForAsset", key)
+	result, err := contract.EvaluateTransaction("GetHistoryForKey", key)
 	if err != nil {
 		log.Fatalf("Failed to evaluate transaction: %s\n", err)
 	}
@@ -320,12 +320,12 @@ func getHistoryForAsset(contract *gateway.Contract, key string) {
 	log.Printf("Total execution time is: %f sec\n", executionTime)
 }
 
-func getHistoryForAssetsOld(contract *gateway.Contract, keys string) {
+func GetHistoryForKeyRangeOld(contract *gateway.Contract, keys string) {
 	startTime := time.Now()
 
 	keys_list := strings.Split(keys, ",")
 	for _, key := range keys_list {
-		result, err := contract.EvaluateTransaction("getHistoryForAsset", key)
+		result, err := contract.EvaluateTransaction("GetHistoryForKey", key)
 		if err != nil {
 			log.Fatalf("Failed to evaluate transaction: %s\n", err)
 		}
@@ -338,7 +338,7 @@ func getHistoryForAssetsOld(contract *gateway.Contract, keys string) {
 	log.Printf("Total execution time is: %f sec\n", executionTime)
 }
 
-func getHistoryForAssetRangeOld(contract *gateway.Contract, keys string) {
+func GetHistoryForOrderedKeyRangeOld(contract *gateway.Contract, keys string) {
 	startEndKeys := strings.Split(keys, ",")
 
 	start, _ := strconv.Atoi(startEndKeys[0])
@@ -353,7 +353,7 @@ func getHistoryForAssetRangeOld(contract *gateway.Contract, keys string) {
 	startTime := time.Now()
 
 	for _, key := range keys_list {
-		_, err := contract.EvaluateTransaction("getHistoryForAsset", key)
+		_, err := contract.EvaluateTransaction("GetHistoryForKey", key)
 		if err != nil {
 			log.Fatalf("Failed to evaluate transaction: %s\n", err)
 		}
@@ -365,10 +365,10 @@ func getHistoryForAssetRangeOld(contract *gateway.Contract, keys string) {
 	log.Printf("Total execution time is: %f sec\n", executionTime)
 }
 
-func pointQueryOld(contract *gateway.Contract, key string, version int) {
+func GetHistoryForVersionOld(contract *gateway.Contract, key string, version int) {
 	startTime := time.Now()
 
-	result, err := contract.EvaluateTransaction("getHistoryForAsset", key)
+	result, err := contract.EvaluateTransaction("GetHistoryForKey", key)
 	if err != nil {
 		log.Fatalf("Failed to evaluate transaction: %s\n", err)
 	}
@@ -402,11 +402,11 @@ func pointQueryOld(contract *gateway.Contract, key string, version int) {
 	log.Printf("Total execution time is: %f sec\n", executionTime)
 }
 
-// versionQuery calls GetHistoryForKey API to execute Version Query
-func versionQueryOld(contract *gateway.Contract, key string, start int, end int) {
+// GetHistoryForVersionRange calls GetHistoryForKey API to execute Version Query
+func GetHistoryForVersionRangeOld(contract *gateway.Contract, key string, start int, end int) {
 	startTime := time.Now()
 
-	result, err := contract.EvaluateTransaction("getHistoryForAsset", key)
+	result, err := contract.EvaluateTransaction("GetHistoryForKey", key)
 	if err != nil {
 		log.Fatalf("Failed to evaluate transaction: %s\n", err)
 	}
@@ -442,11 +442,11 @@ func versionQueryOld(contract *gateway.Contract, key string, start int, end int)
 	log.Printf("Total execution time is: %f sec\n", executionTime)
 }
 
-func getHistoryForAssets(contract *gateway.Contract, keys string) {
+func GetHistoryForKeyRange(contract *gateway.Contract, keys string) {
 	startTime := time.Now()
 
 	keys_list := strings.Split(keys, ",")
-	result, err := contract.EvaluateTransaction("getHistoryForAssets", keys_list...)
+	result, err := contract.EvaluateTransaction("GetHistoryForKeyRange", keys_list...)
 	if err != nil {
 		log.Fatalf("Failed to evaluate transaction: %s\n", err)
 	}
@@ -465,7 +465,7 @@ func getHistoryForAssets(contract *gateway.Contract, keys string) {
 	log.Printf("Total execution time is: %f sec\n", executionTime)
 }
 
-func getHistoryForAssetRange(contract *gateway.Contract, keys string) {
+func GetHistoryForOrderedKeyRange(contract *gateway.Contract, keys string) {
 	startEndKeys := strings.Split(keys, ",")
 
 	start, _ := strconv.Atoi(startEndKeys[0])
@@ -479,7 +479,7 @@ func getHistoryForAssetRange(contract *gateway.Contract, keys string) {
 
 	startTime := time.Now()
 
-	result, err := contract.EvaluateTransaction("getHistoryForAssets", keys_list...)
+	result, err := contract.EvaluateTransaction("GetHistoryForKeyRange", keys_list...)
 	if err != nil {
 		log.Fatalf("Failed to evaluate transaction: %s\n", err)
 	}
@@ -497,7 +497,7 @@ func getHistoryForAssetRange(contract *gateway.Contract, keys string) {
 	log.Printf("Total execution time is: %f sec\n", executionTime)
 }
 
-func pointQuery(contract *gateway.Contract, key string, version int) {
+func GetHistoryForVersion(contract *gateway.Contract, key string, version int) {
 
 	fmt.Printf("Querying for version %d of key %s\n", version, key)
 	startTime := time.Now()
@@ -523,7 +523,7 @@ func pointQuery(contract *gateway.Contract, key string, version int) {
 	log.Printf("Total execution time is: %f sec\n", executionTime)
 }
 
-func versionQuery(contract *gateway.Contract, key string, start int, end int) {
+func GetHistoryForVersionRange(contract *gateway.Contract, key string, start int, end int) {
 
 	fmt.Printf("Querying for versions from %d to %d of key %s\n", start, end, key)
 	startTime := time.Now()
@@ -550,7 +550,7 @@ func versionQuery(contract *gateway.Contract, key string, start int, end int) {
 	log.Printf("Total execution time is: %f sec\n", executionTime)
 }
 
-func blockRangeQuery(contract *gateway.Contract, start int, end int, updates int) {
+func GetHistoryForBlockRange(contract *gateway.Contract, start int, end int, updates int) {
 
 	fmt.Printf("Querying for keys within block range from %d to %d updated %d times or more \n", start, end, updates)
 	startTime := time.Now()
