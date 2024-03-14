@@ -67,18 +67,18 @@ func (sc *SmartContract) Invoke(stub shim.ChaincodeStubInterface) sc.Response {
 		return sc.CreateBulkParallel(stub, args)
 	case "Create":
 		return sc.Create(stub, args)
-	case "getState":
-		return sc.getState(stub, args)
-	case "getHistoryForAsset":
-		return sc.getHistoryForAsset(stub, args)
+	case "GetState":
+		return sc.GetState(stub, args)
+	case "GetHistoryForKey":
+		return sc.GetHistoryForKey(stub, args)
 	// Requires GetHistoryForKeys API
-	case "getHistoryForAssets":
-		return sc.getHistoryForAssets(stub, args)
+	case "GetHistoryForKeyRange":
+		return sc.GetHistoryForKeyRange(stub, args)
 	// Requires GetVersionsForKey API
-	case "getVersionsForAsset":
-		return sc.getVersionsForAsset(stub, args)
-	case "getUpdatesByBlockRange":
-		return sc.getUpdatesByBlockRange(stub, args)
+	case "GetHistoryForVersionRange":
+		return sc.GetHistoryForVersionRange(stub, args)
+	case "GetHistoryForBlockRange":
+		return sc.GetHistoryForBlockRange(stub, args)
 	default:
 		return shim.Error("Invalid Smart Contract function name.")
 	}
@@ -158,7 +158,7 @@ func (sc *SmartContract) CreateBulkParallel(stub shim.ChaincodeStubInterface, ar
 	return shim.Success(nil)
 }
 
-func (sc *SmartContract) getState(stub shim.ChaincodeStubInterface, args []string) sc.Response {
+func (sc *SmartContract) GetState(stub shim.ChaincodeStubInterface, args []string) sc.Response {
 	log.Println("-----GetState Test-----")
 	key := args[0]
 	val, err := stub.GetState(key)
@@ -168,8 +168,8 @@ func (sc *SmartContract) getState(stub shim.ChaincodeStubInterface, args []strin
 	return shim.Success(val)
 }
 
-// getHistoryForAsset calls built in GetHistoryForKey() API
-func (sc *SmartContract) getHistoryForAsset(stub shim.ChaincodeStubInterface, args []string) sc.Response {
+// GetHistoryForKey calls built in GetHistoryForKey() API
+func (sc *SmartContract) GetHistoryForKey(stub shim.ChaincodeStubInterface, args []string) sc.Response {
 	if len(args) != 1 {
 		return shim.Error("Incorrect number of arguments. Expecting 1")
 	}
@@ -200,8 +200,8 @@ func (sc *SmartContract) getHistoryForAsset(stub shim.ChaincodeStubInterface, ar
 	return shim.Success(historyAsBytes)
 }
 
-// getHistoryForAssets calls custom GetHistoryForKeys() API
-func (sc *SmartContract) getHistoryForAssets(stub shim.ChaincodeStubInterface, args []string) sc.Response {
+// GetHistoryForKeyRange calls custom GetHistoryForKeys() API
+func (sc *SmartContract) GetHistoryForKeyRange(stub shim.ChaincodeStubInterface, args []string) sc.Response {
 	if len(args) < 1 {
 		return shim.Error("Incorrect number of arguments. Expecting 1 or more")
 	}
@@ -252,7 +252,7 @@ func (sc *SmartContract) getHistoryForAssets(stub shim.ChaincodeStubInterface, a
 	return shim.Success(historyAsBytes)
 }
 
-func (sc *SmartContract) getVersionsForAsset(stub shim.ChaincodeStubInterface, args []string) sc.Response {
+func (sc *SmartContract) GetHistoryForVersionRange(stub shim.ChaincodeStubInterface, args []string) sc.Response {
 	if len(args) != 3 {
 		return shim.Error("Incorrect number of arguments. Expecting 3")
 	}
@@ -284,7 +284,7 @@ func (sc *SmartContract) getVersionsForAsset(stub shim.ChaincodeStubInterface, a
 	return shim.Success(versionAsBytes)
 }
 
-func (sc *SmartContract) getUpdatesByBlockRange(stub shim.ChaincodeStubInterface, args []string) sc.Response {
+func (sc *SmartContract) GetHistoryForBlockRange(stub shim.ChaincodeStubInterface, args []string) sc.Response {
 	if len(args) != 3 {
 		return shim.Error("Incorrect number of arguments. Expecting 3")
 	}

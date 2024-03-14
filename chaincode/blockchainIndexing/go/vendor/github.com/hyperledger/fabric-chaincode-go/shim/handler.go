@@ -553,7 +553,7 @@ func (h *Handler) handleGetHistoryForKey(key string, channelID string, txid stri
 	return nil, fmt.Errorf("incorrect chaincode message %s received. Expecting %s or %s", responseMsg.Type, pb.ChaincodeMessage_RESPONSE, pb.ChaincodeMessage_ERROR)
 }
 
-func (h *Handler) handleGetHistoryForKeys(keys []string, channelID string, txid string) (*pb.QueryResponse, error) {
+func (h *Handler) handleGetHistoryForKeyRange(keys []string, channelID string, txid string) (*pb.QueryResponse, error) {
 	// Create the channel on which to communicate the response from validating peer
 	respChan, err := h.createResponseChannel(channelID, txid)
 	if err != nil {
@@ -561,24 +561,24 @@ func (h *Handler) handleGetHistoryForKeys(keys []string, channelID string, txid 
 	}
 	defer h.deleteResponseChannel(channelID, txid)
 
-	// Send GET_HISTORY_FOR_KEYS message to peer chaincode support
-	payloadBytes := marshalOrPanic(&pb.GetHistoryForKeys{Keys: keys})
+	// Send GET_HISTORY_FOR_KEY_RANGE message to peer chaincode support
+	payloadBytes := marshalOrPanic(&pb.GetHistoryForKeyRange{Keys: keys})
 
-	msg := &pb.ChaincodeMessage{Type: pb.ChaincodeMessage_GET_HISTORY_FOR_KEYS, Payload: payloadBytes, Txid: txid, ChannelId: channelID}
+	msg := &pb.ChaincodeMessage{Type: pb.ChaincodeMessage_GET_HISTORY_FOR_KEY_RANGE, Payload: payloadBytes, Txid: txid, ChannelId: channelID}
 	var responseMsg pb.ChaincodeMessage
 
 	if responseMsg, err = h.sendReceive(msg, respChan); err != nil {
-		return nil, fmt.Errorf("[%s] error sending %s", shorttxid(msg.Txid), pb.ChaincodeMessage_GET_HISTORY_FOR_KEYS)
+		return nil, fmt.Errorf("[%s] error sending %s", shorttxid(msg.Txid), pb.ChaincodeMessage_GET_HISTORY_FOR_KEY_RANGE)
 	}
 
 	if responseMsg.Type == pb.ChaincodeMessage_RESPONSE {
 		// Success response
-		getHistoryForKeysResponse := &pb.QueryResponse{}
-		if err = proto.Unmarshal(responseMsg.Payload, getHistoryForKeysResponse); err != nil {
+		getHistoryForKeyRangeResponse := &pb.QueryResponse{}
+		if err = proto.Unmarshal(responseMsg.Payload, getHistoryForKeyRangeResponse); err != nil {
 			return nil, fmt.Errorf("[%s] unmarshal error", shorttxid(responseMsg.Txid))
 		}
 
-		return getHistoryForKeysResponse, nil
+		return getHistoryForKeyRangeResponse, nil
 	}
 	if responseMsg.Type == pb.ChaincodeMessage_ERROR {
 		// Error response
@@ -589,7 +589,7 @@ func (h *Handler) handleGetHistoryForKeys(keys []string, channelID string, txid 
 	return nil, fmt.Errorf("incorrect chaincode message %s received. Expecting %s or %s", responseMsg.Type, pb.ChaincodeMessage_RESPONSE, pb.ChaincodeMessage_ERROR)
 }
 
-func (h *Handler) handleGetVersionsForKey(key string, start uint64, end uint64, channelID string, txid string) (*pb.QueryResponse, error) {
+func (h *Handler) handleGetHistoryForVersionRange(key string, start uint64, end uint64, channelID string, txid string) (*pb.QueryResponse, error) {
 	// Create the channel on which to communicate the response from validating peer
 	respChan, err := h.createResponseChannel(channelID, txid)
 	if err != nil {
@@ -597,24 +597,24 @@ func (h *Handler) handleGetVersionsForKey(key string, start uint64, end uint64, 
 	}
 	defer h.deleteResponseChannel(channelID, txid)
 
-	// Send GET_VERSIONS_FOR_KEY message to peer chaincode support
-	payloadBytes := marshalOrPanic(&pb.GetVersionsForKey{Key: key, Start: start, End: end})
+	// Send GET_HISTORY_FOR_VERSION_RANGE message to peer chaincode support
+	payloadBytes := marshalOrPanic(&pb.GetHistoryForVersionRange{Key: key, Start: start, End: end})
 
-	msg := &pb.ChaincodeMessage{Type: pb.ChaincodeMessage_GET_VERSIONS_FOR_KEY, Payload: payloadBytes, Txid: txid, ChannelId: channelID}
+	msg := &pb.ChaincodeMessage{Type: pb.ChaincodeMessage_GET_HISTORY_FOR_VERSION_RANGE, Payload: payloadBytes, Txid: txid, ChannelId: channelID}
 	var responseMsg pb.ChaincodeMessage
 
 	if responseMsg, err = h.sendReceive(msg, respChan); err != nil {
-		return nil, fmt.Errorf("[%s] error sending %s: %s", shorttxid(txid), pb.ChaincodeMessage_GET_VERSIONS_FOR_KEY, err)
+		return nil, fmt.Errorf("[%s] error sending %s: %s", shorttxid(txid), pb.ChaincodeMessage_GET_HISTORY_FOR_VERSION_RANGE, err)
 	}
 
 	if responseMsg.Type == pb.ChaincodeMessage_RESPONSE {
 		// Success response
-		getVersionsForKeyResponse := &pb.QueryResponse{}
-		if err = proto.Unmarshal(responseMsg.Payload, getVersionsForKeyResponse); err != nil {
+		getHistoryForVersionRangeResponse := &pb.QueryResponse{}
+		if err = proto.Unmarshal(responseMsg.Payload, getHistoryForVersionRangeResponse); err != nil {
 			return nil, fmt.Errorf("[%s] unmarshal error", shorttxid(responseMsg.Txid))
 		}
 
-		return getVersionsForKeyResponse, nil
+		return getHistoryForVersionRangeResponse, nil
 	}
 	if responseMsg.Type == pb.ChaincodeMessage_ERROR {
 		// Error response
@@ -625,7 +625,7 @@ func (h *Handler) handleGetVersionsForKey(key string, start uint64, end uint64, 
 	return nil, fmt.Errorf("incorrect chaincode message %s received. Expecting %s or %s", responseMsg.Type, pb.ChaincodeMessage_RESPONSE, pb.ChaincodeMessage_ERROR)
 }
 
-func (h *Handler) handleGetUpdatesByBlockRange(start uint64, end uint64, updates uint64, channelID string, txid string) (*pb.QueryResponse, error) {
+func (h *Handler) handleGetHistoryForBlockRange(start uint64, end uint64, updates uint64, channelID string, txid string) (*pb.QueryResponse, error) {
 	// Create the channel on which to communicate the response from validating peer
 	respChan, err := h.createResponseChannel(channelID, txid)
 	if err != nil {
@@ -633,24 +633,24 @@ func (h *Handler) handleGetUpdatesByBlockRange(start uint64, end uint64, updates
 	}
 	defer h.deleteResponseChannel(channelID, txid)
 
-	// Send GET_UPDATES_BY_BLOCK_RANGE message to peer chaincode support
-	payloadBytes := marshalOrPanic(&pb.GetUpdatesByBlockRange{Start: start, End: end, Updates: updates})
+	// Send GET_HISTORY_FOR_BLOCK_RANGE message to peer chaincode support
+	payloadBytes := marshalOrPanic(&pb.GetHistoryForBlockRange{Start: start, End: end, Updates: updates})
 
-	msg := &pb.ChaincodeMessage{Type: pb.ChaincodeMessage_GET_UPDATES_BY_BLOCK_RANGE, Payload: payloadBytes, Txid: txid, ChannelId: channelID}
+	msg := &pb.ChaincodeMessage{Type: pb.ChaincodeMessage_GET_HISTORY_FOR_BLOCK_RANGE, Payload: payloadBytes, Txid: txid, ChannelId: channelID}
 	var responseMsg pb.ChaincodeMessage
 
 	if responseMsg, err = h.sendReceive(msg, respChan); err != nil {
-		return nil, fmt.Errorf("[%s] error sending %s: %s", shorttxid(txid), pb.ChaincodeMessage_GET_UPDATES_BY_BLOCK_RANGE, err)
+		return nil, fmt.Errorf("[%s] error sending %s: %s", shorttxid(txid), pb.ChaincodeMessage_GET_HISTORY_FOR_BLOCK_RANGE, err)
 	}
 
 	if responseMsg.Type == pb.ChaincodeMessage_RESPONSE {
 		// Success response
-		getUpdatesByBlockRangeResponse := &pb.QueryResponse{}
-		if err = proto.Unmarshal(responseMsg.Payload, getUpdatesByBlockRangeResponse); err != nil {
+		getHistoryForBlockRangeResponse := &pb.QueryResponse{}
+		if err = proto.Unmarshal(responseMsg.Payload, getHistoryForBlockRangeResponse); err != nil {
 			return nil, fmt.Errorf("[%s] unmarshal error", shorttxid(responseMsg.Txid))
 		}
 
-		return getUpdatesByBlockRangeResponse, nil
+		return getHistoryForBlockRangeResponse, nil
 	}
 	if responseMsg.Type == pb.ChaincodeMessage_ERROR {
 		// Error response

@@ -1,13 +1,13 @@
 cloud.google.com/go v0.26.0/go.mod h1:aQUYkXzVsufM+DwF1aE+0xfcU+56JwCaLick0ClmMTw=
 github.com/BurntSushi/toml v0.3.1/go.mod h1:xHWCNGjB5oqiDr8zfno3MHue2Ht5sIBksp03qcyfWMU=
+github.com/bc-indexing/hlf-im-chaincode-go v0.0.0-20240314170225-d9f1fc027936 h1:HEP9mP9XsoFe08S1o2cB7FEzBE8J59d61YDRU6hRDh0=
+github.com/bc-indexing/hlf-im-chaincode-go v0.0.0-20240314170225-d9f1fc027936/go.mod h1:tVH9aq8ciKv3KCE/G0rorkusjutJ7rQKS2SpLKfDT5E=
+github.com/bc-indexing/hlf-im-protos/bindings/go-apiv1 v0.0.0-20240314165523-5b23f4fca96f h1:pcAhjycCBORJGOdr4ydSXC1c+MoEGJlD01TM1adrixY=
+github.com/bc-indexing/hlf-im-protos/bindings/go-apiv1 v0.0.0-20240314165523-5b23f4fca96f/go.mod h1:WWnyWP40P2roPmmvxsUXSvVI/CF6vwY1K1UFidnKBys=
 github.com/client9/misspell v0.3.4/go.mod h1:qj6jICC3Q7zFZvVWo7KLAzC3yx5G7kyvSDkc90ppPyw=
 github.com/davecgh/go-spew v1.1.0/go.mod h1:J7Y8YcW2NihsgmVo/mv3lAwl/skON4iLHjSsI+c5H38=
 github.com/davecgh/go-spew v1.1.1 h1:vj9j/u1bqnvCEfJOwUhtlOARqs3+rkHYY13jYWTU97c=
 github.com/davecgh/go-spew v1.1.1/go.mod h1:J7Y8YcW2NihsgmVo/mv3lAwl/skON4iLHjSsI+c5H38=
-github.com/dgaron/fabric-chaincode-go v0.0.0-20240115161810-5782ce1bfb44 h1:d4oXkCY1VHRiNt05YMju49yzRB2nHs5ZDtAXqd/vcZI=
-github.com/dgaron/fabric-chaincode-go v0.0.0-20240115161810-5782ce1bfb44/go.mod h1:K0BmK0NzJ8omHQIm7o87BScOmM1vy9kMQScTjSGQRhk=
-github.com/dgaron/fabric-protos/bindings/go-apiv1 v0.0.0-20240115160558-3b75c98f2cd0 h1:DvlinbX2GgCtJYj9RnFGLspDanHH6U2V6xYMEbkmZ1E=
-github.com/dgaron/fabric-protos/bindings/go-apiv1 v0.0.0-20240115160558-3b75c98f2cd0/go.mod h1:WWnyWP40P2roPmmvxsUXSvVI/CF6vwY1K1UFidnKBys=
 github.com/golang/glog v0.0.0-20160126235308-23def4e6c14b h1:VKtxabqXZkF25pY9ekfRL6a582T4P37/31XEstQ5p58=
 github.com/golang/glog v0.0.0-20160126235308-23def4e6c14b/go.mod h1:SBH7ygxi8pfUlaOkMMuAQtPIUF8ecWP5IEl/CR7VP2Q=
 github.com/golang/mock v1.1.1/go.mod h1:oTYuIxOrZwtPieC+H1uAHpcLFnEyAGVDL/k47Jfbm0A=
