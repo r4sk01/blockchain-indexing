@@ -433,24 +433,24 @@ func (s *ChaincodeStub) GetHistoryForKey(key string) (HistoryQueryIteratorInterf
 	return &HistoryQueryIterator{CommonIterator: &CommonIterator{s.handler, s.ChannelID, s.TxID, response, 0}}, nil
 }
 
-func (s *ChaincodeStub) GetHistoryForKeys(keys []string) (HistoryQueryIteratorInterface, error) {
-	response, err := s.handler.handleGetHistoryForKeys(keys, s.ChannelID, s.TxID)
+func (s *ChaincodeStub) GetHistoryForKeyRange(keys []string) (HistoryQueryIteratorInterface, error) {
+	response, err := s.handler.handleGetHistoryForKeyRange(keys, s.ChannelID, s.TxID)
 	if err != nil {
 		return nil, err
 	}
 	return &HistoryQueryIterator{CommonIterator: &CommonIterator{s.handler, s.ChannelID, s.TxID, response, 0}}, nil
 }
 
-func (s *ChaincodeStub) GetVersionsForKey(key string, start uint64, end uint64) (HistoryQueryIteratorInterface, error) {
-	response, err := s.handler.handleGetVersionsForKey(key, start, end, s.ChannelID, s.TxID)
+func (s *ChaincodeStub) GetHistoryForVersionRange(key string, start uint64, end uint64) (HistoryQueryIteratorInterface, error) {
+	response, err := s.handler.handleGetHistoryForVersionRange(key, start, end, s.ChannelID, s.TxID)
 	if err != nil {
 		return nil, err
 	}
 	return &HistoryQueryIterator{CommonIterator: &CommonIterator{s.handler, s.ChannelID, s.TxID, response, 0}}, nil
 }
 
-func (s *ChaincodeStub) GetUpdatesByBlockRange(start uint64, end uint64, updates uint64) (HistoryQueryIteratorInterface, error) {
-	response, err := s.handler.handleGetUpdatesByBlockRange(start, end, updates, s.ChannelID, s.TxID)
+func (s *ChaincodeStub) GetHistoryForBlockRange(start uint64, end uint64, updates uint64) (HistoryQueryIteratorInterface, error) {
+	response, err := s.handler.handleGetHistoryForBlockRange(start, end, updates, s.ChannelID, s.TxID)
 	if err != nil {
 		return nil, err
 	}

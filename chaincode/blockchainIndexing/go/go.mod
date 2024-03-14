@@ -13,6 +13,6 @@ require (
 	gopkg.in/yaml.v2 v2.2.8 // indirect
 )
 
-replace github.com/hyperledger/fabric-protos-go => github.com/dgaron/fabric-protos/bindings/go-apiv1 v0.0.0-20240115160558-3b75c98f2cd0
+replace github.com/hyperledger/fabric-protos-go => github.com/bc-indexing/hlf-im-protos/bindings/go-apiv1 v0.0.0-20240314165523-5b23f4fca96f
 
-replace github.com/hyperledger/fabric-chaincode-go => github.com/dgaron/fabric-chaincode-go v0.0.0-20240115161810-5782ce1bfb44
+replace github.com/hyperledger/fabric-chaincode-go => github.com/bc-indexing/hlf-im-chaincode-go v0.0.0-20240314170225-d9f1fc027936
