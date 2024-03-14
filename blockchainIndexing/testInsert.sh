@@ -2,50 +2,50 @@
 set -euo pipefail
 IFS=$'\n\t'
 #
-# Purpose: Build images for each index version, insert 12M TPCH, & output results to file
+# Purpose: Build images for each index version & test refactored APIs
 #
 # Author: Daniel Garon
-# Date: 2024-02-21 
-# Checked with shellcheck.net
+# Date: 2024-03-14
 
 main() {
-    local results=/home/andrey/Desktop/insertResults-ethereum-sequential.txt
+    local results=/home/andrey/Desktop/refactoringTest.txt
     local branches=(
-        dgaron-2.3-blockRangeQuery-OriginalIndex
-        # dgaron-2.3-blockRangeQuery-VBI
-        # dgaron-2.3-blockRangeQuery-BBI
+        2.3-hlf-im-original
+        2.3-hlf-im-version
+        2.3-hlf-im-block
     )
     for branch in "${branches[@]}"; do
         {
             echo "Building images for $branch"
             buildImages "$branch"
             insert
+            run_tests
         } >> "$results" 2>&1
     done
 }
 
-insert() {
-    local dataDir="/home/andrey/Documents/insert-tpch/ethereum/First100K"
-    printf "SEQUENTIAL\n"
+run_tests() {
+    go run application.go -t GetHistoryForKey -k 7
+    go run application.go -t GetHistoryForKeyRange -k 7
+    go run application.go -t GetHistoryForVersionRange -k 7 -s 3 -e 6
+    go run application.go -t GetHistoryForBlockRange -s 10 -e 20 -u 3
+}
 
-    ./original-startFabric.sh go &> /dev/null
+insert() {
+    local dataFile=home/andrey/Documents/insert-tpch/ethereum/First100K/blockTransactions17000000-17010000.json
+    ./startFabric.sh go &> /dev/null
     sleep 10
     pushd ./go
-
-    for file in "$dataDir"/*; do
-        printf "Inserting %s\n\n" "$file"
-        go run application.go -t BulkInvoke -f "$file"
-        printf "\n"
-    done
-
+    printf "Inserting %s\n\n" "$dataFile"
+    go run application.go -t BulkInvokeParallel -f "$dataFile"
+    printf "\n"
     popd
-    ./original-networkDown.sh &> /dev/null
-
+    ./networkDown.sh &> /dev/null
     printf "\n"
 }
 
 buildImages() {
-    pushd /home/andrey/Desktop/fabric-rvp
+    pushd /home/andrey/Desktop/hlf-indexing-middleware
     git checkout "$1"
     {
         make docker-clean 
