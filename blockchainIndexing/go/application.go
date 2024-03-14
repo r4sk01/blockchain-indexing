@@ -641,7 +641,7 @@ func GetHistoryForKeyRange(contract *gateway.Contract, keys string) {
 	startTime := time.Now()
 
 	keys_list := strings.Split(keys, ",")
-	result, err := contract.EvaluateTransaction("GetHistoryForKeyRange", keys_list...)
+	_, err := contract.EvaluateTransaction("GetHistoryForKeyRange", keys_list...)
 	if err != nil {
 		log.Fatalf("Failed to evaluate transaction: %s\n", err)
 	}
@@ -649,7 +649,7 @@ func GetHistoryForKeyRange(contract *gateway.Contract, keys string) {
 	endTime := time.Now()
 	executionTime := endTime.Sub(startTime).Seconds()
 
-	fmt.Println(string(result))
+	// fmt.Println(string(result))
 	log.Printf("Total execution time is: %f sec\n", executionTime)
 }
 
