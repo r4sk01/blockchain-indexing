@@ -207,6 +207,8 @@ func BulkInvokeParallel(contract *gateway.Contract, fileUrl string) {
 	var t Table
 	json.Unmarshal(raw, &t)
 
+	fmt.Printf("Number of transactions: %d\n", len(t.Table))
+
 	chunkSize := 500
 
 	var wg sync.WaitGroup
