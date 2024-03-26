@@ -595,6 +595,7 @@ func GetHistoryForVersionOld(contract *gateway.Contract, key string, version int
 	endTime := time.Now()
 	executionTime := endTime.Sub(startTime).Seconds()
 	fmt.Println(string(assetJSON))
+	fmt.Printf("Retrieved %d total assets\n", len(assets))
 	log.Printf("Total execution time is: %f sec\n", executionTime)
 }
 
