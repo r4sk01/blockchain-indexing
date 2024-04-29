@@ -15,7 +15,7 @@ main() {
         2.3-hlf-im-block
     )
     for branch in "${branches[@]}"; do
-        echo "Building images for $branch"
+        echo "Building images for $branch" >> "$results"
         buildImages "$branch"
         insert_and_test
     done
@@ -29,10 +29,13 @@ insert_and_test() {
     {
         printf "Inserting %s\n\n" "$dataFile"
         go run application.go -t BulkInvokeParallel -f "$dataFile"
-        printf "\n"
+        echo "Running GetHistoryForKey"
         go run application.go -t GetHistoryForKey -k 0x00000000000124d994209fbb955e0217b5c2eca1
+        echo "Running GetHistoryForKeyRange"
         go run application.go -t GetHistoryForKeyRange -k 0x00000000000124d994209fbb955e0217b5c2eca1
+        echo "Running GetHistoryForVersionRange"
         go run application.go -t GetHistoryForVersionRange -k 0x00000000000124d994209fbb955e0217b5c2eca1 -s 3 -e 6
+        echo "Running GetHistoryForBlockRange"
         go run application.go -t GetHistoryForBlockRange -s 10 -e 20 -u 3
     } >> "$results" 2>&1
     popd
