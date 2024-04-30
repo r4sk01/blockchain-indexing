@@ -27,7 +27,7 @@ insert_and_test() {
     sleep 5
 
     pushd ./addOrg3
-    ./addOrg3.sh up -c channel1 >> "$results" 2>&1
+    ./addOrg3.sh up -c mychannel >> "$results" 2>&1
     popd
 
     sleep 5
