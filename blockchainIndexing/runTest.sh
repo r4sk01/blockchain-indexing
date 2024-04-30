@@ -24,7 +24,13 @@ main() {
 insert_and_test() {
     local dataFile=/home/andrey/Documents/insert-tpch/ethereum/First100K/blockTransactions17010001-17011000.json
     ./startFabric.sh go
-    sleep 10
+    sleep 5
+
+    pushd ./addOrg3
+    ./addOrg3.sh up -c channel1 >> "$results" 2>&1
+    popd
+
+    sleep 5
     pushd ./go
     {
         printf "Inserting %s\n\n" "$dataFile"
