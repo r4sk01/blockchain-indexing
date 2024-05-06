@@ -8,7 +8,7 @@ IFS=$'\n\t'
 # Date: 2024-03-14
 
 main() {
-    results=/home/andrey/Desktop/branchTest.txt
+    results=/home/andrey/Desktop/two_million.txt
     local branches=(
         2.3-hlf-im-original
         2.3-hlf-im-version
@@ -22,15 +22,9 @@ main() {
 }
 
 insert_and_test() {
-    local dataFile=/home/andrey/Documents/insert-tpch/ethereum/First100K/blockTransactions17010001-17011000.json
+    local dataFiles=/home/andrey/Documents/insert-tpch/ethereum/First100K/blockTransactions17010001-17011000.json
     ./startFabric.sh go
-    sleep 5
-
-    pushd ./addOrg3
-    ./addOrg3.sh up -c mychannel >> "$results" 2>&1
-    popd
-
-    sleep 5
+    sleep 10
     pushd ./go
     {
         printf "Inserting %s\n\n" "$dataFile"
