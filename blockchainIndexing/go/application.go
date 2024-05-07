@@ -101,7 +101,8 @@ func main() {
 	end := flag.Int("e", 1, "end version for version query or ending block for block range query")
 	updates := flag.Int("u", 0, "minimum updates required in range to appear in results")
 
-	limit := flag.Int("l", 0, "data insert limit")
+	data_s := flag.Int("ds", 0, "data insert start")
+	data_e := flag.Int("de", 0, "data insert end")
 
 	flag.Parse()
 
@@ -111,7 +112,7 @@ func main() {
 	case "BulkInvoke":
 		BulkInvoke(contract, *file)
 	case "BulkInvokeParallel":
-		BulkInvokeParallel(contract, *file, *limit)
+		BulkInvokeParallel(contract, *file, *data_s, *data_e)
 	case "Invoke":
 		Invoke(contract, *file)
 	case "GetHistoryForKey":
@@ -150,7 +151,7 @@ func BulkInvoke(contract *gateway.Contract, fileUrl string) {
 
 	}
 
-	jsonData, err := ioutil.ReadFile(fileUrl)
+	jsonData, err := os.ReadFile(fileUrl)
 	if err != nil {
 		log.Fatalf("error while reading json file: %s", err)
 
@@ -197,12 +198,12 @@ func BulkInvoke(contract *gateway.Contract, fileUrl string) {
 
 }
 
-func BulkInvokeParallel(contract *gateway.Contract, fileUrl string, limit int) {
+func BulkInvokeParallel(contract *gateway.Contract, fileUrl string, data_s int, data_e int) {
 	if fileUrl == "" || !filepath.IsAbs(fileUrl) {
 		log.Fatalln("File URL is not absolute.")
 	}
 
-	raw, err := ioutil.ReadFile(fileUrl)
+	raw, err := os.ReadFile(fileUrl)
 	if err != nil {
 		log.Fatalln(err)
 	}
@@ -210,7 +211,7 @@ func BulkInvokeParallel(contract *gateway.Contract, fileUrl string, limit int) {
 	var t Table
 	json.Unmarshal(raw, &t)
 
-	fmt.Printf("Number of transactions: %d\n", limit)
+	fmt.Printf("Number of transactions to be inserted: %d\n", data_e-data_s)
 
 	chunkSize := 500
 
@@ -222,7 +223,7 @@ func BulkInvokeParallel(contract *gateway.Contract, fileUrl string, limit int) {
 	sem := make(chan bool, 10)
 
 	// TEMPORARY
-	for i := 0; i < limit; i += chunkSize {
+	for i := data_s; i < data_e; i += chunkSize {
 
 		// if i%10000 == 0 {
 		// 	log.Printf("Processing chunk starting at index %d\n", i)
@@ -274,7 +275,7 @@ func Invoke(contract *gateway.Contract, fileUrl string) {
 		os.Exit(1)
 	}
 
-	jsonData, err := ioutil.ReadFile(fileUrl)
+	jsonData, err := os.ReadFile(fileUrl)
 	if err != nil {
 		log.Fatalf("error while reading json file: %s", err)
 
@@ -597,7 +598,7 @@ func populateWallet(wallet *gateway.Wallet) error {
 
 	certPath := filepath.Join(credPath, "signcerts", "cert.pem")
 	// read the certificate pem
-	cert, err := ioutil.ReadFile(filepath.Clean(certPath))
+	cert, err := os.ReadFile(filepath.Clean(certPath))
 	if err != nil {
 		return err
 	}
@@ -612,7 +613,7 @@ func populateWallet(wallet *gateway.Wallet) error {
 		return errors.New("keystore folder should have contain one file")
 	}
 	keyPath := filepath.Join(keyDir, files[0].Name())
-	key, err := ioutil.ReadFile(filepath.Clean(keyPath))
+	key, err := os.ReadFile(filepath.Clean(keyPath))
 	if err != nil {
 		return err
 	}
