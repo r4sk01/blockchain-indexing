@@ -353,6 +353,9 @@ func BulkInvokeParallel(contract *gateway.Contract, fileUrl string) {
 		totalTransactions += len(transactions)
 		transactions = []Transaction{}
 
+		if totalTransactions >= 2000000 {
+			break
+		}
 	}
 
 	// Read the closing ']' of the outermost array
