@@ -260,6 +260,11 @@ func BulkInvoke(contract *gateway.Contract, fileUrl string) {
 		totalTransactions += len(transactions)
 		transactions = []Transaction{}
 
+		if totalTransactions >= 2000000 {
+			fmt.Printf("Inserted %d transactions.\n", totalTransactions)
+			break
+		}
+
 	}
 
 	// Read the closing ']' of the outermost array
