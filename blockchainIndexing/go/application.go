@@ -100,6 +100,9 @@ func main() {
 	start := flag.Int("s", 1, "start version for version query or starting block for block range query")
 	end := flag.Int("e", 1, "end version for version query or ending block for block range query")
 	updates := flag.Int("u", 0, "minimum updates required in range to appear in results")
+
+	limit := flag.Int("l", 0, "data insert limit")
+
 	flag.Parse()
 
 	// /var/hyperledger/production/ledgersData/historyLeveldb
@@ -108,7 +111,7 @@ func main() {
 	case "BulkInvoke":
 		BulkInvoke(contract, *file)
 	case "BulkInvokeParallel":
-		BulkInvokeParallel(contract, *file)
+		BulkInvokeParallel(contract, *file, *limit)
 	case "Invoke":
 		Invoke(contract, *file)
 	case "GetHistoryForKey":
@@ -194,7 +197,7 @@ func BulkInvoke(contract *gateway.Contract, fileUrl string) {
 
 }
 
-func BulkInvokeParallel(contract *gateway.Contract, fileUrl string) {
+func BulkInvokeParallel(contract *gateway.Contract, fileUrl string, limit int) {
 	if fileUrl == "" || !filepath.IsAbs(fileUrl) {
 		log.Fatalln("File URL is not absolute.")
 	}
@@ -207,7 +210,7 @@ func BulkInvokeParallel(contract *gateway.Contract, fileUrl string) {
 	var t Table
 	json.Unmarshal(raw, &t)
 
-	fmt.Printf("Number of transactions: %d\n", len(t.Table))
+	fmt.Printf("Number of transactions: %d\n", limit)
 
 	chunkSize := 500
 
@@ -218,7 +221,8 @@ func BulkInvokeParallel(contract *gateway.Contract, fileUrl string) {
 	// Create a buffered channel to limit number of goroutines
 	sem := make(chan bool, 10)
 
-	for i := 0; i < len(t.Table); i += chunkSize {
+	// TEMPORARY
+	for i := 0; i < limit; i += chunkSize {
 
 		// if i%10000 == 0 {
 		// 	log.Printf("Processing chunk starting at index %d\n", i)
@@ -506,7 +510,7 @@ func GetHistoryForVersion(contract *gateway.Contract, key string, version int) {
 
 	versionString := strconv.Itoa(version)
 
-	result, err := contract.EvaluateTransaction("GetHistoryForVersionRange", key, versionString, versionString)
+	_, err := contract.EvaluateTransaction("GetHistoryForVersionRange", key, versionString, versionString)
 	if err != nil {
 		log.Fatalf("Failed to evaluate transaction: %s\n", err)
 	}
@@ -514,13 +518,11 @@ func GetHistoryForVersion(contract *gateway.Contract, key string, version int) {
 	endTime := time.Now()
 	executionTime := endTime.Sub(startTime).Seconds()
 
-	var assets []Asset
-	err = json.Unmarshal(result, &assets)
-	if err != nil {
-		log.Fatalf("Failed to unmarshal JSON: %s\n", err)
-	}
-
-	log.Printf("Total number of assets is: %d\n", len(assets))
+	// var assets []Asset
+	// err = json.Unmarshal(result, &assets)
+	// if err != nil {
+	// 	log.Fatalf("Failed to unmarshal JSON: %s\n", err)
+	// }
 	// fmt.Println(string(result))
 	log.Printf("Total execution time is: %f sec\n", executionTime)
 }
