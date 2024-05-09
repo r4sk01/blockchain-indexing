@@ -726,7 +726,7 @@ func GetHistoryForVersion(contract *gateway.Contract, key string, version int) {
 
 	versionString := strconv.Itoa(version)
 
-	result, err := contract.EvaluateTransaction("GetHistoryForVersionRange", key, versionString, versionString)
+	_, err := contract.EvaluateTransaction("GetHistoryForVersionRange", key, versionString, versionString)
 	if err != nil {
 		log.Fatalf("Failed to evaluate transaction: %s\n", err)
 	}
@@ -734,7 +734,7 @@ func GetHistoryForVersion(contract *gateway.Contract, key string, version int) {
 	endTime := time.Now()
 	executionTime := endTime.Sub(startTime).Seconds()
 
-	fmt.Println(string(result))
+	// fmt.Println(string(result))
 	log.Printf("Total execution time is: %f sec\n", executionTime)
 }
 
