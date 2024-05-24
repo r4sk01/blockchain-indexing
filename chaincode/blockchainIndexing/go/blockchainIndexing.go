@@ -3,6 +3,7 @@ package main
 import (
 	"encoding/json"
 	"log"
+	"math"
 	"strconv"
 	"time"
 
@@ -168,18 +169,19 @@ func (sc *SmartContract) PointQuery(stub shim.ChaincodeStubInterface, args []str
 	key := args[0]
 	version, _ := strconv.ParseUint(args[1], 10, 64)
 	startBlk, _ := strconv.ParseUint(args[2], 10, 64)
-	endBlk, _ := strconv.ParseUint(args[3], 10, 64)
+	var endBlk uint64 = math.MaxUint64
+	var currentBlk uint64 = endBlk
 	var results []string
 
-	for startBlk <= endBlk {
-		val, _, err := stub.Hist(key, startBlk)
+	for startBlk < currentBlk {
+		val, committed, err := stub.Hist(key, startBlk)
 		if err != nil {
 			return shim.Error("Failed to get historical value: " + err.Error())
 		}
 
 		results = append(results, val)
 		startBlk++
-
+		currentBlk = committed - 1
 	}
 
 	log.Printf("pointQuery results: %s\n", results)
@@ -198,10 +200,9 @@ func (sc *SmartContract) VersionQuery(stub shim.ChaincodeStubInterface, args []s
 	startVersion, _ := strconv.ParseUint(args[1], 10, 64)
 	endVersion, _ := strconv.ParseUint(args[2], 10, 64)
 	startBlk, _ := strconv.ParseUint(args[3], 10, 64)
-	endBlk, _ := strconv.ParseUint(args[4], 10, 64)
+	var endBlk uint64 = math.MaxUint64
+	var currentBlk uint64 = endBlk
 	var results []string
-
-	currentBlk := endBlk
 
 	for startBlk < currentBlk {
 		val, committed, err := stub.Hist(key, startBlk)
@@ -227,21 +228,22 @@ func (sc *SmartContract) VersionQuery(stub shim.ChaincodeStubInterface, args []s
 
 func (sc *SmartContract) RangeQuery(stub shim.ChaincodeStubInterface, args []string) sc.Response {
 	startBlk, _ := strconv.ParseUint(args[0], 10, 64)
-	endBlk, _ := strconv.ParseUint(args[1], 10, 64)
+	var endBlk uint64 = math.MaxUint64
+	var currentBlk uint64 = endBlk
 
 	var results []string
 
 	for _, key := range args[2:] {
 		log.Println(key)
-		for startBlk <= endBlk {
-			val, _, err := stub.Hist(key, startBlk)
+		for startBlk < currentBlk {
+			val, committed, err := stub.Hist(key, startBlk)
 			if err != nil {
 				return shim.Error("Failed to get historical value: " + err.Error())
 			}
 
 			results = append(results, val)
 			startBlk++
-
+			currentBlk = committed - 1
 		}
 		startBlk, _ = strconv.ParseUint(args[0], 10, 64)
 
@@ -260,20 +262,22 @@ func (sc *SmartContract) HistTest(stub shim.ChaincodeStubInterface, args []strin
 	startKey, _ := strconv.ParseUint(args[0], 10, 64)
 	endKey, _ := strconv.ParseUint(args[1], 10, 64)
 	startBlk, _ := strconv.ParseUint(args[2], 10, 64)
-	endBlk, _ := strconv.ParseUint(args[3], 10, 64)
+	var endBlk uint64 = math.MaxUint64
+	var currentBlk uint64 = endBlk
 	var results []string
 
 	for key := startKey; key <= endKey; key++ {
 		keyStr := strconv.FormatUint(key, 10)
 		log.Println(keyStr)
-		for startBlk <= endBlk {
-			val, _, err := stub.Hist(keyStr, startBlk)
+		for startBlk < currentBlk {
+			val, committed, err := stub.Hist(keyStr, startBlk)
 			if err != nil {
 				return shim.Error("Failed to get historical value: " + err.Error())
 			}
 
 			results = append(results, val)
 			startBlk++
+			currentBlk = committed - 1
 
 		}
 		startBlk, _ = strconv.ParseUint(args[0], 10, 64)

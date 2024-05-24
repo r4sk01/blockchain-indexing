@@ -8,7 +8,6 @@ import (
 	"fmt"
 	"io/ioutil"
 	"log"
-	"math"
 	"os"
 	"path/filepath"
 	"sort"
@@ -140,7 +139,6 @@ func main() {
 	startK := flag.String("startK", "1", "start key")
 	endK := flag.String("endK", "1", "end key")
 	startB := flag.String("startB", "1", "start block")
-	endB := flag.String("endB", string(math.MaxUint64), "end block")
 	flag.Parse()
 
 	// /var/hyperledger/production/ledgersData/historyLeveldb
@@ -155,13 +153,13 @@ func main() {
 	case "getHistoryForAsset":
 		getHistoryForAsset(contract, *key)
 	case "histTest":
-		histTest(contract, *startK, *endK, *startB, *endB)
+		histTest(contract, *startK, *endK, *startB)
 	case "pointQuery":
-		pointQuery(contract, *key, *version, *startB, *endB)
+		pointQuery(contract, *key, *version, *startB)
 	case "versionQuery":
-		versionQuery(contract, *key, *startV, *endV, *startB, *endB)
+		versionQuery(contract, *key, *startV, *endV, *startB)
 	case "rangeQuery":
-		rangeQuery(contract, *key, *startB, *endB)
+		rangeQuery(contract, *key, *startB)
 	case "getState":
 		getState(contract, *key)
 	case "pointQueryOld":
@@ -447,21 +445,21 @@ func getHistoryForAsset(contract *gateway.Contract, key string) {
 	log.Printf("Total execution time is: %f sec\n", executionTime)
 }
 
-func histTest(contract *gateway.Contract, startKey string, endKey string, startBlk string, endBlk string) {
+func histTest(contract *gateway.Contract, startKey string, endKey string, startBlk string) {
 	log.Println("-----stub.Hist() Test-----")
 
-	_, err := contract.EvaluateTransaction("histTest", startKey, endKey, startBlk, endBlk)
+	_, err := contract.EvaluateTransaction("histTest", startKey, endKey, startBlk)
 	if err != nil {
 		log.Fatalf("Failed to submit transaction: %s\n", err)
 	}
 	log.Println("Transaction has been evaluated")
 }
 
-func pointQuery(contract *gateway.Contract, key string, version string, startBlk string, endBlk string) {
+func pointQuery(contract *gateway.Contract, key string, version string, startBlk string) {
 	log.Println("-----Point Query-----")
 	startTime := time.Now()
 
-	result, err := contract.EvaluateTransaction("PointQuery", key, version, startBlk, endBlk)
+	result, err := contract.EvaluateTransaction("PointQuery", key, version, startBlk)
 	if err != nil {
 		log.Fatalf("Failed to evaluate transaction: %s\n", err)
 	}
@@ -473,11 +471,11 @@ func pointQuery(contract *gateway.Contract, key string, version string, startBlk
 	log.Printf("Finished point query with execution time: %f sec\n", executionTime)
 }
 
-func versionQuery(contract *gateway.Contract, key string, startVersion string, endVersion string, startBlk string, endBlk string) {
+func versionQuery(contract *gateway.Contract, key string, startVersion string, endVersion string, startBlk string) {
 	log.Println("-----Version Query-----")
 	startTime := time.Now()
 
-	result, err := contract.EvaluateTransaction("VersionQuery", key, startVersion, endVersion, startBlk, endBlk)
+	result, err := contract.EvaluateTransaction("VersionQuery", key, startVersion, endVersion, startBlk)
 	if err != nil {
 		log.Fatalf("Failed to evaluate transaction: %s\n", err)
 	}
@@ -492,14 +490,14 @@ func versionQuery(contract *gateway.Contract, key string, startVersion string, e
 	log.Printf("Finished point query with execution time: %f sec\n", executionTime)
 }
 
-func rangeQuery(contract *gateway.Contract, keys string, startBlk string, endBlk string) {
+func rangeQuery(contract *gateway.Contract, keys string, startBlk string) {
 	log.Println("-----Range Query-----")
 	startTime := time.Now()
 
 	keys_list := strings.Split(keys, ",")
 	args := []string{}
 	args = append(args, startBlk)
-	args = append(args, endBlk)
+	args = append(args)
 	args = append(args, keys_list...)
 	result, err := contract.EvaluateTransaction("RangeQuery", args...)
 	if err != nil {
