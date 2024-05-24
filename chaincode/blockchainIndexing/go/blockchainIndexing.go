@@ -174,7 +174,7 @@ func (sc *SmartContract) PointQuery(stub shim.ChaincodeStubInterface, args []str
 	for startBlk <= endBlk {
 		val, _, err := stub.Hist(key, startBlk)
 		if err != nil {
-			shim.Error("Failed to get historical value: " + err.Error())
+			return shim.Error("Failed to get historical value: " + err.Error())
 		}
 
 		results = append(results, val)
@@ -186,7 +186,7 @@ func (sc *SmartContract) PointQuery(stub shim.ChaincodeStubInterface, args []str
 
 	resultsBytes, err := json.Marshal(results[version])
 	if err != nil {
-		shim.Error("Marhsal failed with: " + err.Error())
+		return shim.Error("Marhsal failed with: " + err.Error())
 	}
 
 	return shim.Success(resultsBytes)
@@ -201,14 +201,17 @@ func (sc *SmartContract) VersionQuery(stub shim.ChaincodeStubInterface, args []s
 	endBlk, _ := strconv.ParseUint(args[4], 10, 64)
 	var results []string
 
-	for startBlk <= endBlk {
-		val, _, err := stub.Hist(key, startBlk)
+	currentBlk := endBlk
+
+	for startBlk < currentBlk {
+		val, committed, err := stub.Hist(key, startBlk)
 		if err != nil {
-			shim.Error("Failed to get historical value: " + err.Error())
+			return shim.Error("Failed to get historical value: " + err.Error())
 		}
 
 		results = append(results, val)
 		startBlk++
+		currentBlk = committed - 1
 
 	}
 
@@ -216,7 +219,7 @@ func (sc *SmartContract) VersionQuery(stub shim.ChaincodeStubInterface, args []s
 
 	resultsBytes, err := json.Marshal(results[startVersion : endVersion+1])
 	if err != nil {
-		shim.Error("Marhsal failed with: " + err.Error())
+		return shim.Error("Marhsal failed with: " + err.Error())
 	}
 
 	return shim.Success(resultsBytes)
@@ -233,7 +236,7 @@ func (sc *SmartContract) RangeQuery(stub shim.ChaincodeStubInterface, args []str
 		for startBlk <= endBlk {
 			val, _, err := stub.Hist(key, startBlk)
 			if err != nil {
-				shim.Error("Failed to get historical value: " + err.Error())
+				return shim.Error("Failed to get historical value: " + err.Error())
 			}
 
 			results = append(results, val)
@@ -266,7 +269,7 @@ func (sc *SmartContract) HistTest(stub shim.ChaincodeStubInterface, args []strin
 		for startBlk <= endBlk {
 			val, _, err := stub.Hist(keyStr, startBlk)
 			if err != nil {
-				shim.Error("Failed to get historical value: " + err.Error())
+				return shim.Error("Failed to get historical value: " + err.Error())
 			}
 
 			results = append(results, val)
@@ -324,7 +327,7 @@ func (sc *SmartContract) getState(stub shim.ChaincodeStubInterface, args []strin
 	key := args[0]
 	val, err := stub.GetState(key)
 	if err != nil {
-		shim.Error("Failed to get state: " + err.Error())
+		return shim.Error("Failed to get state: " + err.Error())
 	}
 	return shim.Success(val)
 }
