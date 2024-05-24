@@ -11,6 +11,7 @@ import (
 	"os"
 	"path/filepath"
 	"sort"
+	"strconv"
 	"strings"
 	"sync"
 	"time"
@@ -525,7 +526,8 @@ func getState(contract *gateway.Contract, key string) {
 	log.Printf("+%v\n", tx)
 }
 
-func pointQueryOld(contract *gateway.Contract, key string, version int) {
+func pointQueryOld(contract *gateway.Contract, key string, versionString string) {
+	version, _ := strconv.Atoi(versionString)
 	startTime := time.Now()
 
 	result, err := contract.EvaluateTransaction("getHistoryForAsset", key)
@@ -560,7 +562,9 @@ func pointQueryOld(contract *gateway.Contract, key string, version int) {
 }
 
 // versionQuery calls GetHistoryForKey API to execute Version Query
-func versionQueryOld(contract *gateway.Contract, key string, start int, end int) {
+func versionQueryOld(contract *gateway.Contract, key string, startString string, endString string) {
+	start, _ := strconv.Atoi(startString)
+	end, _ := strconv.Atoi(endString)
 	startTime := time.Now()
 
 	result, err := contract.EvaluateTransaction("getHistoryForAsset", key)
