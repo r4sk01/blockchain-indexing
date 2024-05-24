@@ -8,6 +8,7 @@ import (
 	"fmt"
 	"io/ioutil"
 	"log"
+	"math"
 	"os"
 	"path/filepath"
 	"strings"
@@ -138,7 +139,7 @@ func main() {
 	startK := flag.String("startK", "1", "start key")
 	endK := flag.String("endK", "1", "end key")
 	startB := flag.String("startB", "1", "start block")
-	endB := flag.String("endB", "1", "end block")
+	endB := flag.String("endB", string(math.MaxUint64), "end block")
 	flag.Parse()
 
 	// /var/hyperledger/production/ledgersData/historyLeveldb
@@ -475,7 +476,11 @@ func versionQuery(contract *gateway.Contract, key string, startVersion string, e
 	}
 	endTime := time.Now()
 	executionTime := endTime.Sub(startTime).Seconds()
-	log.Printf("Transaction has been evaluated, result is: %s\n", string(result))
+	// log.Printf("Transaction has been evaluated, result is: %s\n", string(result))
+
+	var assets []Asset
+	json.Unmarshal(result, &assets)
+	log.Printf("Transaction has been evaluated, number of results is: %d\n", len(assets))
 
 	log.Printf("Finished point query with execution time: %f sec\n", executionTime)
 }
