@@ -222,7 +222,7 @@ func (sc *SmartContract) VersionQuery(stub shim.ChaincodeStubInterface, args []s
 	}
 	var e int
 	if int(endVersion) >= len(results) {
-		e = len(results)
+		e = len(results) - 1
 	} else {
 		e = int(endVersion)
 	}
