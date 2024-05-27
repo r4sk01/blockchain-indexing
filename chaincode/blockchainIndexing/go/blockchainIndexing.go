@@ -214,7 +214,19 @@ func (sc *SmartContract) VersionQuery(stub shim.ChaincodeStubInterface, args []s
 
 	log.Printf("versionQuery results: %s\n", results)
 
-	resultsBytes, err := json.Marshal(results[startVersion : endVersion+1])
+	var s int
+	if int(startVersion)-1 >= 0 {
+		s = int(startVersion) - 1
+	} else {
+		s = 0
+	}
+	var e int
+	if int(endVersion) >= len(results) {
+		e = len(results)
+	} else {
+		e = int(endVersion)
+	}
+	resultsBytes, err := json.Marshal(results[s:e])
 	if err != nil {
 		return shim.Error("Marhsal failed with: " + err.Error())
 	}
